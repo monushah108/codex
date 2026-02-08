@@ -42,15 +42,6 @@ const ChatBox = memo(function ChatBox() {
           <MessageSquare className="size-3" />
           <span className="text-xs">TEAM CHAT</span>
         </div>
-        <div>
-          <Button
-            variant="none"
-            className="text-xs border-gray-700/70 rounded py-2 px-4 hover:bg-gray-700/20 hover:text-white cursor-pointer  "
-          >
-            <span>controller</span>
-            <ChevronDown className="size-3" />
-          </Button>
-        </div>
       </div>
 
       <div className="flex-1 ">

@@ -3,6 +3,7 @@ import { Code2 } from "lucide-react";
 import React from "react";
 import Editor from "@monaco-editor/react";
 import { useState } from "react";
+import TabBar from "./ui/TabBar";
 
 interface CodeWindowProps {
   code: string;
@@ -14,8 +15,10 @@ const CodeWindow = React.memo(function CodeWindow({
   setCode,
 }: CodeWindowProps) {
   return (
-    <div className="flex flex-col justify-center items-center bg-[#1e1e1e] h-full ">
-      {/* <div className="flex items-center flex-col justify-center">
+    <div className="h-full">
+      <TabBar />
+      <div className="flex flex-col justify-center items-center bg-[#1e1e1e] h-full ">
+        {/* <div className="flex items-center flex-col justify-center">
         <Code2 className="w-20 h-20 text-[#007acc]/30" />
         <div className="text-center ">
           <p className="text-lg mb-2">No file open</p>
@@ -25,21 +28,22 @@ const CodeWindow = React.memo(function CodeWindow({
         </div>
       </div> */}
 
-      <Editor
-        height="100%"
-        width="100%"
-        theme="vs-dark"
-        defaultLanguage="javascript"
-        value={code}
-        onChange={(value) => setCode(value || "")}
-        options={{
-          fontSize: 14,
-          fontFamily: "Fira Code, monospace",
-          minimap: { enabled: false },
-          lineNumbers: "on",
-          automaticLayout: true,
-        }}
-      />
+        <Editor
+          height="100%"
+          width="100%"
+          theme="vs-dark"
+          defaultLanguage="javascript"
+          value={code}
+          onChange={(value) => setCode(value || "")}
+          options={{
+            fontSize: 14,
+            fontFamily: "Fira Code, monospace",
+            minimap: { enabled: false },
+            lineNumbers: "on",
+            automaticLayout: true,
+          }}
+        />
+      </div>
     </div>
   );
 });

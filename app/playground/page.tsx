@@ -9,7 +9,6 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-import TabBar from "@/components/editor/TabBar";
 import StatusBar from "@/components/editor/StatusBar";
 
 const CodeWindow = lazy(() => import("@/components/editor/CodeWindow"));
@@ -23,20 +22,8 @@ export const metadata: Metadata = {
 };
 export default function Page() {
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
+    <div className=" flex flex-col h-screen w-screen bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
       {/* Header */}
-      <div className="h-[35px] shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center px-3">
-        <div className="flex gap-1">
-          <span className="bg-red-500 w-3 h-3 rounded-full" />
-          <span className="bg-yellow-500 w-3 h-3 rounded-full" />
-          <span className="bg-green-500 w-3 h-3 rounded-full" />
-        </div>
-        <h1 className="flex-1 text-center text-sm">
-          Collaborative Code Editor
-        </h1>
-      </div>
-
-      <TabBar />
 
       <div className="flex-1 w-full">
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">

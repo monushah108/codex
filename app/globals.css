@@ -124,3 +124,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .play-btns {
+    @apply text-xs rounded cursor-pointer   hover:bg-black/50 hover:text-white;
+  }
+}
