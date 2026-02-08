@@ -1,12 +1,11 @@
+"use client";
 import { Collapsible, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { ChevronRight, File, Folder, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { CollapsibleContent } from "../ui/collapsible";
 import { ScrollArea } from "../ui/scroll-area";
 
-const CollapsAbleFolders = (parentId) => {};
-
-const FileExplore = memo(function FileExplore({ handleFileToggle }) {
+function FileExplore() {
   const [Folders, setFolders] = useState([
     { id: 123, type: "folder", parentId: null, name: "src" },
     { id: 321, type: "folder", parentId: 123, name: "src" },
@@ -50,16 +49,13 @@ const FileExplore = memo(function FileExplore({ handleFileToggle }) {
         <button onClick={handleCreateFolder}>
           <Folder className="w-3 h-3 ml-2" />
         </button>
-        <button onClick={handleFileToggle}>
-          <X className="w-3 h-3 ml-2" />
-        </button>
       </div>
       <div>
         <ScrollArea className="h-[550px] rounded-md  p-3 "></ScrollArea>
       </div>
     </div>
   );
-});
+}
 
 export default FileExplore;
 

@@ -9,11 +9,7 @@ import {
 } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 
-const Terminal = memo(function Terminal({
-  handleTerminalToggle,
-  output,
-  setOutput,
-}) {
+const Terminal = memo(function Terminal({ output, setOutput }) {
   const [userInput, setuserInput] = useState("");
   const TerminalRef = useRef(null);
 
@@ -55,27 +51,6 @@ const Terminal = memo(function Terminal({
     setuserInput("");
   };
 
-  useEffect(() => {
-    TerminalRef.current?.scrollIntoView({ behavior: "smooth" });
-    const input = TerminalRef.current?.querySelector("input");
-    input?.focus();
-  }, [output]);
-
-  const getOutputColor = (type: string) => {
-    switch (type) {
-      case "error":
-        return "text-[#f48771]";
-      case "success":
-        return "text-[#89d185]";
-      case "info":
-        return "text-[#75beff]";
-      case "input":
-        return "text-[#cccccc]";
-      default:
-        return "text-[#cccccc]";
-    }
-  };
-
   const prompt = () => (
     <div>
       <ArrowBigRight className="w-3 h-3" />
@@ -92,12 +67,6 @@ const Terminal = memo(function Terminal({
         <div className="flex items-center gap-3">
           <button onClick={() => setOutput([])}>
             <Trash className="size-3" />
-          </button>
-          <button onClick={handleTerminalToggle}>
-            <ChevronDown className="size-3" />
-          </button>
-          <button onClick={handleTerminalToggle}>
-            <X className="size-3" />
           </button>
         </div>
       </div>

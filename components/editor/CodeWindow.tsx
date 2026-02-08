@@ -29,7 +29,7 @@ const CodeWindow = React.memo(function CodeWindow({
         height="100%"
         width="100%"
         theme="vs-dark"
-        defaultLanguage="python"
+        defaultLanguage="javascript"
         value={code}
         onChange={(value) => setCode(value || "")}
         options={{

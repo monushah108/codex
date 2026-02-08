@@ -1,9 +1,8 @@
-"use client";
-
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import EditorSkeleton from "@/components/editor/Skeleton/codeWindowSkeleton";
 import FileExploreSkeleton from "@/components/editor/Skeleton/FileExploreSkeleton";
 import TerminalSkeleton from "@/components/editor/Skeleton/TerminalSkeleton";
+
 import {
   ResizableHandle,
   ResizablePanel,
@@ -17,11 +16,12 @@ const CodeWindow = lazy(() => import("@/components/editor/CodeWindow"));
 const FileExplore = lazy(() => import("@/components/editor/FileExplore"));
 const Terminal = lazy(() => import("@/components/editor/Terminal"));
 const ChatBox = lazy(() => import("@/components/editor/ChatBox"));
+import { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: "playground",
+};
 export default function Page() {
-  const [code, setCode] = useState("");
-  const [output, setOutput] = useState<any[]>([]);
-
   return (
     <div className="flex flex-col h-screen w-screen bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
       {/* Header */}
@@ -36,37 +36,49 @@ export default function Page() {
         </h1>
       </div>
 
-      <TabBar setOutput={setOutput} code={code} />
+      <TabBar />
 
-      <div className="flex-1 h-full w-full">
+      <div className="flex-1 w-full">
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
           {/* File Explorer */}
-          <ResizablePanel defaultSize={20}>
-            <FileExplore />
+          <ResizablePanel defaultSize={20} collapsedSize={0} collapsible>
+            <Suspense fallback={<FileExploreSkeleton />}>
+              <FileExplore />
+            </Suspense>
           </ResizablePanel>
 
-          <ResizableHandle />
+          <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
-          {/* Center column */}
+          {/* Center Column */}
           <ResizablePanel defaultSize={60}>
             <ResizablePanelGroup orientation="vertical" className="h-full">
-              <ResizablePanel defaultSize={65}>
-                <CodeWindow />
+              {/* Code Editor */}
+              <ResizablePanel defaultSize={60}>
+                <Suspense fallback={<EditorSkeleton />}>
+                  <CodeWindow />
+                </Suspense>
               </ResizablePanel>
 
-              <ResizableHandle />
+              <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
-              <ResizablePanel defaultSize={35}>
-                <Terminal />
+              {/* Terminal */}
+              <ResizablePanel defaultSize={40} collapsedSize={0} collapsible>
+                <Suspense fallback={<TerminalSkeleton />}>
+                  <Terminal />
+                </Suspense>
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
 
-          <ResizableHandle />
+          <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
           {/* Chat */}
-          <ResizablePanel defaultSize={20}>
-            <ChatBox />
+          <ResizablePanel defaultSize={20} collapsedSize={0} collapsible>
+            <Suspense
+              fallback={<div className="p-4 text-sm">Loading chat…</div>}
+            >
+              <ChatBox />
+            </Suspense>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

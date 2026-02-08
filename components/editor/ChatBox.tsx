@@ -1,9 +1,17 @@
-import { MessageSquare, MessageSquareCode, SendIcon, X } from "lucide-react";
+"use client";
+import {
+  ChevronDown,
+  MessageSquare,
+  MessageSquareCode,
+  SendIcon,
+  X,
+} from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
+import { Button } from "../ui/button";
 // import ChatBubble from "../ui/ChatBubble";
 
-const ChatBox = memo(function ChatBox({ handleChatToggle }) {
+const ChatBox = memo(function ChatBox() {
   const [msg, setMsg] = useState("");
   const [chats, setChats] = useState([]);
   const endRef = useRef<HTMLDivElement>(null);
@@ -34,9 +42,15 @@ const ChatBox = memo(function ChatBox({ handleChatToggle }) {
           <MessageSquare className="size-3" />
           <span className="text-xs">TEAM CHAT</span>
         </div>
-        <button onClick={handleChatToggle}>
-          <X className="size-3" />
-        </button>
+        <div>
+          <Button
+            variant="none"
+            className="text-xs border-gray-700/70 rounded py-2 px-4 hover:bg-gray-700/20 hover:text-white cursor-pointer  "
+          >
+            <span>controller</span>
+            <ChevronDown className="size-3" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 ">
