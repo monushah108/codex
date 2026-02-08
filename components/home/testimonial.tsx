@@ -1,7 +1,9 @@
+"use client";
 import { motion } from "motion/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
-import { Testimonials } from "../constant/main-constant.js";
+import { Testimonials } from "../constant/main-constant";
+
 export default function Testimonial() {
   return (
     <section className="px-10 py-20 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 relative overflow-hidden">

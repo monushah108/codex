@@ -1,3 +1,4 @@
+"use client";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import {
   ArrowBigRight,
@@ -112,7 +113,7 @@ const Terminal = memo(function Terminal({
               you can just run your code it's not so advance{" "}
             </p>
           </div>
-          {output.map(({ id, outputValue, outputType, cmd }) => (
+          {/* {output.map(({ id, outputValue, outputType, cmd }) => (
             <div key={id}>
               <div className="flex gap-1 p-2 items-center">
                 {prompt()}
@@ -126,7 +127,7 @@ const Terminal = memo(function Terminal({
                 {outputValue}
               </pre>
             </div>
-          ))}
+          ))} */}
           <form onSubmit={handleExecuteCommand}>
             <div
               className="flex items-center gap-1 p-2 group"

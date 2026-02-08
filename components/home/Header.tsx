@@ -4,6 +4,7 @@ import { Binary, Moon, Sun, TextAlignJustify, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { NavItems } from "../constant/main-constant.js";
+import Link from "next/link";
 export default function Header() {
   const [darkMode, setDarkMode] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,7 +53,7 @@ export default function Header() {
             )}
           </Button>
 
-          <Link to="/login">
+          <Link href="/login">
             <Button
               variant="outline"
               className="font-medium dark:border-gray-700"
@@ -60,7 +61,7 @@ export default function Header() {
               Sign in
             </Button>
           </Link>
-          <Link to="/Auth">
+          <Link href="/Auth">
             <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium">
               Get Started
             </Button>
@@ -95,7 +96,7 @@ export default function Header() {
               </a>
             ))}
             <div className="flex flex-col gap-2 mt-8">
-              <Link to="/login">
+              <Link href="/login">
                 <Button
                   variant="outline"
                   className="font-medium dark:border-gray-700"
@@ -103,7 +104,7 @@ export default function Header() {
                   Sign in
                 </Button>
               </Link>
-              <Link to="/Auth">
+              <Link href="/Auth">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium">
                   Get Started
                 </Button>
