@@ -19,6 +19,7 @@ import {
 } from "../ui/dropdown-menu";
 import { ButtonGroup } from "../ui/button-group";
 import { ScrollArea } from "../ui/scroll-area";
+import InviteModule from "./Module/inviteModule";
 
 export default function PlayHeader() {
   return (
@@ -30,10 +31,8 @@ export default function PlayHeader() {
             codex
           </span>
         </div>
-        <Button variant="none" className="play-btns">
-          <UserRoundPlus />
-          <span>invite</span>
-        </Button>
+        {/* invite button  */}
+        <InviteModule />
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

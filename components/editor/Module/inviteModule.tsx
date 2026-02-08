@@ -1,0 +1,74 @@
+"use client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { UserRoundPlus, Copy, Link } from "lucide-react";
+import React, { useState } from "react";
+
+export default function InviteModule() {
+  const [roomName, setRoomName] = useState("codex-room");
+  const inviteLink = `https://codex.dev/join/${roomName}`;
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="none" className="play-btns">
+          <UserRoundPlus />
+          <span>invite</span>
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="bg-[#323233] text-[#d4d4d4] border border-[#2d2d30]">
+        <DialogHeader>
+          <DialogTitle>invite friends</DialogTitle>
+          <DialogDescription>
+            invite your friends to code together
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4 mt-2">
+          {/* Room name */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-[#9e9e9e]">room name</label>
+            <Input
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              placeholder="enter room name"
+              className="bg-[#1e1e1e] border-[#2d2d30]"
+            />
+          </div>
+
+          {/* Invite link */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-[#9e9e9e]">invite link</label>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-2 w-full rounded-md bg-[#1e1e1e] border border-[#2d2d30] text-sm truncate">
+                <Link className="size-4 shrink-0" />
+                <span className="truncate">{inviteLink}</span>
+              </div>
+              <Button size="icon" variant="ghost" onClick={copyToClipboard}>
+                <Copy className="size-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Action */}
+          <Button className="mt-2 bg-blue-600 hover:bg-blue-700">
+            send invite
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
