@@ -6,36 +6,6 @@ import { CollapsibleContent } from "../ui/collapsible";
 import { ScrollArea } from "../ui/scroll-area";
 
 function FileExplore() {
-  const [Folders, setFolders] = useState([
-    { id: 123, type: "folder", parentId: null, name: "src" },
-    { id: 321, type: "folder", parentId: 123, name: "src" },
-  ]);
-  const [Files, setFiles] = useState([
-    { id: crypto.randomUUID(), type: "file", parentId: 123, name: "index.js" },
-    { id: crypto.randomUUID(), type: "file", parentId: null, name: "index.js" },
-  ]);
-
-  const [child, setChild] = useState([]);
-  const [adult, setAdult] = useState([]);
-
-  const [FileFocus, setFileFocus] = useState(0);
-
-  useEffect(() => {
-    Folders.filter((dir) => {
-      Files.map((ChildFile) => {
-        if (ChildFile.parentId == dir.id) {
-          setChild((pre) => [...pre, ChildFile]);
-        }
-      });
-      Folders.map((childDir) => {
-        if (childDir.id == dir.id) setChild((pre) => [...pre, childDir]);
-      });
-    });
-    Files.filter((file) => {
-      if (file.parentId == null) setAdult((pre) => [...pre, file]);
-    });
-  }, []);
-
   const handleCreateFile = () => {};
   const handleCreateFolder = () => {};
 
