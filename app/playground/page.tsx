@@ -16,6 +16,7 @@ const FileExplore = lazy(() => import("@/components/editor/FileExplore"));
 const Terminal = lazy(() => import("@/components/editor/Terminal"));
 const ChatBox = lazy(() => import("@/components/editor/ChatBox"));
 import { Metadata } from "next";
+import PlayHeader from "@/components/editor/playHeader";
 
 export const metadata: Metadata = {
   title: "playground",
@@ -24,6 +25,7 @@ export default function Page() {
   return (
     <div className=" flex flex-col h-screen w-screen bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
       {/* Header */}
+      <PlayHeader />
 
       <div className="flex-1 w-full">
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
@@ -49,7 +51,7 @@ export default function Page() {
               <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
               {/* Terminal */}
-              <ResizablePanel defaultSize={40} collapsedSize={0} collapsible>
+              <ResizablePanel defaultSize={40} collapsedSize={0}>
                 <Suspense fallback={<TerminalSkeleton />}>
                   <Terminal />
                 </Suspense>

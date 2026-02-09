@@ -1,25 +1,6 @@
-import {
-  Binary,
-  ChevronDown,
-  Mic,
-  Share2,
-  UserRoundPlus,
-  UserSquare,
-} from "lucide-react";
-import React from "react";
-import { Button } from "../ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { ButtonGroup } from "../ui/button-group";
-import { ScrollArea } from "../ui/scroll-area";
+import { Binary } from "lucide-react";
 import InviteModule from "./Module/inviteModule";
+import ControllerPopover from "./Module/controllerPopover";
 
 export default function PlayHeader() {
   return (
@@ -34,43 +15,8 @@ export default function PlayHeader() {
         {/* invite button  */}
         <InviteModule />
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="none" className="play-btns  ">
-            <span>controller</span>
-            <ChevronDown className="size-3" />
-          </Button>
-        </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="bg-[#323233] text-[#d4d4d4] w-[250px] p-0">
-          <ScrollArea className="h-[300px]">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>
-                <div className="flex items-center justify-between text-sm gap-2 font-semibold">
-                  <span>peers</span>
-                  <UserSquare className="size-4" />
-                </div>
-              </DropdownMenuLabel>
-
-              <DropdownMenuSeparator />
-
-              {Array.from({ length: 20 }).map((_, i) => (
-                <DropdownMenuItem
-                  key={i}
-                  className="flex items-center justify-between"
-                >
-                  <div>Mohit {i + 1}</div>
-                  <Button size="icon" variant="ghost">
-                    <Mic />
-                  </Button>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </ScrollArea>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <div></div>
+      <ControllerPopover />
     </div>
   );
 }
