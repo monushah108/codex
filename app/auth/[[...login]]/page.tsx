@@ -1,4 +1,4 @@
-import { Binary, GalleryVerticalEnd } from "lucide-react";
+import { Binary } from "lucide-react";
 
 import { LoginForm } from "@/components/login-form";
 import { Metadata } from "next";
