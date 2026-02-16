@@ -2,10 +2,11 @@
   "name": "codex",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
     "lint": "eslint"
   },
   "dependencies": {
@@ -23,9 +24,12 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-resizable-panels": "^4.6.2",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.4.0",
     "y-monaco": "^0.1.6",
-    "yjs": "^13.6.29"
+    "yjs": "^13.6.29",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
