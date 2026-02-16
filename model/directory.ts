@@ -1,6 +1,6 @@
 import { model, Schema } from "mongoose";
 
-const folderSchema = new Schema(
+const directorySchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -14,7 +14,11 @@ const folderSchema = new Schema(
     parentId: {
       type: Schema.Types.ObjectId,
       default: null,
-      ref: "Folder",
+      ref: "Directory",
+    },
+    roomId: {
+      type: Schema.Types.ObjectId,
+      ref: "Room",
     },
   },
   {
@@ -22,6 +26,6 @@ const folderSchema = new Schema(
   },
 );
 
-const Folder = model("Folder", folderSchema);
+const Directory = model("Directory", directorySchema);
 
-export default Folder;
+export default Directory;

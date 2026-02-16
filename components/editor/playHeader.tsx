@@ -1,6 +1,7 @@
 import { Binary } from "lucide-react";
 import InviteModule from "./Module/inviteModule";
 import ControllerPopover from "./Module/controllerPopover";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function PlayHeader() {
   return (
@@ -15,8 +16,13 @@ export default function PlayHeader() {
         {/* invite button  */}
         <InviteModule />
       </div>
-
-      <ControllerPopover />
+      <div className="flex gap-4 items-center">
+        <ControllerPopover />
+        <Avatar className="w-7 h-7">
+          <AvatarImage src="" />
+          <AvatarFallback>M</AvatarFallback>
+        </Avatar>
+      </div>
     </div>
   );
 }
