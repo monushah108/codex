@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function PlayHeader() {
   return (
-    <div className="h-[40px] text-[#d4d4d4] col-start-1 col-end-3  shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4 ">
+    <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3  shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4 ">
       <div className="flex items-center gap-3">
         <div className="group md:flex items-center gap-1 hidden hover:bg-blue-400/50 px-2 py-4">
           <Binary className="size-5 text-blue-500 group-hover:text-blue-700" />
