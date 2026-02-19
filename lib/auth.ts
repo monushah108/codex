@@ -1,6 +1,11 @@
-import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
+import { betterAuth } from "better-auth";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [Google],
+export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL,
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
 });
