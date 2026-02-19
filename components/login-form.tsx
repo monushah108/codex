@@ -29,8 +29,6 @@ export function LoginForm({
       provider: "google",
       callbackURL: "/auth",
     });
-
-    console.log(data);
   };
 
   return (
