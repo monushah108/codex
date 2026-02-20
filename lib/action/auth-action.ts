@@ -2,16 +2,19 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth";
-import { redirect } from "next/navigation";
 
-export const socialSignIn = async (provider: "github" | "google") => {
-  const { url } = await auth.api.signInSocial({
+const signIn = async () => {
+  await auth.api.signInEmail({
     body: {
-      provider,
-      callbackURL: "/auth",
+      email: "user@email.com",
+      password: "password",
     },
   });
-  if (url) {
-    redirect(url);
-  }
 };
+
+export async function getSession() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  return session;
+}
