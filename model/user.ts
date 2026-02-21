@@ -10,10 +10,6 @@ const userSchema = new Schema({
     default:
       "https://static.vecteezy.com/system/resources/previews/002/318/271/non_2x/user-profile-icon-free-vector.jpg",
   },
-  secure_url_id: {
-    type: String,
-    required: true,
-  },
   email: {
     type: String,
     required: true,

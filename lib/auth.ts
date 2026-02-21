@@ -25,5 +25,14 @@ export const auth = betterAuth({
     },
   },
 
+  user: {
+    additionalFields: {
+      rootDirId: {
+        type: "string",
+        input: true,
+      },
+    },
+  },
+
   plugins: [nextCookies()],
 });
