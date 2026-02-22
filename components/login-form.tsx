@@ -16,9 +16,9 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-
+import { createAuthClient } from "better-auth/client";
 import { useState } from "react";
-import { emailAuth, socialAuth } from "@/lib/auth-action";
+import { emailAuth } from "@/lib/auth-action";
 
 export function LoginForm({
   className,
@@ -26,6 +26,7 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const authClient = createAuthClient();
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -40,7 +41,16 @@ export function LoginForm({
           <form>
             <FieldGroup>
               <Field>
-                <Button variant="outline" type="button">
+                <Button
+                  onClick={async () => {
+                    await authClient.signIn.social({
+                      provider: "github",
+                      callbackURL: "/playground",
+                    });
+                  }}
+                  variant="outline"
+                  type="button"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -54,7 +64,10 @@ export function LoginForm({
                 </Button>
                 <Button
                   onClick={async () => {
-                    await socialAuth("google");
+                    await authClient.signIn.social({
+                      provider: "google",
+                      callbackURL: "/playground",
+                    });
                   }}
                   variant="outline"
                   type="button"
