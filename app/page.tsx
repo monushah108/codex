@@ -5,6 +5,11 @@ import Header from "@/components/home/Header";
 import Hero from "@/components/home/hero";
 import HowWorks from "@/components/home/howWorks";
 import Testimonial from "@/components/home/testimonial";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "codex",
+};
 
 export default function Home() {
   return (

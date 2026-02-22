@@ -1,7 +1,8 @@
-import { Binary } from "lucide-react";
+import { Binary, LogOut } from "lucide-react";
 import InviteModule from "./Module/inviteModule";
 import ControllerPopover from "./Module/controllerPopover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 export default function PlayHeader() {
   return (
@@ -18,10 +19,37 @@ export default function PlayHeader() {
       </div>
       <div className="flex gap-4 items-center">
         <ControllerPopover />
-        <Avatar className="w-7 h-7">
-          <AvatarImage src="" />
-          <AvatarFallback>M</AvatarFallback>
-        </Avatar>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="outline-none">
+              <Avatar className="cursor-pointer size-6">
+                <AvatarImage src="" />
+                <AvatarFallback>M</AvatarFallback>
+              </Avatar>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-64 p-0 bg-[#1e1e1e] text-[#d4d4d4] border border-white/10 rounded-xl shadow-2xl"
+          >
+            <div className="px-4 py-3 border-b border-white/10">
+              <p className="text-sm font-medium">Monu</p>
+              <p className="text-xs text-gray-400 truncate">monu@example.com</p>
+            </div>
+            <div className="border-t border-white/10" />
+
+            {/* 🔹 Logout */}
+            <div className="py-1">
+              <button
+                // onClick={signOutUser}
+                className="flex items-center w-full px-4 py-2 text-sm hover:bg-red-500/10 text-red-400"
+              >
+                <LogOut size={16} className="mr-2" />
+                Logout
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
