@@ -1,10 +1,28 @@
+"use client";
 import { Binary, LogOut } from "lucide-react";
 import InviteModule from "./Module/inviteModule";
 import ControllerPopover from "./Module/controllerPopover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useEffect, useState } from "react";
 
 export default function PlayHeader() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/login");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    })();
+  }, []);
+
   return (
     <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3  shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4 ">
       <div className="flex items-center gap-3">

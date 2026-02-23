@@ -1,7 +1,16 @@
+import { connectDB } from "@/lib/db";
 import Session from "@/model/session";
 import User from "@/model/user";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest, res: NextResponse) {
+  connectDB();
+  const cookieStore = await cookies();
+  const sid = cookieStore.get("sid")?.value;
+  console.log(sid);
+  //  const user = await User.findOne()
+}
 
 export async function POST(req: NextRequest, res: NextResponse) {
   const { email, password } = req.body;
