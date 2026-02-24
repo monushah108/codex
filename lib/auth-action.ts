@@ -1,6 +1,7 @@
 "use server";
 import { createAuthClient } from "better-auth/client";
 import { headers } from "next/headers";
+import { auth } from "./auth";
 
 const authClient = createAuthClient();
 
