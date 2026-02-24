@@ -1,9 +1,16 @@
 import { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-  return NextRequest.redirect(new URL("/home", request.url));
+  const token = request.headers.get("authorization")?.split(" ")[1];
+  const pathName = request.nextUrl.pathname;
+
+  if (pathName == "/" && !token) {
+    return Response.redirect(new URL("/login", request.nextUrl.origin));
+  } else if (pathName == "/playground" && !token) {
+    return Response.redirect(new URL("/login", request.nextUrl.origin));
+  }
 }
 
 export const config = {
-  matcher: "/api/",
+  matcher: ["/", "/playground/:path*", "/login"],
 };

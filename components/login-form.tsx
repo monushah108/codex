@@ -26,7 +26,6 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const authClient = createAuthClient();
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
