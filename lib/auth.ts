@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { createAuthMiddleware } from "better-auth/api";
 
 const client = new MongoClient(process.env.MONGODB_URI as string);
 const db = client.db();
@@ -28,5 +29,6 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     },
   },
+
   plugins: [nextCookies()],
 });
