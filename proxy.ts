@@ -7,20 +7,19 @@ export async function proxy(request: NextRequest) {
 
   const token = cookieStore.get("better-auth.session_token")?.value;
 
-  // 🟥 If NOT logged in
   if (!token) {
     if (pathName === "/login") {
-      return NextResponse.next(); // allow login page
+      return NextResponse.next();
     }
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/login", request.nextUrl.origin));
   }
 
-  // 🟩 If logged in
   if (token && pathName === "/login") {
-    return NextResponse.redirect(new URL("/playground", request.url));
+    return NextResponse.redirect(
+      new URL("/playground", request.nextUrl.origin),
+    );
   }
 
-  // 🟦 otherwise allow request
   return NextResponse.next();
 }
 
