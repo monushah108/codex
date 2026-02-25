@@ -8,13 +8,15 @@ export async function proxy(request: NextRequest) {
   const token = cookieStore.get("better-auth.session_token")?.value;
 
   if (!token) {
-    if (pathName === "/login") {
+    if (pathName === "/auth/signup") {
       return NextResponse.next();
     }
-    return NextResponse.redirect(new URL("/login", request.nextUrl.origin));
+    return NextResponse.redirect(
+      new URL("/auth/signup", request.nextUrl.origin),
+    );
   }
 
-  if (token && pathName === "/login") {
+  if (token && pathName === "/auth/signup") {
     return NextResponse.redirect(
       new URL("/playground", request.nextUrl.origin),
     );
@@ -24,5 +26,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/playground/:path*", "/login/:path*"],
+  matcher: ["/", "/playground/:path*", "/auth/:path*"],
 };
