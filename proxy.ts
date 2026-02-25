@@ -8,6 +8,8 @@ export function proxy(request: NextRequest) {
     return Response.redirect(new URL("/login", request.nextUrl.origin));
   } else if (pathName == "/playground" && !token) {
     return Response.redirect(new URL("/login", request.nextUrl.origin));
+  } else {
+    return Response.redirect(new URL("/playground", request.nextUrl.origin));
   }
 }
 
