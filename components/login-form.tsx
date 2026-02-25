@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { createAuthClient } from "better-auth/client";
 import { useState } from "react";
-import { emailAuth } from "@/lib/auth-action";
+import { signIn } from "@/lib/auth-action";
 
 export function LoginForm({
   className,
@@ -27,6 +27,16 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const authClient = createAuthClient();
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const data = await signIn(email, password);
+      console.log(data);
+    } catch (error) {
+      console.error("Login error:", error);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -45,7 +55,7 @@ export function LoginForm({
                   onClick={async () => {
                     await authClient.signIn.social({
                       provider: "github",
-                      callbackURL: "/playground",
+                      callbackURL: "/set-password",
                     });
                   }}
                   variant="outline"
@@ -66,7 +76,7 @@ export function LoginForm({
                   onClick={async () => {
                     await authClient.signIn.social({
                       provider: "google",
-                      callbackURL: "/playground",
+                      callbackURL: "/set-password",
                     });
                   }}
                   variant="outline"
@@ -116,12 +126,7 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <Button
-                  type="submit"
-                  onClick={async () => {
-                    await emailAuth(password, email);
-                  }}
-                >
+                <Button type="submit" onClick={handleEmailAuth}>
                   Login
                 </Button>
               </Field>

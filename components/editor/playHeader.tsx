@@ -4,8 +4,9 @@ import InviteModule from "./Module/inviteModule";
 import ControllerPopover from "./Module/controllerPopover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { getSession } from "@/lib/auth-action";
 
-export default function PlayHeader() {
+export default async function PlayHeader() {
   return (
     <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3  shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4 ">
       <div className="flex items-center gap-3">

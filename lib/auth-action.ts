@@ -1,25 +1,31 @@
 "use server";
-import { createAuthClient } from "better-auth/client";
+
 import { headers } from "next/headers";
+import { auth } from "./auth";
 
-const authClient = createAuthClient();
-
-export const socialSignOut = async (provider: string) => {
-  return await authClient.signOut({
-    provider,
-    headers: headers(),
+export const signIn = async (email: string, password: string) => {
+  const result = await auth.api.signInEmail({
+    body: {
+      email,
+      password,
+      callbackURL: "/playground",
+    },
   });
-};
 
-export const emailAuth = async (email: string, password: string) => {
-  return await authClient.signUp.email({
-    email,
-    password,
-  });
+  return result;
 };
 
 export const signOut = async () => {
-  await authClient.signOut({
-    headers: headers(),
+  const result = await auth.api.signOut({
+    headers: await headers(),
   });
+
+  return result;
+};
+
+export const getSession = async () => {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+  return result;
 };
