@@ -1,16 +1,27 @@
-import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
-export function proxy(request: NextRequest) {
-  const token = request.headers.get("authorization")?.split(" ")[1];
+export async function proxy(request: NextRequest) {
+  const cookieStore = await cookies();
   const pathName = request.nextUrl.pathname;
 
-  if (pathName == "/" && !token) {
-    return Response.redirect(new URL("/login", request.nextUrl.origin));
-  } else if (pathName == "/playground" && !token) {
-    return Response.redirect(new URL("/login", request.nextUrl.origin));
-  } else {
-    return Response.redirect(new URL("/playground", request.nextUrl.origin));
+  const token = cookieStore.get("better-auth.session_token")?.value;
+
+  // 🟥 If NOT logged in
+  if (!token) {
+    if (pathName === "/login") {
+      return NextResponse.next(); // allow login page
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
   }
+
+  // 🟩 If logged in
+  if (token && pathName === "/login") {
+    return NextResponse.redirect(new URL("/playground", request.url));
+  }
+
+  // 🟦 otherwise allow request
+  return NextResponse.next();
 }
 
 export const config = {
