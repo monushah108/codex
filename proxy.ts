@@ -8,7 +8,7 @@ export async function proxy(request: NextRequest) {
   const token = cookieStore.get("better-auth.session_token")?.value;
 
   if (!token) {
-    if (pathName === "/auth/signup") {
+    if (pathName === "/auth/signin") {
       return NextResponse.next();
     }
     return NextResponse.redirect(
@@ -26,5 +26,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/playground/:path*", "/auth/:path*"],
+  matcher: ["/", "/playground/:path*", "/auth/:path*"],
 };

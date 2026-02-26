@@ -11,14 +11,24 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { createAuthClient } from "better-auth/client";
+
 import { useState } from "react";
-import { signIn } from "@/lib/auth-action";
+
+import { authClient } from "@/lib/auth-client";
+import { signInSchema } from "@/validation/form";
+import { CircleAlert } from "lucide-react";
+import { toast } from "sonner";
+
+import { Spinner } from "./ui/spinner";
+
+import { Toaster } from "./ui/sonner";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
@@ -26,20 +36,60 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const authClient = createAuthClient();
+  const [errors, setErrors] = useState<
+    Partial<Record<"name" | "email" | "password" | "confirmPassword", string[]>>
+  >({});
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const inputErrorClass = (field?: string[]) =>
+    field ? "border-destructive focus-visible:ring-destructive" : "";
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
-      const data = await signIn(email, password);
-      console.log(data);
-    } catch (error) {
-      console.error("Login error:", error);
+      setIsLoading(true);
+      const { success, data, error } = signInSchema.safeParse({
+        email,
+        password,
+      });
+
+      if (!success) {
+        const formatted = error.flatten().fieldErrors;
+        setErrors(formatted);
+        return;
+      }
+      await authClient.signIn.email(
+        {
+          email,
+          password,
+          callbackURL: "/playground",
+        },
+        {
+          onSuccess() {
+            setIsLoading(false);
+            console.log("Login successful:", data);
+            router.push("/playground");
+          },
+          onError(e) {
+            setIsLoading(false);
+            console.error("Login error:", e);
+            toast.error(e?.error.message || "An error occurred during login.");
+          },
+        },
+      );
+    } catch (e: any) {
+      console.error("Login error:", e);
+      toast.error(e.message || "An error occurred during login.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Toaster />
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>
@@ -48,7 +98,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleEmailAuth}>
             <FieldGroup>
               <Field>
                 <Button
@@ -104,7 +154,14 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className={inputErrorClass(errors.email)}
                 />
+                {errors.email && (
+                  <FieldError className="text-destructive text-xs flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <CircleAlert className="h-3 w-3" />
+                    {errors.email[0]}
+                  </FieldError>
+                )}
               </Field>
               <Field>
                 <div className="flex items-center">
@@ -123,11 +180,18 @@ export function LoginForm({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className={inputErrorClass(errors.password)}
                 />
+                {errors.password && (
+                  <FieldError className="text-destructive text-xs flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <CircleAlert className="h-3 w-3" />
+                    {errors.password[0]}
+                  </FieldError>
+                )}
               </Field>
               <Field>
-                <Button type="submit" onClick={handleEmailAuth}>
-                  Login
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? <Spinner className="h-4 w-4" /> : "Login"}
                 </Button>
               </Field>
             </FieldGroup>
