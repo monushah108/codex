@@ -105,7 +105,7 @@ export function LoginForm({
                   onClick={async () => {
                     await authClient.signIn.social({
                       provider: "github",
-                      callbackURL: "/set-password",
+                      callbackURL: "//playground",
                     });
                   }}
                   variant="outline"
@@ -126,7 +126,7 @@ export function LoginForm({
                   onClick={async () => {
                     await authClient.signIn.social({
                       provider: "google",
-                      callbackURL: "/set-password",
+                      callbackURL: "//playground",
                     });
                   }}
                   variant="outline"

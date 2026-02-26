@@ -27,6 +27,7 @@ import z from "zod";
 import { authClient } from "@/lib/auth-client";
 import { CircleAlert } from "lucide-react";
 import { Spinner } from "./ui/spinner";
+import { Toaster } from "./ui/sonner";
 
 export function SignupForm({
   className,
@@ -72,8 +73,9 @@ export function SignupForm({
           setLoading(false);
           redirect("/playground");
         },
-        onError: (error) => {
+        onError: ({ error }) => {
           toast.error(error?.message || "Failed to create account");
+          setLoading(false);
         },
       },
     );
@@ -81,6 +83,7 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Toaster richColors />
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
@@ -186,7 +189,7 @@ export function SignupForm({
                 <FieldDescription className="text-center mt-2">
                   Already have an account?{" "}
                   <Link
-                    href="/auth/sign-in"
+                    href="/auth/signin"
                     className="underline underline-offset-4"
                   >
                     Sign in

@@ -1,14 +1,15 @@
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "./lib/auth";
 
 export async function proxy(request: NextRequest) {
-  const cookieStore = await cookies();
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
   const pathName = request.nextUrl.pathname;
 
-  const token = cookieStore.get("better-auth.session_token")?.value;
-
-  if (!token) {
-    if (pathName === "/auth/signin") {
+  if (!session) {
+    if (pathName.startsWith("/auth") || pathName === "/") {
       return NextResponse.next();
     }
     return NextResponse.redirect(
@@ -16,7 +17,7 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  if (token && pathName === "/auth/signup") {
+  if (session && pathName.startsWith("/auth")) {
     return NextResponse.redirect(
       new URL("/playground", request.nextUrl.origin),
     );
