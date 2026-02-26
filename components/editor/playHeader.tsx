@@ -5,11 +5,9 @@ import ControllerPopover from "./Module/controllerPopover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useEffect, useState } from "react";
-import { createAuthClient } from "better-auth/react";
 
 export default function PlayHeader() {
   const [user, setUser] = useState(null);
-  const authClient = createAuthClient();
 
   useEffect(() => {
     fetchUser();
