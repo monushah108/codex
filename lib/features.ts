@@ -12,3 +12,10 @@ export const getOutputColor = (type: string) => {
       return "text-[#cccccc]";
   }
 };
+
+export const getRandomImg = async () => {
+  const res = await fetch("https://api.jikan.moe/v4/random/characters");
+  const data = await res.json();
+  return data.data.images.jpg.image_url;
+};
+// https://i.waifu.pics/8m-r1_O.png

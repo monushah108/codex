@@ -1,3 +1,4 @@
+"use client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,11 +16,49 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { useState } from "react";
+import { signUp } from "@/lib/auth-action";
+import { getRandomImg } from "@/lib/features";
+import { createAuthClient } from "better-auth/react";
+import { redirect } from "next/navigation";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [img, setImg] = useState("");
+  const authClient = createAuthClient();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const randomImg = await getRandomImg();
+      setImg(randomImg);
+      const result = await authClient.signUp.email(
+        {
+          email,
+          password,
+          name,
+          image: randomImg,
+          callbackURL: "/playground",
+        },
+        {
+          onSuccess: (data) => {
+            redirect("/playground");
+          },
+          onError: (error) => {
+            console.error("Signup error:", error);
+          },
+        },
+      );
+    } catch (error) {
+      console.error("Error signing up:", error);
+    }
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -30,11 +69,18 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input id="name" type="text" placeholder="John Doe" required />
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </Field>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -43,13 +89,21 @@ export function SignupForm({
                   type="email"
                   placeholder="m@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Field>
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input id="password" type="password" required />
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
