@@ -14,7 +14,7 @@ import React, { useState } from "react";
 
 export default function InviteModule() {
   const [roomName, setRoomName] = useState("codex-room");
-  const inviteLink = `https://codex.dev/join/${roomName}`;
+  const inviteLink = `${process.env.NEXT_PUBLIC_API_URL}/join/${roomName}`;
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(inviteLink);
@@ -62,11 +62,6 @@ export default function InviteModule() {
               </Button>
             </div>
           </div>
-
-          {/* Action */}
-          <Button className="mt-2 bg-blue-600 hover:bg-blue-700">
-            send invite
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

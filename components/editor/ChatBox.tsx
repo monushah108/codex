@@ -1,16 +1,8 @@
 "use client";
-import {
-  ChevronDown,
-  MessageSquare,
-  MessageSquareCode,
-  SendIcon,
-  X,
-} from "lucide-react";
+import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
-import { Button } from "../ui/button";
 import ChatBubble from "./ui/chatBubble";
-import { InputGroupTextarea } from "../ui/input-group";
 import { Textarea } from "../ui/textarea";
 import { socket } from "@/lib/socket";
 
@@ -18,7 +10,6 @@ const ChatBox = memo(function ChatBox() {
   const [msg, setMsg] = useState("");
   const [chats, setChats] = useState([]);
   const endRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
 
   const handlePostMsg = () => {
     if (!msg.trim()) return;

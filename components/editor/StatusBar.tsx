@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import {
   MessageSquare,
   Users,
@@ -6,6 +5,7 @@ import {
   CheckCircle,
   Terminal,
 } from "lucide-react";
+import Membermodule from "./Module/memberModule";
 
 function StatusBar({ handleChatToggle, handleTerminalToggle }) {
   return (
@@ -33,36 +33,7 @@ function StatusBar({ handleChatToggle, handleTerminalToggle }) {
           <span>Chat</span>
         </button>
 
-        <div className="flex items-center gap-1">
-          <Users className="size-3" />
-          <span>3 online</span>
-          <div className="flex flex-1 -space-x-2">
-            <Avatar className="w-4 h-4 border-white border rounded-full">
-              <AvatarImage
-                src={`https://api.dicebear.com/6.x/initials/svg?seed=You`}
-                alt={`Avatar You`}
-                className="rounded-full"
-              />
-              <AvatarFallback>You</AvatarFallback>
-            </Avatar>
-            <Avatar className="w-4 h-4 border-white border rounded-full">
-              <AvatarImage
-                src={`https://api.dicebear.com/6.x/initials/svg?seed=You`}
-                alt={`Avatar You`}
-                className="rounded-full"
-              />
-              <AvatarFallback>You</AvatarFallback>
-            </Avatar>
-            <Avatar className="w-4 h-4 border-white border rounded-full">
-              <AvatarImage
-                src={`https://api.dicebear.com/6.x/initials/svg?seed=You`}
-                alt={`Avatar You`}
-                className="rounded-full"
-              />
-              <AvatarFallback>You</AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
+        <Membermodule />
       </div>
     </div>
   );
