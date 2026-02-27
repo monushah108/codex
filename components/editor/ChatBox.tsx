@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import ChatBubble from "./ui/chatBubble";
 import { InputGroupTextarea } from "../ui/input-group";
 import { Textarea } from "../ui/textarea";
+import { socket } from "@/lib/socket";
 
 const ChatBox = memo(function ChatBox() {
   const [msg, setMsg] = useState("");
@@ -20,6 +21,7 @@ const ChatBox = memo(function ChatBox() {
   const boxRef = useRef<HTMLDivElement>(null);
 
   const handlePostMsg = () => {
+    if (!msg.trim()) return;
     const postSkeleton = {
       id: crypto.randomUUID(),
       time: new Date().toLocaleTimeString("en-us", {
@@ -43,6 +45,21 @@ const ChatBox = memo(function ChatBox() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats]);
+
+  useEffect(() => {
+    socket.connect();
+
+    socket.emit("msg", "hello monu is here");
+
+    socket.on("recive", (data) => {
+      console.log(data);
+    });
+
+    return () => {
+      socket.off("connect", () => console.log("connected"));
+      socket.off("disconnect", () => console.log("disconnected"));
+    };
+  }, []);
 
   return (
     <aside className="flex justify-between flex-col h-full">

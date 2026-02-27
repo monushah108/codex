@@ -15,9 +15,14 @@ app.prepare().then(() => {
   const io = new Server(httpServer);
 
   io.on("connection", (socket) => {
-    socket.on("msg", ({ id, msg }) => {
-      socket.to(id).emit("recive", "hii monu");
+    socket.on("connection", () => {
+      console.log("socket", socket);
     });
+
+    socket.on("msg", ({ id, msg }) => {
+      socket.broadcast.emit("recive", { c: "hii monu", id: socket.id });
+    });
+
     // ...
   });
 
