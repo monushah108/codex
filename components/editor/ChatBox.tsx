@@ -9,12 +9,15 @@ import {
 import { memo, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
-// import ChatBubble from "../ui/ChatBubble";
+import ChatBubble from "./ui/chatBubble";
+import { InputGroupTextarea } from "../ui/input-group";
+import { Textarea } from "../ui/textarea";
 
 const ChatBox = memo(function ChatBox() {
   const [msg, setMsg] = useState("");
   const [chats, setChats] = useState([]);
   const endRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
 
   const handlePostMsg = () => {
     const postSkeleton = {
@@ -31,6 +34,12 @@ const ChatBox = memo(function ChatBox() {
     setMsg("");
   };
 
+  const handleChange = (e) => {
+    setMsg(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = e.target.scrollHeight + "px";
+  };
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats]);
@@ -45,26 +54,26 @@ const ChatBox = memo(function ChatBox() {
       </div>
 
       <div className="flex-1 ">
-        <ScrollArea className="h-[600px] rounded-md p-3 ">
+        <ScrollArea className="h-[740px] rounded-md p-3 ">
           {!chats.length ? (
             <div className="h-[600px] flex items-center justify-center">
               <div className="flex flex-col gap-1 items-center justify-center   ">
                 <div className="rounded  animate-bounce p-2 text-white">
-                  <MessageSquareCode className="w-4 h-4" />
+                  <MessageSquareCode className="size-8" />
                 </div>
-                <p className="text-xs">no Conversation!!</p>
+                <p>No Conversationes!!</p>
               </div>
             </div>
           ) : (
             <>
-              {/* {chats.map(({ id, time, content, name }) => (
-                // <ChatBubble
-                //   name={name}
-                //   key={id}
-                //   time={time}
-                //   content={content}
-                // />
-              ))} */}
+              {chats.map(({ id, time, content, name }) => (
+                <ChatBubble
+                  name={name}
+                  key={id}
+                  time={time}
+                  content={content}
+                />
+              ))}
               <div ref={endRef} />
             </>
           )}
@@ -73,18 +82,20 @@ const ChatBox = memo(function ChatBox() {
 
       <div className="p-3 border-t border-[#2d2d30]">
         <div className="flex items-center gap-2 bg-[#2d2d30] rounded px-3 py-2 focus-within:ring-1 focus-within:ring-[#007acc] transition-all">
-          <input
+          <Textarea
+            autoFocus
             value={msg}
             onKeyDown={(e) => e.key == "Enter" && handlePostMsg()}
-            onChange={(e) => setMsg(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-sm text-[#cccccc] placeholder-[#6a6a6a]"
-            type="text"
+            onChange={handleChange}
+            className="flex-1 bg-transparent outline-none text-sm text-[#cccccc] placeholder-[#6a6a6a]  min-h-10 resize-none max-h-15 "
+            rows={4}
             placeholder="Type a message..."
           />
+
           <button
             disabled={!msg}
             onClick={handlePostMsg}
-            className="p-1 rounded hover:bg-[#007acc] disabled:opacity-30 transition-colors"
+            className="p-2 rounded hover:bg-[#007acc] disabled:opacity-30 transition-colors "
           >
             <SendIcon className="size-4" />
           </button>
