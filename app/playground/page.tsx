@@ -9,6 +9,8 @@ import { Copy, Link, UserRoundPlus } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { Toaster } from "@/components/ui/sonner";
+import gokuSvg from "@/public/super-saiyan-goku.gif";
+import heartSvg from "@/public/pixel-heart.gif";
 
 export default function Page() {
   const [roomName, setRoomName] = useState("codex-room");
@@ -36,8 +38,17 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1e1e1e] text-[#d4d4d4] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#1e1e1e] text-[#d4d4d4] flex flex-col items-center justify-center p-6">
       <Toaster />
+      <div className="flex justify-center mb-10 ">
+        <img
+          src={gokuSvg.src}
+          alt="Coding animation"
+          width={160}
+          height={160}
+          className="rounded-lg"
+        />
+      </div>
       <div className="w-full max-w-md space-y-6">
         {/* Room Name */}
         <div className="space-y-2">
@@ -108,8 +119,9 @@ export default function Page() {
           {IsLoading ? <Spinner className="w-4 h-5" /> : "Start Playground"}
         </Button>
 
-        <p className="text-sm text-[#9e9e9e]">
+        <p className="text-sm text-[#9e9e9e] flex items-center gap-2">
           Create a room. Invite your peers. Code together in real time.
+          <img src={heartSvg.src} className="size-5 " />
         </p>
       </div>
     </div>
