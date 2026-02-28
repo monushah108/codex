@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +9,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserRoundPlus, Copy, Link } from "lucide-react";
-import React, { useState } from "react";
+import { useParams } from "next/navigation";
 
 export default function InviteModule() {
-  const [roomName, setRoomName] = useState("codex-room");
-  const inviteLink = `${process.env.NEXT_PUBLIC_API_URL}/join/${roomName}`;
+  const param = useParams();
+  const inviteLink = `${process.env.NEXT_PUBLIC_API_URL}/join/${param.roomId}`;
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(inviteLink);
@@ -38,18 +37,6 @@ export default function InviteModule() {
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-2">
-          {/* Room name */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-[#9e9e9e]">room name</label>
-            <Input
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              placeholder="enter room name"
-              className="bg-[#1e1e1e] border-[#2d2d30]"
-            />
-          </div>
-
-          {/* Invite link */}
           <div className="flex flex-col gap-1">
             <label className="text-sm text-[#9e9e9e]">invite link</label>
             <div className="flex items-center gap-2">

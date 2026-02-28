@@ -19,11 +19,11 @@ import { Metadata } from "next";
 import PlayHeader from "@/components/editor/playHeader";
 
 export const metadata: Metadata = {
-  title: "playground",
+  title: "room",
 };
 export default function Page() {
   return (
-    <div className=" flex flex-col h-screen w-screen bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
+    <div className=" flex flex-col min-h-svh  bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
       {/* Header */}
       <PlayHeader />
 

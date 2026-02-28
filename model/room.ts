@@ -15,15 +15,15 @@ const roomSchema = new Schema(
     },
     type: {
       type: String,
-      enums: ["public", "private"],
+      enum: ["public", "private"],
       required: true,
     },
-    // password: {
-    //   type: String,
-    //   required: function () {
-    //     return this.type === "private";
-    //   },
-    // },
+    password: {
+      type: String,
+      required: function () {
+        return this.type === "private";
+      },
+    },
     adminId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -33,22 +33,15 @@ const roomSchema = new Schema(
   { timestamps: true },
 );
 
-// roomSchema.pre("save", async function (next) {
-//   if (!this.password) return next();
+roomSchema.pre("save", async function () {
+  if (!this.isModified("password") || !this.password) return;
 
-//   if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+});
 
-//   try {
-//     this.password = await bcrypt.hash(this.password, 12);
-//     next();
-//   } catch (error) {
-//     next(error);
-//   }
-// });
-
-// roomSchema.methods.comparePassword = async function (enteredPassword) {
-//   return await bcrypt.compare(enteredPassword, this.password);
-// };
+roomSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 const Room = models.Room || model("Room", roomSchema);
 

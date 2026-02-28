@@ -43,10 +43,7 @@ export async function POST(request: NextRequest) {
   const { success, data, error } = playSchema.safeParse(body);
 
   if (!success) {
-    return Response.json(
-      { error: z.flattenError(error).fieldErrors },
-      { status: 422 },
-    );
+    return Response.json(z.flattenError(error).fieldErrors, { status: 422 });
   }
 
   const { roomName, roomType, password } = data;
@@ -66,7 +63,7 @@ export async function POST(request: NextRequest) {
       { session },
     );
 
-    const memeber = await Member.insertOne(
+    const member = await Member.insertOne(
       {
         userId,
         roomId: room._id,

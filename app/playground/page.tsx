@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { UserRoundPlus } from "lucide-react";
+import { Binary, UserRoundPlus } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { Toaster } from "@/components/ui/sonner";
-import gokuSvg from "@/public/super-saiyan-goku.gif";
 import heartSvg from "@/public/pixel-heart.gif";
-import { redirect } from "next/navigation";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: {
+    template: "%s | playground",
+    default: "Technical Agency",
+  },
+};
 
 export default function Page() {
   const [roomName, setRoomName] = useState("codex-room");
@@ -19,55 +27,54 @@ export default function Page() {
   const [password, setPassword] = useState("12345678");
   const [IsLoading, setIsLoading] = useState(false);
   const [maxUser, setMaxUser] = useState("3");
-
-  // safer invite link
-  // const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
-
-  // const inviteLink = `${baseUrl}/join/${name}`;
-
-  // const copyToClipboard = async () => {
-  //   await navigator.clipboard.writeText(inviteLink);
-  // };
+  const route = useRouter();
 
   const handleStart = async () => {
-    setIsLoading(true);
-    const response = await fetch("/api/join", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        roomName,
-        roomType,
-        password: roomType === "private" ? password : undefined,
-        maxUser,
-      }),
-    });
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          roomName,
+          roomType,
+          password: roomType === "private" ? password : undefined,
+          maxUser,
+        }),
+      });
+      setIsLoading(false);
 
-    setIsLoading(false);
+      const data = await response.json();
 
-    // if(response.ok){
-    //   route.push(`/playground/${response.id}`)
-    // }
+      if (response.status == 201) {
+        toast.success("room has been created !!");
+        console.log(data);
+        route.push(`/playground/${data.room.id}`);
+      }
 
-    const data = await response.json();
-    console.log(response, data);
-
-    // redirect or start socket here
+      if (response.status == 422) {
+        toast.error(Object.values(data));
+      }
+    } catch (err: any) {
+      toast.error("it's an server erorr");
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#1e1e1e] text-[#d4d4d4] flex flex-col items-center justify-center p-6">
       <Toaster />
-      <div className="flex justify-center mb-10 ">
-        <img
-          src={gokuSvg.src}
-          alt="Coding animation"
-          width={160}
-          height={160}
-          className="rounded-lg"
-        />
+
+      <div className=" mb-20 ">
+        <h2 className="flex items-center justify-center gap-1 mb-2 text-lg font-semibold">
+          <Binary className="size-6" /> codex.
+        </h2>
+        <p className="text-sm text-[#9e9e9e] flex  gap-1">
+          Create a room. Invite your peers. Code together in real time.
+          <img src={heartSvg.src} className="size-5 " />
+        </p>
       </div>
       <div className="w-full max-w-md space-y-6">
         {/* Room Name */}
@@ -144,11 +151,6 @@ export default function Page() {
             </span>
           )}
         </Button>
-
-        <p className="text-sm text-[#9e9e9e] flex  gap-1">
-          Create a room. Invite your peers. Code together in real time.
-          <img src={heartSvg.src} className="size-5 " />
-        </p>
       </div>
     </div>
   );
