@@ -8,8 +8,8 @@ export default function HowWorks() {
         <div className="text-center mb-16">
           <h2 className="text-gray-900 dark:text-white mb-4">How It Works</h2>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Getting started with PairCode is simple. Follow these three easy
-            steps to begin your collaborative coding journey.
+            Getting started with codex is simple. Follow these three easy steps
+            to begin your collaborative coding journey.
           </p>
         </div>
 

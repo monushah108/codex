@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Copy, Link, UserRoundPlus } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { Toaster } from "@/components/ui/sonner";
@@ -24,9 +24,9 @@ export default function Page() {
 
   const inviteLink = `${baseUrl}/join/${roomName}`;
 
-  const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(inviteLink);
-  };
+  // const copyToClipboard = async () => {
+  //   await navigator.clipboard.writeText(inviteLink);
+  // };
 
   const handleStart = () => {
     if (roomType === "private" && !password) {
@@ -119,7 +119,7 @@ export default function Page() {
           {IsLoading ? <Spinner className="w-4 h-5" /> : "Start Playground"}
         </Button>
 
-        <p className="text-sm text-[#9e9e9e] flex items-center gap-2">
+        <p className="text-sm text-[#9e9e9e] flex  gap-1">
           Create a room. Invite your peers. Code together in real time.
           <img src={heartSvg.src} className="size-5 " />
         </p>

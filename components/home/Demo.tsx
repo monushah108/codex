@@ -7,7 +7,7 @@ export default function Demo() {
       <div className="flex items-center justify-center flex-col gap-8 text-center">
         <div className="space-y-3 ">
           <h2 className="text-gray-900 dark:text-white mb-4">
-            See PairCode in Action
+            See codex in Action
           </h2>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Watch how easy it is to start a coding session and collaborate in

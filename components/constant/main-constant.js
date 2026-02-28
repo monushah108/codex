@@ -90,7 +90,7 @@ export const Testimonials = [
     avatar:
       "https://images.unsplash.com/photo-1573495628363-7114730a4a11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHNvZnR3YXJlJTIwZW5naW5lZXJ8ZW58MXx8fHwxNzYwOTQwMTA3fDA&ixlib=rb-4.1.0&q=80&w=1080",
     quote:
-      "PairCode has transformed how our team collaborates. The real-time coding is seamless, and the AI assistant helps us catch issues early. Highly recommend!",
+      "codex has transformed how our team collaborates. The real-time coding is seamless, and the AI assistant helps us catch issues early. Highly recommend!",
     rating: 5,
     gradient: "from-blue-500 to-cyan-500",
   },

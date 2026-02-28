@@ -10,7 +10,7 @@ export default function Testimonial() {
       <div className="max-w-7xl mx-auto flex items-center flex-col gap-8 ">
         <h2 className="font-medium">Trusted by Developers Worldwid</h2>
         <p className="text-sm">
-          see waht developers are saying about their PairCode experience{" "}
+          see waht developers are saying about their codex experience{" "}
         </p>
         <div className="grid gap-8 md:grid-cols-3 mt-12">
           {Testimonials.map((testimonial, index) => (
