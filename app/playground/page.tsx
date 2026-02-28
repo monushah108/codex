@@ -13,26 +13,35 @@ import gokuSvg from "@/public/super-saiyan-goku.gif";
 import heartSvg from "@/public/pixel-heart.gif";
 
 export default function Page() {
-  const [roomName, setRoomName] = useState("codex-room");
+  const [name, setName] = useState("codex-room");
   const [roomType, setRoomType] = useState<"public" | "private">("public");
   const [password, setPassword] = useState("");
   const [IsLoading, setIsLoading] = useState(false);
-  const [PeerCount, setPeerCount] = useState("");
+  const [maxUser, setMaxUser] = useState("");
 
   // safer invite link
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+  // const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
 
-  const inviteLink = `${baseUrl}/join/${roomName}`;
+  // const inviteLink = `${baseUrl}/join/${name}`;
 
   // const copyToClipboard = async () => {
   //   await navigator.clipboard.writeText(inviteLink);
   // };
 
-  const handleStart = () => {
-    if (roomType === "private" && !password) {
-      alert("Please enter a password for private room");
-      return;
-    }
+  const handleStart = async () => {
+    const response = await fetch("api/join", {
+      method: "POST",
+      body: {
+        name,
+        roomType,
+        password,
+        maxUser,
+      },
+    });
+
+    const data = await response.json();
+
+    console.log(data);
 
     // redirect or start socket here
   };
@@ -54,8 +63,8 @@ export default function Page() {
         <div className="space-y-2">
           <Label>Room Name</Label>
           <Input
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="enter room name"
             className="bg-[#1e1e1e] border-[#2d2d30]"
           />
@@ -106,8 +115,8 @@ export default function Page() {
         <Input
           type="number"
           placeholder="Max participants (e.g. 4)"
-          value={PeerCount}
-          onChange={(e) => setPeerCount(e.target.value)}
+          value={maxUser}
+          onChange={(e) => setMaxUser(e.target.value)}
         />
 
         {/* Start Button */}
