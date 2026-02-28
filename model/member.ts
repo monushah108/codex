@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import { model, Schema } from "mongoose";
 
 const memberSchema = new Schema({
   userId: {
@@ -8,8 +8,8 @@ const memberSchema = new Schema({
   },
   role: {
     type: String,
-    enums: ["admin", "manager", "viwer", "employee"],
-    default: "employee",
+    enums: ["admin", "manager", "user"],
+    default: "user",
   },
   roomId: {
     type: Schema.Types.ObjectId,
@@ -17,3 +17,7 @@ const memberSchema = new Schema({
     ref: "Room",
   },
 });
+
+const Member = model("Member", memberSchema);
+
+export default Member;

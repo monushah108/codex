@@ -1,78 +1,117 @@
-import { lazy, Suspense } from "react";
-import EditorSkeleton from "@/components/editor/Skeleton/codeWindowSkeleton";
-import FileExploreSkeleton from "@/components/editor/Skeleton/FileExploreSkeleton";
-import TerminalSkeleton from "@/components/editor/Skeleton/TerminalSkeleton";
+"use client";
 
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Copy, Link, UserRoundPlus } from "lucide-react";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
+import { Toaster } from "@/components/ui/sonner";
 
-import StatusBar from "@/components/editor/StatusBar";
-
-const CodeWindow = lazy(() => import("@/components/editor/CodeWindow"));
-const FileExplore = lazy(() => import("@/components/editor/FileExplore"));
-const Terminal = lazy(() => import("@/components/editor/Terminal"));
-const ChatBox = lazy(() => import("@/components/editor/ChatBox"));
-import { Metadata } from "next";
-import PlayHeader from "@/components/editor/playHeader";
-
-export const metadata: Metadata = {
-  title: "playground",
-};
 export default function Page() {
+  const [roomName, setRoomName] = useState("codex-room");
+  const [roomType, setRoomType] = useState<"public" | "private">("public");
+  const [password, setPassword] = useState("");
+  const [IsLoading, setIsLoading] = useState(false);
+  const [PeerCount, setPeerCount] = useState("");
+
+  // safer invite link
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+
+  const inviteLink = `${baseUrl}/join/${roomName}`;
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+  };
+
+  const handleStart = () => {
+    if (roomType === "private" && !password) {
+      alert("Please enter a password for private room");
+      return;
+    }
+
+    // redirect or start socket here
+  };
+
   return (
-    <div className=" flex flex-col h-screen w-screen bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
-      {/* Header */}
-      <PlayHeader />
+    <div className="min-h-screen bg-[#1e1e1e] text-[#d4d4d4] flex items-center justify-center p-6">
+      <Toaster />
+      <div className="w-full max-w-md space-y-6">
+        {/* Room Name */}
+        <div className="space-y-2">
+          <Label>Room Name</Label>
+          <Input
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            placeholder="enter room name"
+            className="bg-[#1e1e1e] border-[#2d2d30]"
+          />
+        </div>
 
-      <div className="flex-1 w-full">
-        <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
-          {/* File Explorer */}
-          <ResizablePanel defaultSize={20} collapsedSize={0} collapsible>
-            <Suspense fallback={<FileExploreSkeleton />}>
-              <FileExplore />
-            </Suspense>
-          </ResizablePanel>
+        {/* Room Type */}
+        <div className="space-y-3">
+          <Label>Room Type</Label>
 
-          <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
+          <RadioGroup
+            value={roomType}
+            onValueChange={(value) =>
+              setRoomType(value as "public" | "private")
+            }
+            className="flex gap-6"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="public"
+                id="public"
+                className="text-sky-500 
+                 data-[state=checked]:bg-sky-500 
+                 data-[state=checked]:text-white"
+              />
+              <Label htmlFor="public">Public</Label>
+            </div>
 
-          {/* Center Column */}
-          <ResizablePanel defaultSize={60}>
-            <ResizablePanelGroup orientation="vertical" className="h-full">
-              {/* Code Editor */}
-              <ResizablePanel defaultSize={60}>
-                <Suspense fallback={<EditorSkeleton />}>
-                  <CodeWindow />
-                </Suspense>
-              </ResizablePanel>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="private"
+                id="private"
+                className="text-sky-500 
+                 data-[state=checked]:bg-sky-500 
+                 data-[state=checked]:text-white"
+              />
+              <Label htmlFor="private">Private</Label>
+            </div>
+          </RadioGroup>
 
-              <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
+          {roomType === "private" && (
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+        </div>
 
-              {/* Terminal */}
-              <ResizablePanel defaultSize={40} collapsedSize={0}>
-                <Suspense fallback={<TerminalSkeleton />}>
-                  <Terminal />
-                </Suspense>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
+        <Input
+          type="number"
+          placeholder="Max participants (e.g. 4)"
+          value={PeerCount}
+          onChange={(e) => setPeerCount(e.target.value)}
+        />
 
-          <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
+        {/* Start Button */}
+        <Button
+          onClick={handleStart}
+          className="w-full gap-2 bg-sky-500 hover:bg-sky-600"
+        >
+          <UserRoundPlus className="size-4" />
+          {IsLoading ? <Spinner className="w-4 h-5" /> : "Start Playground"}
+        </Button>
 
-          {/* Chat */}
-          <ResizablePanel defaultSize={20} collapsedSize={0} collapsible>
-            <Suspense
-              fallback={<div className="p-4 text-sm">Loading chat…</div>}
-            >
-              <ChatBox />
-            </Suspense>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <p className="text-sm text-[#9e9e9e]">
+          Create a room. Invite your peers. Code together in real time.
+        </p>
       </div>
-
-      <StatusBar />
     </div>
   );
 }

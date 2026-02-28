@@ -95,7 +95,7 @@ const ChatBox = memo(function ChatBox() {
             value={msg}
             onKeyDown={(e) => e.key == "Enter" && handlePostMsg()}
             onChange={handleChange}
-            className="flex-1 bg-transparent outline-none text-sm text-[#cccccc] placeholder-[#6a6a6a]  min-h-10 resize-none max-h-15 "
+            className="flex-1 bg-transparent outline-none border-none text-sm text-[#cccccc] placeholder-[#6a6a6a]  min-h-8 resize-none max-h-15 "
             rows={4}
             placeholder="Type a message..."
           />
