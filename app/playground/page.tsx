@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Toaster } from "@/components/ui/sonner";
 import gokuSvg from "@/public/super-saiyan-goku.gif";
 import heartSvg from "@/public/pixel-heart.gif";
+import { redirect } from "next/navigation";
 
 export default function Page() {
   const [roomName, setRoomName] = useState("codex-room");
@@ -29,6 +30,7 @@ export default function Page() {
   // };
 
   const handleStart = async () => {
+    setIsLoading(true);
     const response = await fetch("/api/join", {
       method: "POST",
       headers: {
@@ -43,9 +45,14 @@ export default function Page() {
       }),
     });
 
-    // const data = await response.json();
+    setIsLoading(false);
 
-    console.log(response);
+    // if(response.ok){
+    //   route.push(`/playground/${response.id}`)
+    // }
+
+    const data = await response.json();
+    console.log(response, data);
 
     // redirect or start socket here
   };
@@ -125,11 +132,17 @@ export default function Page() {
 
         {/* Start Button */}
         <Button
+          disabled={IsLoading}
           onClick={handleStart}
           className="w-full gap-2 bg-sky-500 hover:bg-sky-600"
         >
-          <UserRoundPlus className="size-4" />
-          {IsLoading ? <Spinner className="w-4 h-5" /> : "Start Playground"}
+          {IsLoading ? (
+            <Spinner className="w-4 h-5" />
+          ) : (
+            <span className="flex gap-2 text-sm">
+              <UserRoundPlus className="size-4" /> Start Playground
+            </span>
+          )}
         </Button>
 
         <p className="text-sm text-[#9e9e9e] flex  gap-1">
