@@ -13,11 +13,11 @@ import gokuSvg from "@/public/super-saiyan-goku.gif";
 import heartSvg from "@/public/pixel-heart.gif";
 
 export default function Page() {
-  const [name, setName] = useState("codex-room");
+  const [roomName, setRoomName] = useState("codex-room");
   const [roomType, setRoomType] = useState<"public" | "private">("public");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("12345678");
   const [IsLoading, setIsLoading] = useState(false);
-  const [maxUser, setMaxUser] = useState("");
+  const [maxUser, setMaxUser] = useState("3");
 
   // safer invite link
   // const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
@@ -29,19 +29,23 @@ export default function Page() {
   // };
 
   const handleStart = async () => {
-    const response = await fetch("api/join", {
+    const response = await fetch("/api/join", {
       method: "POST",
-      body: {
-        name,
-        roomType,
-        password,
-        maxUser,
+      headers: {
+        "Content-Type": "application/json",
       },
+      credentials: "include",
+      body: JSON.stringify({
+        roomName,
+        roomType,
+        password: roomType === "private" ? password : undefined,
+        maxUser,
+      }),
     });
 
-    const data = await response.json();
+    // const data = await response.json();
 
-    console.log(data);
+    console.log(response);
 
     // redirect or start socket here
   };
@@ -63,8 +67,8 @@ export default function Page() {
         <div className="space-y-2">
           <Label>Room Name</Label>
           <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
             placeholder="enter room name"
             className="bg-[#1e1e1e] border-[#2d2d30]"
           />

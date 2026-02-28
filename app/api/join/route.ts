@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/db";
+import { getUser } from "@/lib/getUser";
 import Member from "@/model/member";
 import Room from "@/model/room";
 import { playSchema } from "@/validation/playground";
@@ -35,12 +36,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { success, data, error } = playSchema.safeParse({
-    name,
-    maxUser,
-    roomType,
-    password,
-  });
+  const body = await request.json();
+  const userId = await getUser(request);
+  const { success, data, error } = playSchema.safeParse(body);
 
   if (!success) {
     return Response.json(
@@ -49,12 +47,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { name, roomType, maxUser, password } = data;
+  const { roomName, roomType, maxUser, password } = data;
 
   try {
-    // const memeber = await Member.create({
-
-    // })
+    const memeber = await Member.create({});
 
     return Response.json({ request });
   } catch {
