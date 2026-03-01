@@ -12,14 +12,6 @@ import { Toaster } from "@/components/ui/sonner";
 import heartSvg from "@/public/pixel-heart.gif";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: {
-    template: "%s | playground",
-    default: "Technical Agency",
-  },
-};
 
 export default function Page() {
   const [roomName, setRoomName] = useState("codex-room");

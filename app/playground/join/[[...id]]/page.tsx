@@ -4,18 +4,46 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast, Toaster } from "sonner";
 
 export default function Page() {
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("12345678");
   const [isLoading, setIsLoading] = useState(false);
+  const param = useParams();
+  const route = useRouter();
+
+  useEffect(() => {}, []);
 
   const handleStart = async () => {
     if (!password) return;
 
     try {
       setIsLoading(true);
-      await new Promise((res) => setTimeout(res, 2000));
+
+      const res = await fetch(`/api/join/${param.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (res.status == 404) {
+        toast.error(data.error);
+      } else if (res.status == 401) {
+        toast.error(data.error);
+      }
+
+      if (res.status == 201) {
+        route.push(`/playground/${param.id}`);
+      }
+    } catch {
+      toast.error("it's an server error");
     } finally {
       setIsLoading(false);
     }
@@ -25,6 +53,7 @@ export default function Page() {
     <div className="flex min-h-svh bg-[#1e1e1e] text-[#d4d4d4] items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6 bg-[#252526] p-6 rounded-xl border border-[#2d2d30] shadow-lg">
         {/* Room Info */}
+        <Toaster />
         <div className="flex items-center gap-4 ">
           <Avatar className="h-12 w-12 ">
             <AvatarImage src="" />

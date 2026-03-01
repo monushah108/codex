@@ -7,35 +7,6 @@ import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 import z from "zod";
 
-export async function GET(request: NextRequest) {
-  await connectDB();
-  const { userId, roomId } = await request.json();
-
-  try {
-    const room = await Room.findById(roomId);
-
-    if (!room) {
-      return Response.json(
-        { error: "this server has been expired" },
-        { status: 404 },
-      );
-    }
-
-    const memberExists = await Member.findOne({ userId });
-
-    if (!memberExists) {
-      await Member.insertOne({
-        userId,
-        roomId,
-      });
-
-      Response.redirect(new URL(roomId, request.nextUrl.origin));
-    }
-  } catch (err) {
-    return Response.json({ error: "server Error" }, { status: 500 });
-  }
-}
-
 export async function POST(request: NextRequest) {
   await connectDB();
   const body = await request.json();
