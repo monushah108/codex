@@ -6,12 +6,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useSession, authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function PlayHeader() {
+export default function PlayHeader({ roomId }) {
   const { data: session } = useSession();
   const router = useRouter();
 
   const user = session?.user;
+
+  useEffect(() => {
+    IsvalidUser();
+  }, []);
+
+  const IsvalidUser = async () => {
+    try {
+      const res = await fetch(`/api/playground/${roomId}`, {
+        credentials: "include",
+      });
+
+      if (res.status == 403) {
+        router.push(`/playground/join/${roomId}`);
+      }
+    } catch {
+      router.push("/");
+    }
+  };
 
   return (
     <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3 shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4">

@@ -1,6 +1,6 @@
 import { getUser } from "@/lib/getUser";
 import Member from "@/model/member";
-import Room from "@/model/room";
+
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest, { params }) {
@@ -10,18 +10,15 @@ export async function GET(request: NextRequest, { params }) {
   const isMember = await Member.findOne({
     userId,
     roomId,
-    role: { $ne: ["admin", "manager", "user"] },
+    role: { $in: ["admin", "manager", "user"] },
   });
 
   if (!isMember) {
     return Response.json(
-      { redirectTo: `/playground/join/${roomId}` },
-      { status: 401 },
+      { redirectTo: "aunthorized !! , not a memeber of this room" },
+      { status: 403 },
     );
   }
 
-  return Response.json(
-    { redirectTo: `/playground/${roomId}` },
-    { status: 201 },
-  );
+  return Response.json({ redirectTo: "access granted" }, { status: 200 });
 }

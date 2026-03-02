@@ -3,51 +3,68 @@ import { connectDB } from "@/lib/db";
 import { getUser } from "@/lib/getUser";
 import Member from "@/model/member";
 import Room from "@/model/room";
+import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest, { params }) {
   await connectDB();
 
-  const { id } = params;
+  const { id } = await params;
   const userId = await getUser(request);
   const users = db.collection("user");
 
-  console.log(users);
+  const user = await users.findOne({
+    _id: new mongoose.Types.ObjectId(userId),
+  });
 
   try {
-    const member = await Member.findOne({ userId });
+    const isValidId = mongoose.Types.ObjectId.isValid(id);
+
+    if (!isValidId) {
+      return Response.json({ error: "not a valid id" }, { status: 400 });
+    }
+
+    const member = await Member.findOne({ userId, roomId: id });
 
     // ✅ Admin → go directly to playground
     if (member?.role === "admin") {
-      return Response.json({
-        redirectTo: `/playground/${id}`,
-        access: "granted",
-      });
+      return Response.json(
+        {
+          access: "granted",
+        },
+        { status: 200 },
+      );
     }
 
     const room = await Room.findById(id);
 
     if (!room) {
       return Response.json(
-        { error: "Room expired or not found" },
+        { error: "this room no longer exists " },
         { status: 404 },
       );
     }
 
     // ✅ Private room → ask password
     if (room.type === "private") {
-      return Response.json({
-        redirectTo: `/playground/join/${id}`,
-        access: "password_required",
-        createdAt: room.createdAt,
-      });
+      return Response.json(
+        {
+          admin_name: user?.name,
+          admin_img: user?.image,
+          access: "password_required",
+          createdAt: room.createdAt,
+        },
+        { status: 403 },
+      );
     }
 
     // ✅ Public room → allow entry
-    return Response.json({
-      redirectTo: `/playground/${id}`,
-      access: "granted",
-    });
+    return Response.json(
+      {
+        access: "granted",
+      },
+      { status: 200 },
+    );
   } catch (err) {
     console.error(err);
     return Response.json({ error: "Server error" }, { status: 500 });
@@ -74,6 +91,13 @@ export async function POST(request: NextRequest, { params }) {
     if (!isPasswordValid) {
       return Response.json({ error: "Invalid Credentials" }, { status: 401 });
     }
+
+    const isMember = await Member.findOne({ userId, roomId });
+    if (isMember) {
+      return Response.json({ msg: "you have alredy joined" }, { status: 409 });
+    }
+
+    console.log(isMember);
 
     await Member.insertOne({
       userId,

@@ -19,3 +19,8 @@ export const getRandomImg = async () => {
   return data.data.images.jpg.image_url;
 };
 // https://i.waifu.pics/8m-r1_O.png
+
+export const formatte = (time: string) => {
+  const date = new Date(time);
+  return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+};

@@ -21,11 +21,12 @@ import PlayHeader from "@/components/editor/playHeader";
 export const metadata: Metadata = {
   title: "room",
 };
-export default function Page() {
+export default async function Page({ params }) {
+  const { roomId } = await params;
   return (
     <div className=" flex flex-col min-h-svh  bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
       {/* Header */}
-      <PlayHeader />
+      <PlayHeader roomId={roomId} />
 
       <div className="flex-1 w-full">
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
