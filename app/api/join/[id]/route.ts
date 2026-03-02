@@ -24,10 +24,10 @@ export async function GET(request: NextRequest, { params }) {
       return Response.json({ error: "not a valid id" }, { status: 400 });
     }
 
-    const member = await Member.findOne({ userId, roomId: id });
+    const IsMember = await Member.findOne({ userId, roomId: id });
 
     // ✅ Admin → go directly to playground
-    if (member?.role === "admin") {
+    if (IsMember) {
       return Response.json(
         {
           access: "granted",
