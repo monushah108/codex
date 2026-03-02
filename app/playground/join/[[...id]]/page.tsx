@@ -11,18 +11,78 @@ import { toast, Toaster } from "sonner";
 export default function Page() {
   const [password, setPassword] = useState("12345678");
   const [isLoading, setIsLoading] = useState(false);
-  const param = useParams();
-  const route = useRouter();
+  const params = useParams();
+  const router = useRouter();
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    fetchInvite();
+  }, []);
 
+  // const handleStart = async () => {
+  //   if (!password) return;
+
+  //   try {
+  //     setIsLoading(true);
+
+  //     const res = await fetch(`/api/join/${param.id}`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ password }),
+  //       credentials: "include",
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (res.status == 404) {
+  //       toast.error(data.error);
+  //     } else if (res.status == 401) {
+  //       toast.error(data.error);
+  //     }
+
+  //     if (res.status == 201) {
+  //       route.push(`/playground/${param.id}`);
+  //     }
+  //   } catch {
+  //     toast.error("it's an server error");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // 🔹 Fetch invite metadata
+
+  const fetchInvite = async () => {
+    try {
+      const res = await fetch(`/api/join/${params.id}`, {
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Failed to fetch room");
+        return;
+      }
+
+      // ✅ Single source of truth
+      if (data.redirectTo && data.access === "granted") {
+        router.push(data.redirectTo);
+      }
+    } catch {
+      toast.error("Server error");
+    }
+  };
+
+  // 🔹 Submit password
   const handleStart = async () => {
     if (!password) return;
 
     try {
       setIsLoading(true);
 
-      const res = await fetch(`/api/join/${param.id}`, {
+      const res = await fetch(`/api/join/${params.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -33,17 +93,17 @@ export default function Page() {
 
       const data = await res.json();
 
-      if (res.status == 404) {
-        toast.error(data.error);
-      } else if (res.status == 401) {
-        toast.error(data.error);
+      if (!res.ok) {
+        toast.error(data.error || "Invalid password");
+        return;
       }
 
-      if (res.status == 201) {
-        route.push(`/playground/${param.id}`);
+      // ✅ Always trust backend redirect
+      if (data.redirectTo) {
+        router.push(data.redirectTo);
       }
     } catch {
-      toast.error("it's an server error");
+      toast.error("Server error");
     } finally {
       setIsLoading(false);
     }

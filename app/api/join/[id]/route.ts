@@ -1,65 +1,58 @@
+import { db } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { getUser } from "@/lib/getUser";
 import Member from "@/model/member";
 import Room from "@/model/room";
-import { playSchema } from "@/validation/playground";
-import mongoose from "mongoose";
 import { NextRequest } from "next/server";
-import z from "zod";
 
-export async function GET(request: NextRequest, { id }) {
+export async function GET(request: NextRequest, { params }) {
   await connectDB();
-  const roomId = await id;
+
+  const { id } = params;
   const userId = await getUser(request);
+  const users = db.collection("user");
+
+  console.log(users);
 
   try {
-    const room = await Room.findById(roomId);
+    const member = await Member.findOne({ userId });
+
+    // ✅ Admin → go directly to playground
+    if (member?.role === "admin") {
+      return Response.json({
+        redirectTo: `/playground/${id}`,
+        access: "granted",
+      });
+    }
+
+    const room = await Room.findById(id);
 
     if (!room) {
       return Response.json(
-        { error: "this server has been expired" },
+        { error: "Room expired or not found" },
         { status: 404 },
       );
     }
 
-    const memberExists = await Member.findOne({ userId });
-
-    if (!memberExists) {
-      await Member.insertOne({
-        userId,
-        roomId,
+    // ✅ Private room → ask password
+    if (room.type === "private") {
+      return Response.json({
+        redirectTo: `/playground/join/${id}`,
+        access: "password_required",
+        createdAt: room.createdAt,
       });
-
-      Response.redirect(new URL(roomId, request.nextUrl.origin));
     }
+
+    // ✅ Public room → allow entry
+    return Response.json({
+      redirectTo: `/playground/${id}`,
+      access: "granted",
+    });
   } catch (err) {
-    return Response.json({ error: "server Error" }, { status: 500 });
+    console.error(err);
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
-
-// export async function POST(request: NextRequest, { id }) {
-//   await connectDB();
-//   const roomId = await id;
-//   const body = await request.json();
-//   const userId = await getUser(request);
-
-//   const { password } = body;
-
-//   try {
-//     const isPasswordValid = await Room.comparePassword(password);
-//     if (!isPasswordValid) {
-//       return Response.json({ error: "Invalid Credentials" }, { status: 404 });
-//     }
-
-//     await Member.insertOne({
-//       userId,
-//       roomId,
-//     });
-//   } catch (err) {
-//     console.log(err);
-//     return Response.json({ error: "server Error" }, { status: 500 });
-//   }
-// }
 
 export async function POST(request: NextRequest, { params }) {
   await connectDB();

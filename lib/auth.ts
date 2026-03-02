@@ -5,7 +5,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { createAuthMiddleware } from "better-auth/api";
 
 const client = new MongoClient(process.env.MONGODB_URI as string);
-const db = client.db();
+export const db = client.db();
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, {
