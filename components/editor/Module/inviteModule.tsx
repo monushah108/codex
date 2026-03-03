@@ -22,7 +22,7 @@ export default function InviteModule() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="none" className="play-btns">
+        <Button variant="none" className="hover:bg-[#3a3a3d] text-[#d4d4d4]">
           <UserRoundPlus />
           <span>invite</span>
         </Button>

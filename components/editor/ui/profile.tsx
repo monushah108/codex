@@ -1,16 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { authClient, useSession } from "@/lib/auth-client";
 import { LogOut, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,7 +18,7 @@ export default function Profile() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Avatar className="cursor-pointer size-6">
+        <Avatar className="cursor-pointer size-5">
           <AvatarImage src={user?.image || ""} />
           <AvatarFallback>{user?.name?.charAt(0) || "M"}</AvatarFallback>
         </Avatar>

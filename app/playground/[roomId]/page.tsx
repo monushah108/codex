@@ -13,8 +13,8 @@ import PlayHeader from "@/components/editor/playHeader";
 import { useParams, useRouter } from "next/navigation";
 
 export default function Page() {
-  const [showExplorer, setShowExplorer] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const [showExplorer, setShowExplorer] = useState(true);
+  const [showChat, setShowChat] = useState(true);
   const [showTerminal, setShowTerminal] = useState(false);
   const { roomId } = useParams();
   const router = useRouter();
