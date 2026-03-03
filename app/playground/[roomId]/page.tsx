@@ -1,79 +1,67 @@
-import { lazy, Suspense } from "react";
-import EditorSkeleton from "@/components/editor/Skeleton/codeWindowSkeleton";
-import FileExploreSkeleton from "@/components/editor/Skeleton/FileExploreSkeleton";
-import TerminalSkeleton from "@/components/editor/Skeleton/TerminalSkeleton";
-
+"use client";
+import { lazy, useEffect, useState } from "react";
 import {
   ResizableHandle,
-  ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
 import StatusBar from "@/components/editor/StatusBar";
-
 const CodeWindow = lazy(() => import("@/components/editor/CodeWindow"));
 const FileExplore = lazy(() => import("@/components/editor/FileExplore"));
-const Terminal = lazy(() => import("@/components/editor/Terminal"));
 const ChatBox = lazy(() => import("@/components/editor/ChatBox"));
-import { Metadata } from "next";
 import PlayHeader from "@/components/editor/playHeader";
+import { useParams, useRouter } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "room",
-};
-export default async function Page({ params }) {
-  const { roomId } = await params;
+export default function Page() {
+  const [showExplorer, setShowExplorer] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(false);
+  const { roomId } = useParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    IsvalidUser();
+  }, []);
+
+  const IsvalidUser = async () => {
+    try {
+      const res = await fetch(`/api/playground/${roomId}`, {
+        credentials: "include",
+      });
+
+      if (res.status == 403) {
+        router.push(`/playground/join/${roomId}`);
+      } else if (res.status == 400) {
+      }
+    } catch {
+      router.push("/");
+    }
+  };
+
   return (
     <div className=" flex flex-col min-h-svh  bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
       {/* Header */}
-      <PlayHeader roomId={roomId} />
+      <PlayHeader />
 
       <div className="flex-1 w-full">
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
           {/* File Explorer */}
-          <ResizablePanel defaultSize={20} collapsedSize={0} collapsible>
-            <Suspense fallback={<FileExploreSkeleton />}>
-              <FileExplore />
-            </Suspense>
-          </ResizablePanel>
+
+          <FileExplore />
 
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
           {/* Center Column */}
-          <ResizablePanel defaultSize={60}>
-            <ResizablePanelGroup orientation="vertical" className="h-full">
-              {/* Code Editor */}
-              <ResizablePanel defaultSize={60}>
-                <Suspense fallback={<EditorSkeleton />}>
-                  <CodeWindow />
-                </Suspense>
-              </ResizablePanel>
-
-              <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
-
-              {/* Terminal */}
-              <ResizablePanel defaultSize={40} collapsedSize={0}>
-                <Suspense fallback={<TerminalSkeleton />}>
-                  <Terminal />
-                </Suspense>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
+          <CodeWindow />
 
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
           {/* Chat */}
-          <ResizablePanel defaultSize={20} collapsedSize={0} collapsible>
-            <Suspense
-              fallback={<div className="p-4 text-sm">Loading chat…</div>}
-            >
-              <ChatBox />
-            </Suspense>
-          </ResizablePanel>
+          {showChat && <ChatBox />}
         </ResizablePanelGroup>
       </div>
 
-      <StatusBar />
+      <StatusBar setShowChat={setShowChat} setShowTerminal={setShowTerminal} />
     </div>
   );
 }

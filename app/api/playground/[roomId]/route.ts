@@ -1,11 +1,18 @@
 import { getUser } from "@/lib/getUser";
 import Member from "@/model/member";
+import mongoose from "mongoose";
 
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest, { params }) {
   const { roomId } = await params;
   const userId = await getUser(request);
+
+  const isValidId = mongoose.Types.ObjectId.isValid(roomId);
+
+  if (!isValidId) {
+    return Response.json({ error: "not a valid id" }, { status: 400 });
+  }
 
   const isMember = await Member.findOne({
     userId,

@@ -1,29 +1,34 @@
 "use client";
-import { Collapsible, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { ChevronRight, File, Folder, X } from "lucide-react";
-import { memo, useEffect, useState } from "react";
-import { CollapsibleContent } from "../ui/collapsible";
+import { memo, Suspense } from "react";
+
 import { ScrollArea } from "../ui/scroll-area";
+import { ResizablePanel } from "../ui/resizable";
+import FileExploreSkeleton from "./Skeleton/FileExploreSkeleton";
 
 function FileExplore() {
   const handleCreateFile = () => {};
   const handleCreateFolder = () => {};
 
   return (
-    <div className="flex-1 h-full border-r border-[#2d2d30] bg-[#252526] overflow-hidden ">
-      <div className="flex items-center px-2 py-3 justify-between border-b border-border [&>button]:cursor-pointer">
-        <div className="flex-1 text-xs ">ProjectName</div>
-        <button onClick={handleCreateFile}>
-          <File className="w-3 h-3 ml-2" />
-        </button>
-        <button onClick={handleCreateFolder}>
-          <Folder className="w-3 h-3 ml-2" />
-        </button>
-      </div>
-      <div>
-        <ScrollArea className="h-[550px] rounded-md  p-3 "></ScrollArea>
-      </div>
-    </div>
+    <ResizablePanel defaultSize={20}>
+      <Suspense fallback={<FileExploreSkeleton />}>
+        <div className="flex-1 h-full border-r border-[#2d2d30] bg-[#252526] overflow-hidden ">
+          <div className="flex items-center px-2 py-3 justify-between border-b border-border [&>button]:cursor-pointer">
+            <div className="flex-1 text-xs ">ProjectName</div>
+            <button onClick={handleCreateFile}>
+              <File className="w-3 h-3 ml-2" />
+            </button>
+            <button onClick={handleCreateFolder}>
+              <Folder className="w-3 h-3 ml-2" />
+            </button>
+          </div>
+          <div>
+            <ScrollArea className="h-[550px] rounded-md  p-3 "></ScrollArea>
+          </div>
+        </div>
+      </Suspense>
+    </ResizablePanel>
   );
 }
 
