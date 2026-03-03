@@ -1,10 +1,12 @@
-import { MessageSquare, GitBranch, CheckCircle, Terminal } from "lucide-react";
+import { GitBranch, CheckCircle } from "lucide-react";
 import Membermodule from "./Module/memberModule";
+import Profile from "./ui/profile";
 
-function StatusBar({ setShowChat, setShowTerminal }) {
+function StatusBar() {
   return (
-    <div className="h-[22px] bg-[#007acc] text-white flex items-center justify-between px-2 text-xs">
+    <div className=" bg-[#007acc] h-7 text-white flex items-center justify-between px-2 text-xs">
       <div className="flex items-center gap-4">
+        <Profile />
         <div className="flex items-center gap-1">
           <GitBranch className="size-3" />
           <span>main</span>
@@ -15,21 +17,6 @@ function StatusBar({ setShowChat, setShowTerminal }) {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <button
-          className="flex items-center gap-1"
-          onClick={() => setShowTerminal((pre) => !pre)}
-        >
-          <Terminal className="size-3" />
-          <span>Terminal</span>
-        </button>
-        <button
-          className="flex items-center gap-1"
-          onClick={() => setShowChat((pre) => !pre)}
-        >
-          <MessageSquare className="size-3" />
-          <span>Chat</span>
-        </button>
-
         <Membermodule />
       </div>
     </div>

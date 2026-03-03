@@ -47,7 +47,7 @@ export default function Page() {
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
           {/* File Explorer */}
 
-          <FileExplore />
+          {showExplorer && <FileExplore />}
 
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
@@ -61,7 +61,7 @@ export default function Page() {
         </ResizablePanelGroup>
       </div>
 
-      <StatusBar setShowChat={setShowChat} setShowTerminal={setShowTerminal} />
+      <StatusBar />
     </div>
   );
 }

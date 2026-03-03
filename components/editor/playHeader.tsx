@@ -1,16 +1,13 @@
-import { Binary, LogOut } from "lucide-react";
+import {
+  Binary,
+  PanelBottomOpen,
+  PanelLeftOpen,
+  PanelRightClose,
+} from "lucide-react";
 import InviteModule from "./Module/inviteModule";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { useSession, authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { Button } from "../ui/button";
 
 export default function PlayHeader() {
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  const user = session?.user;
-
   return (
     <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3 shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4">
       <div className="flex items-center gap-3">
@@ -24,38 +21,30 @@ export default function PlayHeader() {
         <InviteModule />
       </div>
 
-      <div className="flex gap-4 items-center">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Avatar className="cursor-pointer size-6">
-              <AvatarImage src={user?.image || ""} />
-              <AvatarFallback>{user?.name?.charAt(0) || "M"}</AvatarFallback>
-            </Avatar>
-          </PopoverTrigger>
+      <div className="flex  items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
+        >
+          <PanelLeftOpen className="size-4" />
+        </Button>
 
-          <PopoverContent
-            align="end"
-            className="w-64 p-0 bg-[#1e1e1e] text-[#d4d4d4] border border-white/10 rounded-xl shadow-2xl"
-          >
-            <div className="px-4 py-3 border-b border-white/10">
-              <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-            </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
+        >
+          <PanelBottomOpen className="size-4" />
+        </Button>
 
-            <div className="py-1">
-              <button
-                onClick={async () => {
-                  await authClient.signOut();
-                  router.replace("/auth/signin"); // better than push
-                }}
-                className="flex items-center w-full px-4 py-2 text-sm hover:bg-red-500/10 text-red-400"
-              >
-                <LogOut size={16} className="mr-2" />
-                Logout
-              </button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
+        >
+          <PanelRightClose className="size-4" />
+        </Button>
       </div>
     </div>
   );
