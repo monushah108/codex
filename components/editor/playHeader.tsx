@@ -1,3 +1,4 @@
+"use client";
 import {
   Binary,
   PanelBottomOpen,
@@ -6,8 +7,10 @@ import {
 } from "lucide-react";
 import InviteModule from "./Module/inviteModule";
 import { Button } from "../ui/button";
+import { useLayout } from "@/context/layout-context";
 
 export default function PlayHeader() {
+  const { toggle } = useLayout();
   return (
     <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3 shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4">
       <div className="flex items-center gap-3">
@@ -23,6 +26,7 @@ export default function PlayHeader() {
 
       <div className="flex  items-center">
         <Button
+          onClick={() => toggle("explorer")}
           variant="ghost"
           size="sm"
           className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
@@ -31,6 +35,7 @@ export default function PlayHeader() {
         </Button>
 
         <Button
+          onClick={() => toggle("terminal")}
           variant="ghost"
           size="sm"
           className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
@@ -39,6 +44,7 @@ export default function PlayHeader() {
         </Button>
 
         <Button
+          onClick={() => toggle("chat")}
           variant="ghost"
           size="sm"
           className="hover:bg-[#3a3a3d] text-[#d4d4d4]"

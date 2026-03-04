@@ -1,4 +1,5 @@
 import StoreProvider from "@/app/StoreProvider";
+import { LayoutProvider } from "@/context/layout-context";
 import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "room",
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
 export default function layout({ children }) {
   return (
     <div>
-      <StoreProvider>{children}</StoreProvider>
+      <LayoutProvider>{children}</LayoutProvider>
     </div>
   );
 }

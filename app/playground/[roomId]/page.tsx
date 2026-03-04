@@ -1,5 +1,5 @@
 "use client";
-import { lazy, useEffect, useState } from "react";
+import { lazy, useEffect, useRef, useState } from "react";
 import {
   ResizableHandle,
   ResizablePanelGroup,
@@ -13,9 +13,6 @@ import PlayHeader from "@/components/editor/playHeader";
 import { useParams, useRouter } from "next/navigation";
 
 export default function Page() {
-  const [showExplorer, setShowExplorer] = useState(true);
-  const [showChat, setShowChat] = useState(true);
-  const [showTerminal, setShowTerminal] = useState(false);
   const { roomId } = useParams();
   const router = useRouter();
 
@@ -47,7 +44,7 @@ export default function Page() {
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
           {/* File Explorer */}
 
-          {showExplorer && <FileExplore />}
+          <FileExplore />
 
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
@@ -57,7 +54,7 @@ export default function Page() {
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
           {/* Chat */}
-          {showChat && <ChatBox />}
+          <ChatBox />
         </ResizablePanelGroup>
       </div>
 

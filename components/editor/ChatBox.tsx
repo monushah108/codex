@@ -3,15 +3,19 @@ import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
 import { memo, Suspense, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
 import ChatBubble from "./ui/chatBubble";
-import { Textarea } from "../ui/textarea";
 import { socket } from "@/lib/socket";
 import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
+
+import { PanelImperativeHandle } from "react-resizable-panels";
+import { useLayout } from "@/context/layout-context";
 
 const ChatBox = memo(function ChatBox() {
   const [msg, setMsg] = useState("");
   const [chats, setChats] = useState([]);
   const endRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<PanelImperativeHandle>(null);
+  const { isCollapse } = useLayout();
 
   const handlePostMsg = () => {
     if (!msg.trim()) return;
@@ -36,8 +40,9 @@ const ChatBox = memo(function ChatBox() {
   };
 
   useEffect(() => {
+    isCollapse.chat ? chatRef.current?.collapse() : chatRef.current?.expand();
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chats]);
+  }, [isCollapse.chat, chats]);
 
   useEffect(() => {
     socket.connect();
@@ -55,9 +60,15 @@ const ChatBox = memo(function ChatBox() {
   }, []);
 
   return (
-    <ResizablePanel defaultSize={20}>
+    <ResizablePanel
+      panelRef={chatRef}
+      defaultSize={isCollapse.chat ? 20 : 0}
+      minSize={0}
+      collapsible
+      collapsedSize={0}
+    >
       <Suspense fallback={<div className="p-4 text-sm">Loading chat…</div>}>
-        <aside className="flex justify-between flex-col h-full">
+        <aside className={`flex justify-between flex-col h-full `}>
           <div className="flex items-center justify-between px-2 py-2 border-b border-[#2d2d30]">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-3" />
