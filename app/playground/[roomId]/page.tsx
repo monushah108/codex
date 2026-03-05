@@ -1,5 +1,5 @@
 "use client";
-import { lazy, useEffect, useRef, useState } from "react";
+import { lazy, useEffect } from "react";
 import {
   ResizableHandle,
   ResizablePanelGroup,

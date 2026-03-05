@@ -9,47 +9,47 @@ import {
 } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 
-const Terminal = memo(function Terminal({ output, setOutput }) {
+const Terminal = memo(function Terminal() {
   const [userInput, setuserInput] = useState("");
   const TerminalRef = useRef(null);
 
-  const commands = {
-    help: "Available commands: run code, help, clear",
-    "run code": "Code run successful",
-    clear: () => setOutput([]),
-  };
+  // const commands = {
+  //   help: "Available commands: run code, help, clear",
+  //   "run code": "Code run successful",
+  //   clear: () => setOutput([]),
+  // };
 
-  const handleExecuteCommand = (e) => {
-    e.preventDefault();
-    const input = userInput.trim();
+  // const handleExecuteCommand = (e) => {
+  //   e.preventDefault();
+  //   const input = userInput.trim();
 
-    let outputType = "info";
-    let outputValue = "";
+  //   let outputType = "info";
+  //   let outputValue = "";
 
-    if (commands[input]) {
-      if (typeof commands[input] == "function") {
-        commands[input]();
-        return;
-      }
-      outputType = "success";
-      outputValue = commands[input];
-    } else {
-      outputType = "error";
-      outputValue = "command not found";
-    }
+  //   if (commands[input]) {
+  //     if (typeof commands[input] == "function") {
+  //       commands[input]();
+  //       return;
+  //     }
+  //     outputType = "success";
+  //     outputValue = commands[input];
+  //   } else {
+  //     outputType = "error";
+  //     outputValue = "command not found";
+  //   }
 
-    setOutput((pre) => [
-      ...pre,
-      {
-        id: crypto.randomUUID(),
-        cmd: userInput,
-        outputType,
-        outputValue,
-      },
-    ]);
+  //   setOutput((pre) => [
+  //     ...pre,
+  //     {
+  //       id: crypto.randomUUID(),
+  //       cmd: userInput,
+  //       outputType,
+  //       outputValue,
+  //     },
+  //   ]);
 
-    setuserInput("");
-  };
+  //   setuserInput("");
+  // };
 
   const prompt = () => (
     <div>
@@ -65,7 +65,9 @@ const Terminal = memo(function Terminal({ output, setOutput }) {
           <span className="text-xs">TERMINAL</span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setOutput([])}>
+          <button
+          // onClick={() => setOutput([])}
+          >
             <Trash className="size-3" />
           </button>
         </div>
@@ -97,7 +99,9 @@ const Terminal = memo(function Terminal({ output, setOutput }) {
               </pre>
             </div>
           ))} */}
-          <form onSubmit={handleExecuteCommand}>
+          <form
+          //  onSubmit={handleExecuteCommand}
+          >
             <div
               className="flex items-center gap-1 p-2 group"
               ref={TerminalRef}

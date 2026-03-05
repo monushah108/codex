@@ -16,7 +16,11 @@ const TabBar = memo(function TabBar({ setOutput, code }) {
         </Button>
       </div>
       <div className="space-x-1">
-        <Button variant="none" className="play-btns">
+        <Button
+          variant="none"
+          size="xs"
+          className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
+        >
           <Play className="size-4 " />
           Run Code
         </Button>

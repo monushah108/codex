@@ -6,7 +6,6 @@ import ChatBubble from "./ui/chatBubble";
 import { socket } from "@/lib/socket";
 import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
-
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { useLayout } from "@/context/layout-context";
 
@@ -14,7 +13,6 @@ const ChatBox = memo(function ChatBox() {
   const [msg, setMsg] = useState("");
   const [chats, setChats] = useState([]);
   const endRef = useRef<HTMLDivElement>(null);
-  const chatRef = useRef<PanelImperativeHandle>(null);
   const { isCollapse } = useLayout();
 
   const handlePostMsg = () => {
@@ -40,9 +38,8 @@ const ChatBox = memo(function ChatBox() {
   };
 
   useEffect(() => {
-    isCollapse.chat ? chatRef.current?.collapse() : chatRef.current?.expand();
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [isCollapse.chat, chats]);
+  }, [chats]);
 
   useEffect(() => {
     socket.connect();
@@ -61,7 +58,6 @@ const ChatBox = memo(function ChatBox() {
 
   return (
     <ResizablePanel
-      panelRef={chatRef}
       defaultSize={isCollapse.chat ? 20 : 0}
       minSize={0}
       collapsible

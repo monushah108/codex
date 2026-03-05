@@ -1,4 +1,3 @@
-import StoreProvider from "@/app/StoreProvider";
 import { LayoutProvider } from "@/context/layout-context";
 import { Metadata } from "next";
 export const metadata: Metadata = {
