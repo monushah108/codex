@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 import { authClient } from "@/lib/auth-client";
-import { signInSchema } from "@/validation/form";
+import { signInSchema } from "@/lib/schema/form";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,52 +39,48 @@ export function LoginForm({
   const [errors, setErrors] = useState<
     Partial<Record<"name" | "email" | "password" | "confirmPassword", string[]>>
   >({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const inputErrorClass = (field?: string[]) =>
     field ? "border-destructive focus-visible:ring-destructive" : "";
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (formData: FormData) => {
+    startTransition(async () => {
+      const user = {
+        email: formData.get("email"),
+        password: formData.get("password"),
+      };
 
-    try {
-      setIsLoading(true);
-      const { success, data, error } = signInSchema.safeParse({
-        email,
-        password,
-      });
+      try {
+        const { success, data, error } = signInSchema.safeParse(user);
 
-      if (!success) {
-        const formatted = error.flatten().fieldErrors;
-        setErrors(formatted);
-        return;
+        if (!success) {
+          const formatted = error.flatten().fieldErrors;
+          setErrors(formatted);
+          return;
+        }
+        await authClient.signIn.email(
+          {
+            email,
+            password,
+            callbackURL: "/playground",
+          },
+          {
+            onSuccess() {
+              router.push("/playground");
+            },
+            onError(e) {
+              toast.error(
+                e?.error.message || "An error occurred during login.",
+              );
+            },
+          },
+        );
+      } catch (e: any) {
+        toast.error(e.message || "An error occurred during login.");
       }
-      await authClient.signIn.email(
-        {
-          email,
-          password,
-          callbackURL: "/playground",
-        },
-        {
-          onSuccess() {
-            setIsLoading(false);
-            console.log("Login successful:", data);
-            router.push("/playground");
-          },
-          onError(e) {
-            setIsLoading(false);
-            console.error("Login error:", e);
-            toast.error(e?.error.message || "An error occurred during login.");
-          },
-        },
-      );
-    } catch (e: any) {
-      console.error("Login error:", e);
-      toast.error(e.message || "An error occurred during login.");
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -98,7 +94,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleEmailAuth}>
+          <form action={handleLogin}>
             <FieldGroup>
               <Field>
                 <Button
@@ -190,8 +186,12 @@ export function LoginForm({
                 )}
               </Field>
               <Field>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? <Spinner className="h-4 w-4" /> : "Login"}
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? (
+                    <Spinner className="h-4 w-4" />
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </Field>
             </FieldGroup>

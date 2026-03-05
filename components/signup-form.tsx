@@ -17,13 +17,12 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { getRandomImg } from "@/lib/features";
 
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
-import { signUpSchema } from "@/validation/form";
-import z from "zod";
+import { signUpSchema } from "@/lib/schema/form";
 import { authClient } from "@/lib/auth-client";
 import { CircleAlert } from "lucide-react";
 import { Spinner } from "./ui/spinner";
@@ -39,46 +38,48 @@ export function SignupForm({
   const [errors, setErrors] = useState<
     Partial<Record<"name" | "email" | "password" | "confirmPassword", string[]>>
   >({});
-  const [loading, setLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [isPending, startTransition] = useTransition();
 
   const inputErrorClass = (field?: string[]) =>
     field ? "border-destructive focus-visible:ring-destructive" : "";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignup = async (formData: FormData) => {
+    startTransition(async () => {
+      const newUser = {
+        name: formData.get("name"),
+        email: formData.get("email"),
+        password: formData.get("password"),
+        confirmPassword: formData.get("confirm-password"),
+      };
 
-    const randomImg = await getRandomImg();
-    const { success, data, error } = signUpSchema.safeParse({
-      email,
-      password,
-      name,
-      confirmPassword,
+      const randomImg = await getRandomImg();
+      const { success, data, error } = signUpSchema.safeParse(newUser);
+      console.log(data, error, newUser);
+
+      if (!success) {
+        const formatted = error.flatten().fieldErrors;
+        setErrors(formatted);
+        return;
+      }
+
+      const result = await authClient.signUp.email(
+        {
+          ...data,
+          image: randomImg,
+          callbackURL: "/playground",
+        },
+        {
+          onSuccess: (data) => {
+            redirect("/playground");
+          },
+          onError: ({ error }) => {
+            toast.error(error?.message || "Failed to create account");
+          },
+        },
+      );
     });
-
-    if (!success) {
-      const formatted = error.flatten().fieldErrors;
-      setErrors(formatted);
-      return;
-    }
-    setLoading(true);
-    const result = await authClient.signUp.email(
-      {
-        ...data,
-        image: randomImg,
-        callbackURL: "/playground",
-      },
-      {
-        onSuccess: (data) => {
-          setLoading(false);
-          redirect("/playground");
-        },
-        onError: ({ error }) => {
-          toast.error(error?.message || "Failed to create account");
-          setLoading(false);
-        },
-      },
-    );
   };
 
   return (
@@ -93,7 +94,7 @@ export function SignupForm({
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form action={handleSignup}>
             <FieldGroup>
               {/* Name */}
               <Field>
@@ -102,6 +103,7 @@ export function SignupForm({
                   id="name"
                   type="text"
                   placeholder="John Doe"
+                  name="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={inputErrorClass(errors.name)}
@@ -120,6 +122,7 @@ export function SignupForm({
                 <Input
                   id="email"
                   type="email"
+                  name="email"
                   placeholder="m@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -142,6 +145,7 @@ export function SignupForm({
                     <Input
                       id="password"
                       type="password"
+                      name="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={inputErrorClass(errors.password)}
@@ -162,6 +166,7 @@ export function SignupForm({
                     <Input
                       id="confirm-password"
                       type="password"
+                      name="confirm-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className={inputErrorClass(errors.confirmPassword)}
@@ -182,8 +187,12 @@ export function SignupForm({
 
               {/* Submit */}
               <Field>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? <Spinner className="h-4 w-4" /> : "Create Account"}
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? (
+                    <Spinner className="h-4 w-4" />
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
 
                 <FieldDescription className="text-center mt-2">

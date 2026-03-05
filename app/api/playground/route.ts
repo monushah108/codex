@@ -2,7 +2,7 @@ import { connectDB } from "@/lib/db";
 import { getUser } from "@/lib/getUser";
 import Member from "@/model/member";
 import Room from "@/model/room";
-import { playSchema } from "@/validation/playground";
+import { playSchema } from "@/lib/schema/playground";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 import z from "zod";
