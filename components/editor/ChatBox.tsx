@@ -6,7 +6,7 @@ import ChatBubble from "./ui/chatBubble";
 import { socket } from "@/lib/socket";
 import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
-import { PanelImperativeHandle } from "react-resizable-panels";
+
 import { useLayout } from "@/context/layout-context";
 
 const ChatBox = memo(function ChatBox() {

@@ -28,7 +28,7 @@ export default function PlayHeader() {
         <Button
           onClick={() => toggle("explorer")}
           variant="ghost"
-          size="sm"
+          size="xs"
           className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
         >
           <PanelLeftOpen className="size-4" />
@@ -37,7 +37,7 @@ export default function PlayHeader() {
         <Button
           onClick={() => toggle("terminal")}
           variant="ghost"
-          size="sm"
+          size="xs"
           className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
         >
           <PanelBottomOpen className="size-4" />
@@ -46,7 +46,7 @@ export default function PlayHeader() {
         <Button
           onClick={() => toggle("chat")}
           variant="ghost"
-          size="sm"
+          size="xs"
           className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
         >
           <PanelRightClose className="size-4" />
