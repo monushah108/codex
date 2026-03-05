@@ -15,15 +15,34 @@ app.prepare().then(() => {
   const io = new Server(httpServer);
 
   io.on("connection", (socket) => {
-    socket.on("connection", () => {
-      console.log("socket", socket);
-    });
+    socket.on("create-room", ({ roomId, userId }) => {
+      const serverName = roomId;
+      socket.join(serverName);
 
-    socket.on("msg", ({ id, msg }) => {
-      socket.broadcast.emit("recive", { c: "hii monu", id: socket.id });
-    });
+      socket.data.userId = userId;
 
-    // ...
+      socket
+        .to(serverName)
+        .emit("user-joined", { sId: socket.id, uId: userId });
+
+      // for msgs
+      socket.on(`${serverName}:msg`, ({ roomId, msg }) => {
+        io.to(roomId).emit(`${serverName}:msg`, {
+          user: socket.data.userId,
+          msg,
+        });
+      });
+
+      // for yjs buffer docs
+      socket.on(`${serverName}:doc:send`, ({ roomId, Bufferdata }) => {
+        io.to(roomId).emit("doc:receive", Bufferdata);
+      });
+
+      //disconnect
+      socket.on("disconnect", () => {
+        console.log("user dis", socket.io);
+      });
+    });
   });
 
   httpServer

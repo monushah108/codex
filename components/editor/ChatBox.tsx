@@ -8,6 +8,7 @@ import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
 
 import { useLayout } from "@/context/layout-context";
+import ChatBoxSkeleton from "./Skeleton/chatBoxSkeleton";
 
 const ChatBox = memo(function ChatBox() {
   const [msg, setMsg] = useState("");
@@ -63,7 +64,7 @@ const ChatBox = memo(function ChatBox() {
       collapsible
       collapsedSize={0}
     >
-      <Suspense fallback={<div className="p-4 text-sm">Loading chat…</div>}>
+      <Suspense fallback={<ChatBoxSkeleton />}>
         <aside className={`flex justify-between flex-col h-full `}>
           <div className="flex items-center justify-between px-2 py-2 border-b border-[#2d2d30]">
             <div className="flex items-center gap-2">
