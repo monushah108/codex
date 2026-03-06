@@ -64,14 +64,14 @@ export function SignupForm({
         return;
       }
 
-      const result = await authClient.signUp.email(
+      await authClient.signUp.email(
         {
           ...data,
           image: randomImg,
           callbackURL: "/playground",
         },
         {
-          onSuccess: (data) => {
+          onSuccess: () => {
             redirect("/playground");
           },
           onError: ({ error }) => {

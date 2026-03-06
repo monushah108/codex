@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 
 import { authClient, useSession } from "@/lib/auth-client";
-import { LogOut, Settings, SettingsIcon } from "lucide-react";
+import { LogOut, SettingsIcon } from "lucide-react";
 import Link from "next/link";
 
 export default function Profile() {

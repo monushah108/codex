@@ -2,7 +2,6 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { createAuthMiddleware } from "better-auth/api";
 
 const client = new MongoClient(process.env.MONGODB_URI as string);
 export const db = client.db();

@@ -1,6 +1,6 @@
 import Directory from "@/model/directory";
 
-export async function POST(request: any, { params }) {
+export async function POST(request, { params }) {
   const { id } = await params;
   const user = request.user;
 
@@ -15,12 +15,12 @@ export async function POST(request: any, { params }) {
   });
 }
 
-export async function DELETE(request: any) {
+export async function DELETE(request) {
   const id = request.json();
   const user = request.user;
 }
 
-export async function PATCH(request: any) {
+export async function PATCH(request) {
   const id = request.json();
   const user = request.user;
 }

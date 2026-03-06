@@ -62,8 +62,7 @@ export function LoginForm({
         }
         await authClient.signIn.email(
           {
-            email,
-            password,
+            ...data,
             callbackURL: "/playground",
           },
           {

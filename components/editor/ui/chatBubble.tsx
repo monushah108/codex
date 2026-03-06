@@ -8,14 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Separator } from "@/components/ui/separator";
-import {
-  CircleX,
-  CopyIcon,
-  Delete,
-  Edit3,
-  EllipsisVertical,
-  X,
-} from "lucide-react";
+import { CircleX, CopyIcon, Edit3, EllipsisVertical } from "lucide-react";
 import { Fira_Code } from "next/font/google";
 import { useState } from "react";
 
