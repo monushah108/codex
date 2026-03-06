@@ -1,3 +1,4 @@
+"use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
@@ -10,11 +11,9 @@ import {
 import { authClient, useSession } from "@/lib/auth-client";
 import { LogOut, Settings, SettingsIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const { data: session } = useSession();
-  const router = useRouter();
 
   const user = session?.user;
   return (

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       { session },
     );
 
-    const member = await Member.insertOne(
+    await Member.insertOne(
       {
         userId,
         roomId: room._id,

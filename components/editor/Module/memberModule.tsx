@@ -10,15 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  ChevronDown,
-  Mic,
-  MicOff,
-  UserSquare,
-  Search,
-  VolumeX,
-  Users,
-} from "lucide-react";
+import { Mic, MicOff, UserSquare, Search, VolumeX, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const peers = Array.from({ length: 20 }).map((_, i) => ({

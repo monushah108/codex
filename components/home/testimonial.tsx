@@ -50,7 +50,7 @@ export default function Testimonial() {
                   ))}
               </div>
               <p className="text-gray-600 dark:text-gray-300 italic text-sm">
-                "{testimonial.quote}"
+                {testimonial.quote}
               </p>
               <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 ">
                 <Avatar className="w-12 h-12 object-cover rounded-full">

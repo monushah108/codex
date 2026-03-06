@@ -133,7 +133,7 @@ export default function Hero() {
                         {"{"} useState {"}"}{" "}
                       </span>
                       <span className="text-purple-600">from</span>
-                      <span className="text-green-600"> 'react'</span>
+                      <span className="text-green-600">react</span>
                     </div>
                   )}
                   {lineNum === 3 && (

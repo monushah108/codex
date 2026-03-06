@@ -1,13 +1,7 @@
 "use client";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import {
-  ArrowBigRight,
-  ChevronDown,
-  TerminalIcon,
-  Trash,
-  X,
-} from "lucide-react";
-import { memo, useEffect, useRef, useState } from "react";
+import { ArrowBigRight, TerminalIcon, Trash } from "lucide-react";
+import { memo, useRef, useState } from "react";
 
 const Terminal = memo(function Terminal() {
   const [userInput, setuserInput] = useState("");
@@ -81,7 +75,7 @@ const Terminal = memo(function Terminal() {
           <div className="p-3 text-sm">
             <p className="text-blue-400">Vs code like terminal </p>
             <p className="text-gray-500 text-xs">
-              you can just run your code it's not so advance{" "}
+              you can just run your code it's not so advance
             </p>
           </div>
           {/* {output.map(({ id, outputValue, outputType, cmd }) => (

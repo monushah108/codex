@@ -77,7 +77,7 @@ export function LoginForm({
             },
           },
         );
-      } catch (e: any) {
+      } catch (e) {
         toast.error(e.message || "An error occurred during login.");
       }
     });

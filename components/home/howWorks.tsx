@@ -1,4 +1,3 @@
-import { UserPlus, Search, Code2 } from "lucide-react";
 import { Steps } from "../constant/main-constant.js";
 
 export default function HowWorks() {

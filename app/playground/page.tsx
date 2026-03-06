@@ -5,6 +5,7 @@ import heartSvg from "@/public/pixel-heart.gif";
 
 import Form from "@/components/editor/form";
 import { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "create room",
@@ -21,7 +22,7 @@ export default function Page() {
         </h2>
         <p className="text-sm text-[#9e9e9e] flex  gap-1">
           Create a room. Invite your peers. Code together in real time.
-          <img src={heartSvg.src} className="size-5 " />
+          <Image alt="heart" src={heartSvg.src} className="size-5 " />
         </p>
       </div>
       <Form />
