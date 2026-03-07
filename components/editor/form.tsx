@@ -1,13 +1,23 @@
 "use client";
+
 import { useState, useTransition } from "react";
 import { Input } from "../ui/input";
-import { Field, FieldGroup, FieldLabel, FieldDescription } from "../ui/field";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldDescription,
+  FieldError,
+} from "../ui/field";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { PasswordInput } from "../ui/password-input";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Spinner } from "../ui/spinner";
 import { useRouter } from "next/navigation";
+import { playSchema } from "@/lib/schema/playground";
+import { CircleAlert } from "lucide-react";
+import { set } from "mongoose";
 
 export default function Form() {
   const [roomName, setRoomName] = useState("codex-room");
@@ -16,35 +26,65 @@ export default function Form() {
   const [maxUser, setMaxUser] = useState("3");
   const [duration, setDuration] = useState("lifetime");
 
+  const [errors, setErrors] = useState<
+    Partial<
+      Record<
+        "maxUser" | "duration" | "password" | "roomName" | "roomType",
+        string[]
+      >
+    >
+  >({});
+
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const handleForm = async () => {
+  const inputErrorClass = (field?: string[]) =>
+    field
+      ? "border-destructive focus-visible:ring-destructive"
+      : "bg-[#1e1e1e] border-[#2d2d30]";
+
+  const handleForm = async (formData: FormData) => {
     startTransition(async () => {
+      const newRoom = {
+        roomName: formData.get("roomName"),
+        roomType: roomType,
+        password: formData.get("password") || undefined,
+        maxUser: formData.get("maxUser"),
+        duration: duration,
+      };
+
+      const { success, data, error } = playSchema.safeParse(newRoom);
+      if (!success) {
+        const formatted = error.flatten().fieldErrors;
+        setErrors(formatted);
+        return;
+      }
+
       try {
-        const response = await fetch("/api/join", {
+        const response = await fetch("/api/playground", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({
-            roomName,
-            roomType,
-            password: roomType === "private" ? password : undefined,
-            maxUser,
-            duration,
-          }),
+          body: JSON.stringify(data),
         });
-        const data = await response.json();
+
+        const result = await response.json();
+
+        console.log(result);
+
         if (response.status === 201) {
           toast.success("Room created successfully!");
-          router.push(`/playground/${data.room.id}`);
+          router.push(`/playground/${result.room.id}`);
         }
+
         if (response.status === 422) {
-          toast.error(Object.values(data).join(", "));
+          toast.error(result.error || "Validation failed");
         }
-      } catch {
+        setErrors({});
+      } catch (err) {
+        console.log(err);
         toast.error("A server error occurred. Please try again.");
       }
     });
@@ -63,9 +103,17 @@ export default function Form() {
           <Input
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
+            name="roomName"
             placeholder="Enter a room title"
-            className="bg-[#1e1e1e] border-[#2d2d30]"
+            className={inputErrorClass(errors.roomName)}
           />
+
+          {errors.roomName && (
+            <FieldError className="text-destructive text-xs flex items-center gap-1">
+              <CircleAlert className="h-3 w-3" />
+              {errors.roomName[0]}
+            </FieldError>
+          )}
         </Field>
 
         {/* Room Visibility */}
@@ -81,36 +129,47 @@ export default function Form() {
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem
+                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
                 value="public"
                 id="public"
-                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
               />
               <FieldLabel htmlFor="public">Public</FieldLabel>
             </div>
 
             <div className="flex items-center space-x-2">
               <RadioGroupItem
+                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
                 value="private"
                 id="private"
-                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
               />
               <FieldLabel htmlFor="private">Private</FieldLabel>
             </div>
           </RadioGroup>
-
-          {roomType === "private" && (
-            <div className="mt-3">
-              <FieldLabel>Access Password</FieldLabel>
-              <PasswordInput
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter room password"
-              />
-            </div>
-          )}
         </Field>
 
-        {/* Room Duration */}
+        {/* Password */}
+        {roomType === "private" && (
+          <Field>
+            <FieldLabel>Access Password</FieldLabel>
+
+            <PasswordInput
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter room password"
+              className={inputErrorClass(errors.password)}
+            />
+
+            {errors.password && (
+              <FieldError className="text-destructive text-xs flex items-center gap-1">
+                <CircleAlert className="h-3 w-3" />
+                {errors.password[0]}
+              </FieldError>
+            )}
+          </Field>
+        )}
+
+        {/* Duration */}
         <Field>
           <FieldLabel>Room Duration</FieldLabel>
 
@@ -121,37 +180,45 @@ export default function Form() {
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem
+                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
                 value="lifetime"
                 id="lifetime"
-                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
               />
               <FieldLabel htmlFor="lifetime">No Expiration</FieldLabel>
             </div>
 
             <div className="flex items-center space-x-2">
               <RadioGroupItem
+                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
                 value="one-week"
                 id="week"
-                className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
               />
               <FieldLabel htmlFor="week">Expires in 7 Days</FieldLabel>
             </div>
           </RadioGroup>
         </Field>
 
-        {/* Maximum Participants */}
+        {/* Max Users */}
         <Field>
           <FieldLabel>Maximum Participants</FieldLabel>
 
           <Input
             type="number"
-            placeholder="Maximum participants (e.g. 4)"
+            placeholder="Maximum participants"
             value={maxUser}
             onChange={(e) => setMaxUser(e.target.value)}
+            name="maxUser"
+            className={inputErrorClass(errors.maxUser)}
           />
+
+          {errors.maxUser && (
+            <FieldError className="text-destructive text-xs flex items-center gap-1">
+              <CircleAlert className="h-3 w-3" />
+              {errors.maxUser[0]}
+            </FieldError>
+          )}
         </Field>
 
-        {/* Create Room */}
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? <Spinner className="h-4 w-4" /> : "Create Room"}
         </Button>

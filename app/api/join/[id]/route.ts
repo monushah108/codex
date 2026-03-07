@@ -82,6 +82,8 @@ export async function POST(request: NextRequest, { params }) {
   try {
     const room = await Room.findById(roomId);
 
+    console.log(room);
+
     if (!room) {
       return Response.json({ error: "Room not found" }, { status: 404 });
     }

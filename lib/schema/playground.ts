@@ -11,6 +11,7 @@ export const playSchema = z
       .max(4, "max users can be at most 4"),
 
     roomType: z.enum(["public", "private"]),
+    duration: z.string().min(1, "error"),
 
     password: z.string().max(8, "password must be at most 8 digits").optional(),
   })

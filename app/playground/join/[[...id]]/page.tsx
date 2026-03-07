@@ -1,6 +1,11 @@
 import JoinRoom from "@/components/editor/joinRoom";
+import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "join",
+};
 
 export default async function Page({ params }) {
   const { id } = await params;
@@ -20,11 +25,8 @@ export default async function Page({ params }) {
 
   const data = await res.json();
 
-  if (res.status == 404) {
+  if (res.status == 404 || res.status == 400) {
     redirect("/");
-  }
-  if (res.status == 403) {
-    redirect(`/playground/join/${roomId}`);
   }
 
   if (res.status == 200) {

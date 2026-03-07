@@ -12,7 +12,6 @@ import { formatte } from "@/lib/features";
 export default function JoinRoom({ owner, roomId }) {
   const [password, setPassword] = useState("12345678");
   const [isLoading, setIsLoading] = useState(false);
-  const [Owner, setOwner] = useState([]);
 
   const router = useRouter();
   const handleStart = async () => {
@@ -21,7 +20,7 @@ export default function JoinRoom({ owner, roomId }) {
     try {
       setIsLoading(true);
 
-      const res = await fetch(`/api/join/${params?.id}`, {
+      const res = await fetch(`/api/join/${roomId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -44,9 +43,8 @@ export default function JoinRoom({ owner, roomId }) {
         }, 5000);
       }
 
-      // ✅ Always trust backend redirect
       if (res.status == 201 || res.status == 409) {
-        router.push(`/playground/${params?.id}`);
+        router.push(`/playground/${roomId}`);
       }
     } catch {
       toast.error("Server error");
@@ -61,7 +59,7 @@ export default function JoinRoom({ owner, roomId }) {
         <Toaster />
         <div className="flex items-center gap-4 ">
           <Avatar className="h-12 w-12 ">
-            <AvatarImage src={Owner?.admin_img} />
+            <AvatarImage src={owner?.admin_img} />
             <AvatarFallback className="bg-sky-500 text-black font-semibold">
               CX
             </AvatarFallback>
@@ -69,14 +67,14 @@ export default function JoinRoom({ owner, roomId }) {
 
           <div className="flex flex-col">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              {Owner?.admin_name}
+              {owner?.admin_name}
               <span className="text-xs px-2 py-0.5 bg-sky-500/20 text-sky-400 rounded">
                 Admin
               </span>
             </h2>
 
             <span className="text-xs text-gray-400">
-              Created • {formatte(Owner?.createdAt)}
+              Created • {formatte(owner?.createdAt)}
             </span>
 
             <span className="text-xs text-gray-400">
