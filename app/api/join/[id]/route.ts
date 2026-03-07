@@ -9,24 +9,18 @@ import { NextRequest } from "next/server";
 export async function GET(request: NextRequest, { params }) {
   await connectDB();
 
-  const { id } = await params;
+  const { id: roomId } = await params;
   const userId = await getUser(request);
-  const users = db.collection("user");
-
-  const user = await users.findOne({
-    _id: new mongoose.Types.ObjectId(userId),
-  });
 
   try {
-    const isValidId = mongoose.Types.ObjectId.isValid(id);
+    const isValidId = mongoose.Types.ObjectId.isValid(roomId);
 
     if (!isValidId) {
       return Response.json({ error: "not a valid id" }, { status: 400 });
     }
 
-    const IsMember = await Member.findOne({ userId, roomId: id });
+    const IsMember = await Member.findOne({ userId, roomId });
 
-    // ✅ Admin → go directly to playground
     if (IsMember) {
       return Response.json(
         {
@@ -36,7 +30,7 @@ export async function GET(request: NextRequest, { params }) {
       );
     }
 
-    const room = await Room.findById(id);
+    const room = await Room.findById(roomId);
 
     if (!room) {
       return Response.json(
@@ -44,6 +38,10 @@ export async function GET(request: NextRequest, { params }) {
         { status: 404 },
       );
     }
+
+    const users = db.collection("user");
+
+    const user = await users.findOne({ _id: room.adminId });
 
     // ✅ Private room → ask password
     if (room.type === "private") {

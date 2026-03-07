@@ -51,7 +51,7 @@ export default async function Page({ params }) {
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
           {/* Chat */}
-          <ChatBox />
+          <ChatBox roomId={roomId} />
         </ResizablePanelGroup>
       </div>
 

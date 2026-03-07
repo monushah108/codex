@@ -17,7 +17,6 @@ import { Spinner } from "../ui/spinner";
 import { useRouter } from "next/navigation";
 import { playSchema } from "@/lib/schema/playground";
 import { CircleAlert } from "lucide-react";
-import { set } from "mongoose";
 
 export default function Form() {
   const [roomName, setRoomName] = useState("codex-room");

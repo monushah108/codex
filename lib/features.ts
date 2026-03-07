@@ -22,5 +22,10 @@ export const getRandomImg = async () => {
 
 export const formatte = (time: string) => {
   const date = new Date(time);
-  return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+  return date.toLocaleTimeString("en-us", {
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };

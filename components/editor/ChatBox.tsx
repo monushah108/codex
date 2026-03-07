@@ -9,36 +9,64 @@ import { Input } from "../ui/input";
 
 import { useLayout } from "@/context/layout-context";
 import ChatBoxSkeleton from "./Skeleton/chatBoxSkeleton";
+import { toast } from "sonner";
+import { Toaster } from "../ui/sonner";
 
-const ChatBox = memo(function ChatBox() {
-  const [msg, setMsg] = useState("");
-  const [chats, setChats] = useState([]);
+const ChatBox = memo(function ChatBox({ roomId }) {
+  const [messages, setMessages] = useState([]);
+  const [content, setContent] = useState("");
+  const [cursor, setCursor] = useState(null);
   const endRef = useRef<HTMLDivElement>(null);
   const { isCollapse } = useLayout();
 
-  const handlePostMsg = () => {
-    if (!msg.trim()) return;
-    const postSkeleton = {
-      id: crypto.randomUUID(),
-      time: new Date().toLocaleTimeString("en-us", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      content: "",
-      name: "monu",
-    };
+  const fetchMessages = async () => {
+    try {
+      const res = await fetch(`/api/chat?chatId=${roomId}&cursor=${123}`, {
+        credentials: "include",
+      });
 
-    setChats((pre) => [...pre, { ...postSkeleton, content: msg }]);
-    setMsg("");
+      const data = res.json();
+
+      setMessages((pre) => [...pre, ...data]);
+    } catch {
+      toast.error("something went wrong!!");
+    }
+  };
+
+  // useEffect(() => {
+  //   const observer = new IntersectionObserver((entries) => {
+  //     if (entries[0].isIntersecting) {
+  //       fetchMessages();
+  //     }
+  //   });
+  //   console.log(observer);
+  //   // if (loaderRef.current) observer.observe(loaderRef.current);
+
+  //   return () => observer.disconnect();
+  // }, [cursor]);
+
+  const PostMsg = async () => {
+    if (!content.trim()) return;
+
+    await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ content, roomId }),
+    });
+
+    setContent("");
   };
 
   const handleChange = (e) => {
-    setMsg(e.target.value);
+    setContent(e.target.value);
   };
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chats]);
+  }, [messages]);
 
   useEffect(() => {
     socket.connect();
@@ -63,6 +91,7 @@ const ChatBox = memo(function ChatBox() {
       collapsedSize={0}
     >
       <Suspense fallback={<ChatBoxSkeleton />}>
+        <Toaster />
         <aside className={`flex justify-between flex-col h-full `}>
           <div className="flex items-center justify-between px-2 py-2 border-b border-[#2d2d30]">
             <div className="flex items-center gap-2">
@@ -73,7 +102,7 @@ const ChatBox = memo(function ChatBox() {
 
           <div className="flex-1 ">
             <ScrollArea className="h-[740px] rounded-md p-3 ">
-              {!chats.length ? (
+              {!messages.length ? (
                 <div className="h-[600px] flex items-center justify-center">
                   <div className="flex flex-col gap-1 items-center justify-center   ">
                     <div className="rounded  animate-bounce p-2 text-white">
@@ -84,7 +113,7 @@ const ChatBox = memo(function ChatBox() {
                 </div>
               ) : (
                 <>
-                  {chats.map(({ id, time, content, name }) => (
+                  {messages.map(({ id, time, content, name }) => (
                     <ChatBubble
                       name={name}
                       key={id}
@@ -102,16 +131,16 @@ const ChatBox = memo(function ChatBox() {
             <div className="flex items-center gap-2 bg-[#2d2d30] rounded px-3 py-2 focus-within:ring-1 focus-within:ring-[#007acc] transition-all">
               <Input
                 autoFocus
-                value={msg}
-                onKeyDown={(e) => e.key == "Enter" && handlePostMsg()}
+                value={content}
+                onKeyDown={(e) => e.key == "Enter" && PostMsg()}
                 onChange={handleChange}
                 className="flex-1 bg-transparent outline-none border-none text-sm text-[#cccccc] placeholder-[#6a6a6a]  min-h-8 resize-none max-h-15 "
                 placeholder="Type a message..."
               />
 
               <button
-                disabled={!msg}
-                onClick={handlePostMsg}
+                disabled={!content}
+                onClick={PostMsg}
                 className="p-2 rounded hover:bg-[#007acc] disabled:opacity-30 transition-colors "
               >
                 <SendIcon className="size-4" />

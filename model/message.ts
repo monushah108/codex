@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 const messageSchema = new Schema({
   chatId: {
@@ -18,6 +18,7 @@ const messageSchema = new Schema({
   repliedId: {
     type: Schema.Types.ObjectId,
     ref: "Message",
+    default: null,
   },
   timeStamp: {
     type: Date,
@@ -25,6 +26,8 @@ const messageSchema = new Schema({
   },
 });
 
-const Message = model("Message", messageSchema);
+messageSchema.index({ chatId: 1, timeStamp: -1 });
+
+const Message = models.Message || model("Message", messageSchema);
 
 export default Message;
