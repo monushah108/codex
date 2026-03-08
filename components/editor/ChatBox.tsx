@@ -1,9 +1,16 @@
 "use client";
 import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
-import { memo, Suspense, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ScrollArea } from "../ui/scroll-area";
 import ChatBubble from "./ui/chatBubble";
-import { socket } from "@/lib/socket";
+// import { socket } from "@/lib/socket";
 import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
 
@@ -11,77 +18,95 @@ import { useLayout } from "@/context/layout-context";
 import ChatBoxSkeleton from "./Skeleton/chatBoxSkeleton";
 import { toast } from "sonner";
 import { Toaster } from "../ui/sonner";
+import { useSession } from "@/lib/auth-client";
 
 const ChatBox = memo(function ChatBox({ roomId }) {
-  const [messages, setMessages] = useState([]);
+  const [msgs, setMsgs] = useState<string[]>([]);
   const [content, setContent] = useState("");
-  const [cursor, setCursor] = useState(null);
   const endRef = useRef<HTMLDivElement>(null);
   const { isCollapse } = useLayout();
+  const { data: session } = useSession();
 
-  const fetchMessages = async () => {
+  const getMsgs = useCallback(async () => {
     try {
-      const res = await fetch(`/api/chat?chatId=${roomId}&cursor=${123}`, {
+      const res = await fetch(`/api/chat?roomId=${roomId}&cursor=${123}`, {
         credentials: "include",
       });
 
-      const data = res.json();
+      const data = await res.json();
 
-      setMessages((pre) => [...pre, ...data]);
-    } catch {
+      setMsgs((pre) => [...pre, ...data]);
+    } catch (err) {
+      console.log(err);
       toast.error("something went wrong!!");
     }
-  };
+  }, [roomId]);
 
-  // useEffect(() => {
-  //   const observer = new IntersectionObserver((entries) => {
-  //     if (entries[0].isIntersecting) {
-  //       fetchMessages();
-  //     }
-  //   });
-  //   console.log(observer);
-  //   // if (loaderRef.current) observer.observe(loaderRef.current);
-
-  //   return () => observer.disconnect();
-  // }, [cursor]);
+  useEffect(() => {
+    getMsgs();
+  }, [getMsgs]);
 
   const PostMsg = async () => {
     if (!content.trim()) return;
-
-    await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ content, roomId }),
-    });
-
     setContent("");
-  };
+    const user = session?.user;
 
-  const handleChange = (e) => {
-    setContent(e.target.value);
+    const msgId = crypto.randomUUID();
+
+    const tempMsg = {
+      _id: msgId,
+      userId: user?.id,
+      content,
+      name: "You",
+      image: "",
+      timeStamp: new Date().toISOString(),
+    };
+
+    setMsgs((prev) => [...prev, tempMsg]);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ content, roomId, msgId }),
+      });
+      const msg = await res.json();
+
+      console.log(msg, tempMsg);
+      setMsgs((prev) =>
+        prev.map((m) =>
+          m._id === msg.msgId
+            ? { ...msg, image: user?.image, name: user?.name }
+            : m,
+        ),
+      );
+    } catch (err) {
+      console.log(err);
+      toast.error("Message failed");
+    }
   };
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [msgs]);
 
-  useEffect(() => {
-    socket.connect();
+  // useEffect(() => {
+  //   socket.connect();
 
-    socket.emit("msg", "hello monu is here");
+  //   socket.emit("msg", "hello monu is here");
 
-    socket.on("recive", (data) => {
-      console.log(data);
-    });
+  //   socket.on("recive", (data) => {
+  //     console.log(data);
+  //   });
 
-    return () => {
-      socket.off("connect", () => console.log("connected"));
-      socket.off("disconnect", () => console.log("disconnected"));
-    };
-  }, []);
+  //   return () => {
+  //     socket.off("connect", () => console.log("connected"));
+  //     socket.off("disconnect", () => console.log("disconnected"));
+  //   };
+  // }, []);
 
   return (
     <ResizablePanel
@@ -102,7 +127,7 @@ const ChatBox = memo(function ChatBox({ roomId }) {
 
           <div className="flex-1 ">
             <ScrollArea className="h-[740px] rounded-md p-3 ">
-              {!messages.length ? (
+              {!msgs.length ? (
                 <div className="h-[600px] flex items-center justify-center">
                   <div className="flex flex-col gap-1 items-center justify-center   ">
                     <div className="rounded  animate-bounce p-2 text-white">
@@ -113,12 +138,16 @@ const ChatBox = memo(function ChatBox({ roomId }) {
                 </div>
               ) : (
                 <>
-                  {messages.map(({ id, time, content, name }) => (
+                  {msgs.map(({ _id, timeStamp, content, name, image }) => (
                     <ChatBubble
+                      key={_id}
                       name={name}
-                      key={id}
-                      time={time}
+                      id={_id}
+                      timeStamp={timeStamp}
                       content={content}
+                      image={image}
+                      setMsgs={setMsgs}
+                      getMsgs={getMsgs}
                     />
                   ))}
                   <div ref={endRef} />
@@ -133,7 +162,7 @@ const ChatBox = memo(function ChatBox({ roomId }) {
                 autoFocus
                 value={content}
                 onKeyDown={(e) => e.key == "Enter" && PostMsg()}
-                onChange={handleChange}
+                onChange={(e) => setContent(e.target.value)}
                 className="flex-1 bg-transparent outline-none border-none text-sm text-[#cccccc] placeholder-[#6a6a6a]  min-h-8 resize-none max-h-15 "
                 placeholder="Type a message..."
               />

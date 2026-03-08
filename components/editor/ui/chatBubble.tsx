@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,34 +9,78 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Separator } from "@/components/ui/separator";
+
+import { formatte } from "@/lib/features";
 import { CircleX, CopyIcon, Edit3, EllipsisVertical } from "lucide-react";
 import { Fira_Code } from "next/font/google";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 const firaCode = Fira_Code({
   subsets: ["latin"],
   weight: ["400", "500"],
 });
 
-export default function ChatBubble({ name, content, time }) {
+export default function ChatBubble({
+  id,
+  name,
+  content,
+  timeStamp,
+  image,
+  getMsgs,
+  setMsgs,
+}) {
   const [show, setShow] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [textValue, setTextValue] = useState(content);
+  const [editedMsg, setEditedMsg] = useState(content);
 
-  const isLong = content.length > 248;
+  const isLong = useMemo(() => content.length > 248, [content]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content);
   };
 
-  const handleEdit = (e) => {
-    setTextValue(e.target.value);
+  const EditMsg = async (e) => {
+    setIsEdit(false);
+    setMsgs((pre) =>
+      pre.map((i) => (i._id == id ? { ...i, content: editedMsg } : i)),
+    );
+    try {
+      await fetch("api/chat", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ id, editedMsg }),
+      });
+    } catch {
+      toast.error("server error");
+      getMsgs();
+    }
   };
 
-  const handleDelete = () => {};
+  const DeleteMsg = async () => {
+    setMsgs((pre) => pre.filter((i) => i._id !== id));
+    try {
+      await fetch("/api/chat", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      console.log(err);
+      toast.error("server error");
+      getMsgs();
+    }
+  };
 
   return (
     <div
+      key={id}
       className={`${firaCode.className} 
         bg-slate-800 
         text-slate-200 
@@ -46,11 +91,18 @@ export default function ChatBubble({ name, content, time }) {
         mt-4`}
     >
       {/* Header */}
+
       <div className="flex justify-between items-center text-sm font-medium">
-        <span className="capitalize">{name}</span>
+        <div className="flex items-center gap-1">
+          <Avatar className="cursor-pointer size-5">
+            <AvatarImage src={image} />
+            <AvatarFallback>{name || "cx"}</AvatarFallback>
+          </Avatar>
+          <span className="capitalize text-xs">{name}</span>
+        </div>
 
         <div className="flex items-center gap-2 text-xs text-slate-400">
-          {time}
+          {formatte(timeStamp).split("at")[1]}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -68,7 +120,7 @@ export default function ChatBubble({ name, content, time }) {
                 Copy <CopyIcon />
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={handleDelete} className="text-red-400">
+              <DropdownMenuItem onClick={DeleteMsg} className="text-red-400">
                 Delete <CircleX />
               </DropdownMenuItem>
 
@@ -87,8 +139,8 @@ export default function ChatBubble({ name, content, time }) {
         <div className="space-y-2">
           <textarea
             autoFocus
-            value={textValue}
-            onChange={(e) => setTextValue(e.target.value)}
+            value={editedMsg}
+            onChange={(e) => setEditedMsg(e.target.value)}
             className="w-full bg-slate-900 text-slate-200 
                text-sm p-3 rounded-md 
                border border-slate-700 
@@ -100,7 +152,7 @@ export default function ChatBubble({ name, content, time }) {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => {
-                setTextValue(content);
+                setEditedMsg(content);
                 setIsEdit(false);
               }}
               className="text-xs px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 transition"
@@ -109,7 +161,7 @@ export default function ChatBubble({ name, content, time }) {
             </button>
 
             <button
-              onClick={() => setIsEdit(false)}
+              onClick={EditMsg}
               className="text-xs px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 transition"
             >
               Save
