@@ -50,12 +50,12 @@ export async function POST(request: NextRequest) {
 
   session.startTransaction();
 
-  const chatId = await Chat.findOne({ roomId }).select("_id");
+  const chat = await Chat.findOne({ roomId }).select("_id");
 
   try {
-    if (chatId) {
+    if (chat) {
       const msg = await Message.insertOne({
-        chatId,
+        chatId: chat._id,
         userId,
         content,
       });
@@ -105,8 +105,6 @@ export async function PUT(request: NextRequest) {
   await connectDB();
   const body = await request.json();
 
-  console.log(body);
-
   const { id, editedMsg } = body;
 
   try {
@@ -115,8 +113,6 @@ export async function PUT(request: NextRequest) {
       { content: editedMsg },
       { new: true },
     );
-
-    console.log(updatedMessage);
 
     if (!updatedMessage) {
       return Response.json({ error: "Message not found" }, { status: 404 });

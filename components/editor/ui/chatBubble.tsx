@@ -46,7 +46,7 @@ export default function ChatBubble({
       pre.map((i) => (i._id == id ? { ...i, content: editedMsg } : i)),
     );
     try {
-      await fetch("api/chat", {
+      await fetch("/api/chat", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
