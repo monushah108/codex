@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextRequest } from "next/server";
 
-export async function getUser(request: NextRequest) {
+export async function getUserId(request: NextRequest) {
   const session = await auth.api.getSession({
     headers: request.headers,
   });

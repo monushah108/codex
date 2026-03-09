@@ -18,14 +18,12 @@ import { useLayout } from "@/context/layout-context";
 import ChatBoxSkeleton from "./Skeleton/chatBoxSkeleton";
 import { toast } from "sonner";
 import { Toaster } from "../ui/sonner";
-import { useSession } from "@/lib/auth-client";
 
 const ChatBox = memo(function ChatBox({ roomId }) {
   const [msgs, setMsgs] = useState<string[]>([]);
   const [content, setContent] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const { isCollapse } = useLayout();
-  const { data: session } = useSession();
 
   const getMsgs = useCallback(async () => {
     try {
@@ -49,13 +47,11 @@ const ChatBox = memo(function ChatBox({ roomId }) {
   const PostMsg = async () => {
     if (!content.trim()) return;
     setContent("");
-    const user = session?.user;
 
     const msgId = crypto.randomUUID();
 
     const tempMsg = {
       _id: msgId,
-      userId: user?.id,
       content,
       name: "You",
       image: "",
@@ -75,14 +71,7 @@ const ChatBox = memo(function ChatBox({ roomId }) {
       });
       const msg = await res.json();
 
-      console.log(msg, tempMsg);
-      setMsgs((prev) =>
-        prev.map((m) =>
-          m._id === msg.msgId
-            ? { ...msg, image: user?.image, name: user?.name }
-            : m,
-        ),
-      );
+      setMsgs((prev) => prev.map((m) => (m._id === msg.msgId ? msg : m)));
     } catch (err) {
       console.log(err);
       toast.error("Message failed");

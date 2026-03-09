@@ -1,6 +1,6 @@
 import { db } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import { getUser } from "@/lib/getUser";
+import { getUserId } from "@/lib/getUserId";
 import Member from "@/model/member";
 import Room from "@/model/room";
 import mongoose from "mongoose";
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }) {
   await connectDB();
 
   const { id: roomId } = await params;
-  const userId = await getUser(request);
+  const userId = await getUserId(request);
 
   try {
     const isValidId = mongoose.Types.ObjectId.isValid(roomId);
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest, { params }) {
 
   const { id: roomId } = await params;
   const body = await request.json();
-  const userId = await getUser(request);
+  const userId = await getUserId(request);
   const { password } = body;
 
   try {

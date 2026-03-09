@@ -1,14 +1,9 @@
+import { getUserId } from "@/lib/getUserId";
 import Directory from "@/model/directory";
 
-export async function POST(request, { params }) {
+export async function GET(request, { params }) {
   const { id } = await params;
-  const user = request.user;
-
-  await Directory.create({
-    userId: user._id,
-    roomId: id,
-    parentId: user.rootDirId,
-  });
+  const user = await getUserId(request);
 
   return Response.json(null, {
     status: 201,

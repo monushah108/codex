@@ -1,6 +1,6 @@
 import { db } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import { getUser } from "@/lib/getUser";
+import { getUserId } from "@/lib/getUserId";
 import Chat from "@/model/chat";
 import Message from "@/model/message";
 import mongoose from "mongoose";
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   await connectDB();
   const { content, roomId, msgId } = await request.json();
-  const userId = await getUser(request);
+  const userId = await getUserId(request);
   const session = await mongoose.startSession();
 
   session.startTransaction();

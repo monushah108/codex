@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db";
-import { getUser } from "@/lib/getUser";
+import { getUserId } from "@/lib/getUserId";
 import Member from "@/model/member";
 import Room from "@/model/room";
 import { playSchema } from "@/lib/schema/playground";
@@ -10,7 +10,7 @@ import z from "zod";
 export async function POST(request: NextRequest) {
   await connectDB();
   const body = await request.json();
-  const userId = await getUser(request);
+  const userId = await getUserId(request);
   const { success, data, error } = playSchema.safeParse(body);
 
   if (!success) {

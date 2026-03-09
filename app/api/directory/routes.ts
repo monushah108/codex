@@ -1,12 +1,6 @@
-import Directory from "@/model/directory";
+import { getUserId } from "@/lib/getUserId";
 import { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const userId = request.userId;
-
-  const dir = await Directory.findById(userId.rootDirId);
-
-  return Response.json(dir, {
-    status: 200,
-  });
+export async function POST(request: NextRequest) {
+  const userId = await getUserId(request);
 }

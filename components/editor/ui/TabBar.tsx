@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const TabBar = memo(function TabBar({ setOutput, code }) {
   return (
-    <div className="h-[35px] bg-[#2d2d30] border-b border-[#2d2d30] flex items-center justify-between  ">
+    <div className="h-[35px] bg-[#2d2d30] border-b border-[#2d2d30] flex items-center justify-between px-1 ">
       <div>
         <Button
           variant="none"

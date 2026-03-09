@@ -11,7 +11,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 import { formatte } from "@/lib/features";
-import { CircleX, CopyIcon, Edit3, EllipsisVertical } from "lucide-react";
+import {
+  CircleX,
+  CopyIcon,
+  Edit3,
+  EllipsisVertical,
+  ReplyIcon,
+} from "lucide-react";
 import { Fira_Code } from "next/font/google";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -78,6 +84,8 @@ export default function ChatBubble({
     }
   };
 
+  const replyMsg = async () => {};
+
   return (
     <div
       key={id}
@@ -116,6 +124,9 @@ export default function ChatBubble({
               className="bg-slate-800 
         text-slate-200  border-slate-800 shadow-md"
             >
+              <DropdownMenuItem onClick={replyMsg}>
+                reply <ReplyIcon />
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleCopy}>
                 Copy <CopyIcon />
               </DropdownMenuItem>
