@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight, File, Folder } from "lucide-react";
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 
 import { ScrollArea } from "../ui/scroll-area";
 import { ResizablePanel } from "../ui/resizable";
@@ -18,11 +18,36 @@ import NoFolder from "./ui/noFolder";
 import { Separator } from "../ui/separator";
 import { Input } from "../ui/input";
 
-function FileExplore() {
+function FileExplore({ roomId }) {
   const exRef = useRef<PanelImperativeHandle>(null);
   const { isCollapse } = useLayout();
   const [Isproject, setIsproject] = useState(false);
+
+  const [projectDocs, setProjectDocs] = useState([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    getProjectDoc();
+  }, []);
+
+  async function getProjectDoc() {
+    try {
+      const res = await fetch(`/api/directory/${roomId}`, {
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (res.status == 201) {
+        setIsproject(true);
+      }
+
+      setProjectDocs(data);
+    } catch (err) {
+      console.log(err);
+      setError("server failed to fetch");
+    }
+  }
 
   const handleCreateFile = () => {
     setIsproject(true);

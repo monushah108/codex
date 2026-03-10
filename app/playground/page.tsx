@@ -17,7 +17,13 @@ export default function Page() {
         </h2>
         <p className="text-sm text-[#9e9e9e] flex  gap-1">
           Create a room. Invite your peers. Code together in real time.
-          <Image alt="heart" src={heartSvg.src} width="20" height="20" />
+          <Image
+            alt="heart"
+            src={heartSvg.src}
+            width="20"
+            height="20"
+            unoptimized
+          />
         </p>
       </div>
       <Form />

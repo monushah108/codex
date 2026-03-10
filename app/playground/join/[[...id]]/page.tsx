@@ -14,7 +14,7 @@ export default async function Page({ params }) {
   const cookieStore = await cookies();
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/join/${roomId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/playground/join/${roomId}`,
     {
       headers: {
         Cookie: cookieStore.toString(),

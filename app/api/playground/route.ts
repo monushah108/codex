@@ -1,11 +1,11 @@
 import { connectDB } from "@/lib/db";
-import { getUserId } from "@/lib/getUserId";
 import Member from "@/model/member";
 import Room from "@/model/room";
 import { playSchema } from "@/lib/schema/playground";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 import z from "zod";
+import { getUserId } from "@/lib/getUserId";
 
 export async function POST(request: NextRequest) {
   await connectDB();

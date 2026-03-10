@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 const fileSchema = new Schema({
   name: {
@@ -18,6 +18,6 @@ const fileSchema = new Schema({
   },
 });
 
-const File = model("File", fileSchema);
+const File = models.File || model("File", fileSchema);
 
 export default File;

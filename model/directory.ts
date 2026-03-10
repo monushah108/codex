@@ -1,12 +1,7 @@
-import { model, Schema } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 const directorySchema = new Schema(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: "User",
-    },
     name: {
       type: String,
       required: true,
@@ -26,6 +21,6 @@ const directorySchema = new Schema(
   },
 );
 
-const Directory = model("Directory", directorySchema);
+const Directory = models.Directory || model("Directory", directorySchema);
 
 export default Directory;

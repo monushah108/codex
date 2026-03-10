@@ -20,7 +20,7 @@ export default function JoinRoom({ owner, roomId }) {
     try {
       setIsLoading(true);
 
-      const res = await fetch(`/api/join/${roomId}`, {
+      const res = await fetch(`/api/playground/join/${roomId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

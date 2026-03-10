@@ -1,6 +1,7 @@
 import { db } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { getUserId } from "@/lib/getUserId";
+
 import Member from "@/model/member";
 import Room from "@/model/room";
 import mongoose from "mongoose";
@@ -43,7 +44,6 @@ export async function GET(request: NextRequest, { params }) {
 
     const user = await users.findOne({ _id: room.adminId });
 
-    // ✅ Private room → ask password
     if (room.type === "private") {
       return Response.json(
         {
@@ -56,7 +56,6 @@ export async function GET(request: NextRequest, { params }) {
       );
     }
 
-    // ✅ Public room → allow entry
     return Response.json(
       {
         access: "granted",
@@ -79,8 +78,6 @@ export async function POST(request: NextRequest, { params }) {
 
   try {
     const room = await Room.findById(roomId);
-
-    console.log(room);
 
     if (!room) {
       return Response.json({ error: "Room not found" }, { status: 404 });

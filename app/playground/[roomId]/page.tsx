@@ -17,12 +17,12 @@ export default async function Page({ params }) {
   const cookieStore = await cookies();
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/join/${roomId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/playground/${roomId}`,
     {
       headers: {
         Cookie: cookieStore.toString(),
       },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     },
   );
 
@@ -41,7 +41,7 @@ export default async function Page({ params }) {
         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
           {/* File Explorer */}
 
-          <FileExplore />
+          <FileExplore roomId={roomId} />
 
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
