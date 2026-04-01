@@ -8,11 +8,6 @@ const roomSchema = new Schema(
       required: true,
       trim: true,
     },
-    projectId: {
-      type: Schema.Types.ObjectId,
-      ref: "Directory",
-      default: null,
-    },
     type: {
       type: String,
       enum: ["public", "private"],
@@ -27,6 +22,11 @@ const roomSchema = new Schema(
     adminId: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+    rootDirId: {
+      type: Schema.Types.ObjectId,
+      ref: "Directory",
       required: true,
     },
   },

@@ -2,10 +2,11 @@ import { connectDB } from "@/lib/db";
 import Member from "@/model/member";
 import Room from "@/model/room";
 import { playSchema } from "@/lib/schema/playground";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { NextRequest } from "next/server";
 import z from "zod";
 import { getUserId } from "@/lib/getUserId";
+import Directory from "@/model/directory";
 
 export async function POST(request: NextRequest) {
   await connectDB();
@@ -24,12 +25,17 @@ export async function POST(request: NextRequest) {
   session.startTransaction();
 
   try {
+    const rootDirId = new Types.ObjectId();
+    const roomId = new Types.ObjectId();
+
     const room = await Room.insertOne(
       {
+        _id: roomId,
         adminId: userId,
         name: roomName,
         type: roomType,
         password,
+        rootDirId,
       },
       { session },
     );
@@ -37,8 +43,17 @@ export async function POST(request: NextRequest) {
     await Member.insertOne(
       {
         userId,
-        roomId: room._id,
+        roomId,
         role: "admin",
+      },
+      { session },
+    );
+
+    await Directory.insertOne(
+      {
+        _id: rootDirId,
+        name: roomName,
+        roomId,
       },
       { session },
     );

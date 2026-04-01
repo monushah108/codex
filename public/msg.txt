@@ -1,1 +1,4 @@
 join and playground folder has wrong architucher 
+
+i think i should move the code in lib validate file and 
+for user Id we can use api.auth

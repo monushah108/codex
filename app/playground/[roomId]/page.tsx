@@ -28,7 +28,7 @@ export default async function Page({ params }) {
 
   if (res.status == 403) {
     redirect(`/playground/join/${roomId}`);
-  } else if (res.status == 400) {
+  } else if (res.status == 400 || res.status == 404) {
     redirect("/profile");
   }
 

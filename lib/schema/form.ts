@@ -5,7 +5,7 @@ export const signUpSchema = z
     name: z
       .string("please enter name")
       .min(4, "name should be 4 min")
-      .max(8, "name can be at max 8 characters"),
+      .max(10, "name can be at max 8 characters"),
     email: z.email("please enter email"),
     password: z
       .string("please enter password")

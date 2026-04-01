@@ -6,7 +6,7 @@ const directorySchema = new Schema(
       type: String,
       required: true,
     },
-    parentId: {
+    parentDirId: {
       type: Schema.Types.ObjectId,
       default: null,
       ref: "Directory",

@@ -7,13 +7,13 @@ export async function GET(request: NextRequest, { params }) {
   const { id: roomId } = await params;
   const userId = await getUserId(request);
 
-  const hasRootDir = await Directory.findOne({
+  const rootDir = await Directory.findOne({
     roomId,
     parentId: null,
   });
 
   try {
-    if (!hasRootDir) {
+    if (!rootDir) {
       return Response.json(
         { error: "no root directory found !!" },
         { status: 404 },
@@ -22,16 +22,14 @@ export async function GET(request: NextRequest, { params }) {
 
     const directories = await Directory.find({
       roomId,
-      parentId: userId,
     }).lean();
 
     const files = await File.find({
       roomId,
-      parentId: userId,
     }).lean();
 
     return Response.json(
-      { directories, files },
+      { rootDir, directories, files },
       {
         status: 201,
       },
