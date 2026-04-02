@@ -31,6 +31,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-file-icon": "^1.6.0",
     "react-redux": "^9.2.0",
     "react-resizable-panels": "^4.6.2",
     "socket.io": "^4.8.3",
