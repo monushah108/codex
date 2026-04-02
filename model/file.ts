@@ -6,15 +6,14 @@ const fileSchema = new Schema({
     required: true,
     trim: true,
   },
-  parentId: {
+  parentDirId: {
     type: Schema.Types.ObjectId,
     default: null,
     ref: "Directory",
   },
-  userId: {
+  roomId: {
     type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+    ref: "Room",
   },
 });
 

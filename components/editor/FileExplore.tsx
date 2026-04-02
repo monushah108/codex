@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  ChevronRight,
-  File,
-  FilePlus,
-  Folder,
-  FolderPlus,
-  Repeat2,
-} from "lucide-react";
+import { ChevronRight, FilePlus, FolderPlus, Repeat2 } from "lucide-react";
+
 import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 
 import { ResizablePanel } from "../ui/resizable";
@@ -20,30 +14,26 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
+import FolderItem from "./ui/folderItem";
 import NoFolder from "./ui/noFolder";
-
 import { Spinner } from "../ui/spinner";
-
-type EntryType = "file" | "folder";
-type Entryprop = {
-  name: string;
-  type: EntryType | null;
-  ext?: string;
-};
 
 function FileExplore({ roomId }) {
   const exRef = useRef<PanelImperativeHandle>(null);
   const { isCollapse } = useLayout();
-  const [Isproject, setIsproject] = useState(false);
-  const [isPending, startTransition] = useTransition();
+
+  const [isProject, setIsProject] = useState(false);
+  const [doc, setDoc] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [Doc, setDoc] = useState({});
-  const [newEntry, setNewEntry] = useState<Entryprop>({
-    name: "",
+
+  const [creating, setCreating] = useState({
+    parentId: null,
     type: null,
-    ext: "",
   });
+
   const [error, setError] = useState("");
+
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     getProjectDoc();
@@ -58,25 +48,43 @@ function FileExplore({ roomId }) {
 
         const data = await res.json();
 
-        if (res.status == 201) {
-          setIsproject(true);
+        if (res.status === 201) {
+          setIsProject(true);
         }
 
         setDoc(data);
       } catch (err) {
         console.log(err);
-        setError("server failed to fetch");
+        setError("Server failed to fetch explorer");
       }
     });
   }
 
+  console.log(doc, selected);
+
   const handleCreateFile = () => {
-    setIsproject(true);
+    const parent = selected || doc?.rootDir?._id;
+
+    setCreating({
+      parentId: parent,
+      type: "file",
+    });
   };
 
   const handleCreateFolder = () => {
-    setIsproject(true);
+    const parent = selected || doc?.rootDir?._id;
+
+    setCreating({
+      parentId: parent,
+      type: "folder",
+    });
   };
+
+  if (error) {
+    return (
+      <div className="p-2 text-red-400 text-sm">Explorer Error: {error}</div>
+    );
+  }
 
   return (
     <ResizablePanel
@@ -89,78 +97,81 @@ function FileExplore({ roomId }) {
         <div className="flex flex-col h-full border-r border-[#2d2d30] bg-[#1e1e1e] text-gray-300">
           {/* Explorer Header */}
           <FileHeader
-            Isproject={Isproject}
+            Isproject={isProject}
             handleCreateFile={handleCreateFile}
             handleCreateFolder={handleCreateFolder}
           />
+
           {/* Empty State */}
-          <NoFolder Isproject={Isproject} setIsproject={setIsproject} />
+          {/* <NoFolder Isproject={isProject} setIsproject={setIsProject} /> */}
 
           {isPending ? (
-            <Spinner className="size-5" />
+            <div className="flex justify-center py-3">
+              <Spinner className="size-5" />
+            </div>
           ) : (
-            <Collapsible defaultOpen className="group">
-              <div className="flex items-center justify-between px-2 py-1 hover:bg-[#2a2d2e] rounded">
-                {/* Trigger */}
-                <CollapsibleTrigger className="flex items-center gap-1 flex-1 cursor-pointer">
-                  <ChevronRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                  <span>{Doc.rootDir?.name}</span>
-                </CollapsibleTrigger>
-
-                {/* Buttons */}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCreateFile();
-                    }}
-                    className="p-1 rounded hover:bg-[#3a3d3e]"
+            doc?.rootDir && (
+              <Collapsible defaultOpen className="group">
+                {/* Root Folder Header */}
+                <div className="flex items-center justify-between px-2 py-1 hover:bg-[#2a2d2e] rounded">
+                  <CollapsibleTrigger
+                    className="flex items-center gap-1 flex-1 cursor-pointer"
+                    onClick={() => setSelected(doc.rootDir._id)}
                   >
-                    <FilePlus className="size-4" />
-                  </button>
+                    <ChevronRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                    <span>{doc.rootDir.name}</span>
+                  </CollapsibleTrigger>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCreateFolder();
-                    }}
-                    className="p-1 rounded hover:bg-[#3a3d3e]"
-                  >
-                    <FolderPlus className="size-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCreateFile();
+                      }}
+                      className="p-1 rounded hover:bg-[#3a3d3e]"
+                    >
+                      <FilePlus className="size-4" />
+                    </button>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="p-1 rounded hover:bg-[#3a3d3e]"
-                  >
-                    <Repeat2 className="size-4" />
-                  </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCreateFolder();
+                      }}
+                      className="p-1 rounded hover:bg-[#3a3d3e]"
+                    >
+                      <FolderPlus className="size-4" />
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        getProjectDoc();
+                      }}
+                      className="p-1 rounded hover:bg-[#3a3d3e]"
+                    >
+                      <Repeat2 className="size-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <CollapsibleContent>
-                {/* <div className="ml-5 space-y-1">
-                  <div className="flex items-center gap-2 px-2 py-1 hover:bg-[#2a2d2e] rounded cursor-pointer">
-                    <File className="w-4 h-4 text-blue-400" />
-                    app.tsx
-                  </div>
-
-                  <div className="flex items-center gap-2 px-2 py-1 hover:bg-[#2a2d2e] rounded cursor-pointer">
-                    <File className="w-4 h-4 text-blue-400" />
-                    index.tsx
-                  </div>
-                </div> */}
-              </CollapsibleContent>
-            </Collapsible>
+                <CollapsibleContent>
+                  <FolderItem
+                    item={doc.rootDir}
+                    roomId={roomId}
+                    creating={creating}
+                    setCreating={setCreating}
+                    setSelected={setSelected}
+                    refresh={getProjectDoc}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            )
           )}
         </div>
       </Suspense>
     </ResizablePanel>
   );
 }
-
-/* jab create butn pe click  ho to tab add folderName option ae  */
 
 export default FileExplore;
