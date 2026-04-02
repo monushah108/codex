@@ -1,6 +1,7 @@
 import { getUserId } from "@/lib/getUserId";
 import Directory from "@/model/directory";
 import File from "@/model/file";
+import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
 /* =========================
@@ -12,27 +13,38 @@ export async function GET(request: NextRequest, { params }) {
 
   const parentId = request.nextUrl.searchParams.get("parentId");
 
-  const rootDir = await Directory.findOne({
-    roomId,
-    parentDirId: null,
-  }).lean();
+  let parentObjectId = null;
+  let rootDir = null;
 
-  if (!rootDir) {
-    return Response.json(
-      { error: "root directory not found" },
-      { status: 404 },
-    );
+  if (!parentId || parentId === "null") {
+    rootDir = await Directory.findOne({
+      roomId,
+      parentDirId: null,
+    }).lean();
+
+    if (!rootDir) {
+      return Response.json(
+        { error: "root directory not found" },
+        { status: 404 },
+      );
+    }
+
+    parentObjectId = rootDir._id;
+  } else {
+    parentObjectId = new mongoose.Types.ObjectId(parentId);
   }
 
   try {
     const folders = await Directory.find({
       roomId,
-      parentDirId: parentId === "null" ? null : parentId,
+      parentDirId: parentObjectId,
     }).lean();
+
+    console.log("miss", parentObjectId, folders, parentId);
 
     const files = await File.find({
       roomId,
-      parentDirId: parentId === "null" ? null : parentId,
+      parentDirId: parentObjectId,
     }).lean();
 
     return Response.json(
@@ -57,13 +69,12 @@ export async function GET(request: NextRequest, { params }) {
    POST → Create File/Folder
 ========================= */
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }) {
+  const { id: roomId } = await params;
   try {
     const body = await request.json();
 
-    const { name, parentId, type, roomId } = body;
-
-    const userId = await getUserId(request);
+    const { name, parentId, type } = body;
 
     if (!name || !type) {
       return Response.json(

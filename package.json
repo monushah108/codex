@@ -39,7 +39,8 @@
     "tailwind-merge": "^3.4.0",
     "y-monaco": "^0.1.6",
     "yjs": "^13.6.29",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

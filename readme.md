@@ -1,65 +1,157 @@
+<div align="center">
+  <img src="./public/logo.svg" alt="Project Logo" width="80" />
+  
+</div>
+
+<h1 align="center">
+  Real-Time Collaborative Workspace
+</h1>
+
+<p align="center">
+A modern collaborative platform where users can create rooms, chat in real-time, and manage files with a nested folder structure.
+</p>
+
+---
+
+# Features
+
+- Real-time collaboration between users
+- Room-based workspaces
+- Live chat messaging
+- Nested folder and file management
+- Role-based room permissions
+- Optimistic UI updates
+- Cached file explorer state
+- Real-time synchronization across clients
+- Smooth animated user interface
+
+---
+
+# Tech Stack
+
+This project uses a modern **full-stack architecture**.
+
+## Frontend
+
+- Next.js – Full-stack React framework used for routing, server components, and API routes.
+- Framer Motion – Smooth UI animations and transitions.
+- shadcn/ui – Accessible UI component library.
+- Zustand – Lightweight state management.
+- Zod – Schema validation for API inputs.
+
+## Real-Time Collaboration
+
+- Yjs – CRDT-based collaborative state synchronization.
+- Socket.IO – Real-time communication layer.
+
+## Backend
+
+- Next.js API Routes – Server-side backend logic.
+
+## Database
+
+- MongoDB – NoSQL database storing users, rooms, messages, and files.
+
+---
+
+# System Capabilities
+
+Using this stack, the system supports:
+
+- Real-time collaborative workspaces
+- Live chat between room members
+- Nested folder and file management
+- Role-based access control
+- Cached folder and file explorer
+- Optimistic UI updates
+- Smooth animated UI interactions
+- Scalable backend architecture
+
+---
+
+# High Level Architecture
+
+```
+Client (Next.js + React)
+│
+├─ UI Components (shadcn/ui)
+├─ Animations (Framer Motion)
+├─ State Management (Zustand)
+│
+├─ Real-Time Layer
+│   ├─ Yjs (collaborative state)
+│   └─ Socket.IO (live communication)
+│
+▼
+Next.js API Routes
+│
+▼
+MongoDB Database
+```
+
+---
+
 # Database Design Documentation
 
-This document explains the database structure used in the project.
-The system is designed to support **collaborative rooms, chat messaging, and file/document management**.
+This section explains the database structure used in the project.
+
+The system is designed to support:
+
+- collaborative rooms
+- chat messaging
+- hierarchical document and file management
 
 ---
 
 # Overview
 
-The database consists of the following main entities:
+The database consists of the following entities:
 
-- **User** – Stores user profile and authentication data.
-- **Room** – Represents a collaborative workspace or project.
-- **RoomMember** – Manages membership and permissions in rooms.
-- **Chat** – Represents a chat thread inside a room.
-- **Message** – Stores chat messages.
-- **Doc** – Represents folders/directories inside a room.
-- **File** – Represents files stored inside folders.
+- **User**
+- **Room**
+- **RoomMember**
+- **Chat**
+- **Message**
+- **Doc**
+- **File**
 
-The design follows a **modular and scalable structure** so rooms, chats, and files can grow independently.
+The design follows a **modular and scalable structure**.
 
 ---
 
 # Entity Descriptions
 
-## 1. User
+## User
 
-Stores information about registered users.
+Stores registered users.
 
-| Field     | Type   | Description                          |
-| --------- | ------ | ------------------------------------ |
-| id        | string | Unique identifier for the user       |
-| name      | string | User's display name                  |
-| picture   | string | URL to the user's avatar             |
-| password  | string | Hashed password                      |
-| rootDirId | string | Root directory belonging to the user |
+| Field     | Type   | Description       |
+| --------- | ------ | ----------------- |
+| id        | string | Unique identifier |
+| name      | string | Display name      |
+| picture   | string | Avatar URL        |
+| password  | string | Hashed password   |
+| rootDirId | string | Root directory    |
 
-A user can:
+Users can:
 
-- Own rooms
-- Send messages
-- Upload files
-- Create documents/folders
+- own rooms
+- send messages
+- upload files
+- create folders
 
 ---
 
-## 2. Room
+## Room
 
-Represents a collaborative workspace where users can interact.
+Collaborative workspace.
 
-| Field     | Type   | Description                    |
-| --------- | ------ | ------------------------------ |
-| id        | string | Unique identifier for the room |
-| name      | string | Room name                      |
-| projectId | string | Associated project identifier  |
-| admin     | string | Owner of the room              |
-
-A room can contain:
-
-- multiple **members**
-- one **chat thread**
-- multiple **documents/folders**
+| Field     | Type   | Description        |
+| --------- | ------ | ------------------ |
+| id        | string | Unique identifier  |
+| name      | string | Room name          |
+| projectId | string | Associated project |
+| admin     | string | Room owner         |
 
 Relationship:
 
@@ -69,41 +161,35 @@ Room.admin → User.id
 
 ---
 
-## 3. RoomMember
+## RoomMember
 
-Manages which users belong to which rooms.
+Manages membership and permissions.
 
-| Field      | Type   | Description                                |
-| ---------- | ------ | ------------------------------------------ |
-| id         | string | Unique identifier                          |
-| userId     | string | Reference to the user                      |
-| roomId     | string | Reference to the room                      |
-| role       | enum   | Member role (admin / editor / viewer etc.) |
-| permission | string | Custom permissions                         |
+| Field      | Type   | Description        |
+| ---------- | ------ | ------------------ |
+| id         | string | Unique identifier  |
+| userId     | string | Reference to user  |
+| roomId     | string | Reference to room  |
+| role       | enum   | Member role        |
+| permission | string | Custom permissions |
 
-Relationship:
+Relationships:
 
 ```
 RoomMember.roomId → Room.id
 RoomMember.userId → User.id
 ```
 
-This table allows:
-
-- **multiple users per room**
-- **multiple roles**
-- flexible permission systems
-
 ---
 
-## 4. Chat
+## Chat
 
-Represents the chat system inside a room.
+Represents chat threads.
 
-| Field  | Type   | Description                    |
-| ------ | ------ | ------------------------------ |
-| id     | string | Unique identifier              |
-| roomId | string | Room to which the chat belongs |
+| Field  | Type   | Description       |
+| ------ | ------ | ----------------- |
+| id     | string | Unique identifier |
+| roomId | string | Associated room   |
 
 Relationship:
 
@@ -111,48 +197,40 @@ Relationship:
 Chat.roomId → Room.id
 ```
 
-Each room can have **one chat channel**.
-
 ---
 
-## 5. Message
+## Message
 
-Stores messages sent in chat.
+Stores chat messages.
 
-| Field     | Type   | Description                                |
-| --------- | ------ | ------------------------------------------ |
-| id        | string | Unique identifier                          |
-| chatId    | string | Chat thread reference                      |
-| userId    | string | Sender of the message                      |
-| content   | string | Message text                               |
-| repliedId | string | Reference to another message (for replies) |
+| Field     | Type   | Description       |
+| --------- | ------ | ----------------- |
+| id        | string | Unique identifier |
+| chatId    | string | Chat reference    |
+| userId    | string | Sender            |
+| content   | string | Message text      |
+| repliedId | string | Reply reference   |
 
-Relationship:
+Relationships:
 
 ```
 Message.chatId → Chat.id
 Message.userId → User.id
 ```
 
-Features supported:
-
-- threaded replies
-- message ownership
-- scalable message history
-
 ---
 
-## 6. Doc (Folder / Directory)
+## Doc (Folder)
 
-Represents folders inside a room.
+Represents directories.
 
-| Field    | Type   | Description                      |
-| -------- | ------ | -------------------------------- |
-| id       | string | Unique identifier                |
-| name     | string | Folder name                      |
-| parentId | string | Parent folder                    |
-| roomId   | string | Room to which the folder belongs |
-| userId   | string | Creator of the folder            |
+| Field    | Type   | Description       |
+| -------- | ------ | ----------------- |
+| id       | string | Unique identifier |
+| name     | string | Folder name       |
+| parentId | string | Parent folder     |
+| roomId   | string | Associated room   |
+| userId   | string | Creator           |
 
 Relationships:
 
@@ -161,20 +239,18 @@ Doc.userId → User.id
 Doc.roomId → Room.id
 ```
 
-This allows **nested folder structures**.
-
 ---
 
-## 7. File
+## File
 
-Represents files stored inside folders.
+Represents files inside folders.
 
 | Field    | Type   | Description       |
 | -------- | ------ | ----------------- |
 | id       | string | Unique identifier |
 | name     | string | File name         |
 | parentId | string | Parent folder     |
-| userId   | string | Owner of the file |
+| userId   | string | Owner             |
 
 Relationship:
 
@@ -183,14 +259,9 @@ File.parentId → Doc.id
 File.userId → User.id
 ```
 
-This supports:
-
-- hierarchical file systems
-- folder-based organization
-
 ---
 
-# Relationships Diagram (Simplified)
+# Relationships Diagram
 
 ```
 User
@@ -198,7 +269,6 @@ User
  │ owns
  ▼
 Room ────── RoomMember ────── User
- │
  │
  ▼
 Chat
@@ -208,7 +278,6 @@ Message
  │
  ▼
 User
-
 
 Room
  │
@@ -221,26 +290,48 @@ File
 
 ---
 
-# Key Design Decisions
+# Setup Instructions
 
-### 1. Room-Based Architecture
+### Clone Repository
 
-All collaboration happens inside **rooms**, making it easy to scale permissions and features.
+```
+git clone https://github.com/your-username/your-project.git
+cd your-project
+```
 
-### 2. Separation of Chat and Messages
+### Install Dependencies
 
-A separate **Chat table** allows future expansion like:
+```
+npm install
+```
 
-- multiple channels
-- private chats
-- message analytics
+### Run Development Server
 
-### 3. Folder-Based Document System
+```
+npm run dev
+```
 
-`Doc` represents directories and `File` represents files, allowing **nested file structures**.
+Open:
 
-### 4. Role-Based Access Control
-
-`RoomMember` stores roles and permissions, enabling flexible access control.
+```
+http://localhost:3000
+```
 
 ---
+
+# Future Improvements
+
+Possible future enhancements:
+
+- collaborative code editor
+- drag and drop file explorer
+- file version history
+- multi-channel chat
+- collaborative whiteboard
+- real-time cursors
+
+---
+
+# License
+
+MIT License
