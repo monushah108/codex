@@ -15,6 +15,10 @@ const fileSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Room",
   },
+  url: {
+    type: String,
+    required: true,
+  },
 });
 
 const File = models.File || model("File", fileSchema);
