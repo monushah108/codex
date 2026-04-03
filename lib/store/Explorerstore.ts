@@ -212,17 +212,29 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   /* ---------------- DELETE ---------------- */
 
   deleteFile: (parentId, fileId) =>
-    set((state) => ({
-      cache: {
-        ...state.cache,
-        [parentId]: {
-          ...state.cache[parentId],
-          files:
-            state.cache[parentId]?.files.filter((f) => f._id !== fileId) || [],
+    set((state) => {
+      const newFiles = state.openFiles.filter((f) => f._id !== fileId);
+
+      let newActive = state.activeFileId;
+
+      if (state.activeFileId === fileId) {
+        newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
+      }
+
+      return {
+        cache: {
+          ...state.cache,
+          [parentId]: {
+            ...state.cache[parentId],
+            files:
+              state.cache[parentId]?.files.filter((f) => f._id !== fileId) ||
+              [],
+          },
         },
-      },
-      openFiles: state.openFiles.filter((f) => f._id !== fileId),
-    })),
+        openFiles: newFiles,
+        activeFileId: newActive,
+      };
+    }),
 
   deleteFolder: (parentId, folderId) =>
     set((state) => ({

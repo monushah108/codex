@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -13,18 +15,20 @@ import {
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  open: boolean;
   onSave: () => void;
   onDiscard: () => void;
-  onCancel: () => void;
 };
 
-export default function SaveFile({ open, onSave, onDiscard, onCancel }: Props) {
+export default function SaveFile({ onSave, onDiscard }: Props) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Dialog open={open} onOpenChange={onCancel}>
-      <DialogTrigger>
-        <span className="size-1.5 bg-white rounded-full"></span>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {/* Trigger */}
+      <DialogTrigger asChild>
+        <span className="size-2 bg-white rounded-full cursor-pointer"></span>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle>Unsaved Changes</DialogTitle>
@@ -34,15 +38,28 @@ export default function SaveFile({ open, onSave, onDiscard, onCancel }: Props) {
         </DialogHeader>
 
         <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
 
-          <Button variant="destructive" onClick={onDiscard}>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              onDiscard();
+              setOpen(false);
+            }}
+          >
             Discard
           </Button>
 
-          <Button onClick={onSave}>Save</Button>
+          <Button
+            onClick={() => {
+              onSave();
+              setOpen(false);
+            }}
+          >
+            Save
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

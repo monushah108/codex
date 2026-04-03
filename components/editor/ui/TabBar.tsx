@@ -32,15 +32,13 @@ const TabBar = memo(function TabBar() {
 
               {file.isEdited ? (
                 <SaveFile
-                  open={openDialog}
-                  onCancel={() => setOpenDialog(false)}
                   onDiscard={() => {
                     setOpenDialog(false);
                     setActiveFile(nextFile);
                   }}
                   onSave={() => {
                     setOpenDialog(false);
-                    setEdited(activeFileId, true);
+                    setEdited(activeFileId, false);
                   }}
                 />
               ) : (
