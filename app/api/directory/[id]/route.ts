@@ -38,9 +38,8 @@ export async function GET(request: NextRequest, { params }) {
     const folders = await Directory.find({
       roomId,
       parentDirId: parentObjectId,
+      _id: { $ne: rootDir?._id },
     }).lean();
-
-    console.log("miss", parentObjectId, folders, parentId);
 
     const files = await File.find({
       roomId,
