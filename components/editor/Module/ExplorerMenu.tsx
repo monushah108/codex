@@ -13,7 +13,7 @@ export default function ExplorerMenu({
   onDelete,
 }) {
   return (
-    <ContextMenu>
+    <ContextMenu key={id}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
 
       <ContextMenuContent className="w-40 bg-[#3a3d3e] border-[#3a3d3e]">

@@ -17,7 +17,6 @@ const fileSchema = new Schema({
   },
   url: {
     type: String,
-    required: true,
   },
 });
 

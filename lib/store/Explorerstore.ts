@@ -13,6 +13,7 @@ type FolderItem = {
 type FolderChildren = {
   folders: FolderItem[];
   files: FileItem[];
+  selectedFileId?: string;
   loaded: boolean;
   loading: boolean;
 };
@@ -20,7 +21,21 @@ type FolderChildren = {
 type ExplorerStore = {
   cache: Record<string, FolderChildren>;
 
+  /* IDE FILE STATE */
+
+  openFiles: FileItem[];
+  activeFileId: string | null;
+
+  openFile: (file: FileItem) => void;
+  closeFile: (fileId: string) => void;
+  setActiveFile: (fileId: string) => void;
+
+  /* DIRECTORY */
+
   loadFolder: (roomId: string, parentId: string) => Promise<void>;
+  setSelectedFile: (parentId: string, fileId: string) => void;
+
+  /* CRUD */
 
   addFile: (parentId: string, file: FileItem) => void;
   addFolder: (parentId: string, folder: FolderItem) => void;
@@ -34,6 +49,42 @@ type ExplorerStore = {
 
 export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   cache: {},
+
+  /* ---------------- OPEN FILES ---------------- */
+
+  openFiles: [],
+  activeFileId: null,
+
+  openFile: (file) =>
+    set((state) => {
+      const exists = state.openFiles.find((f) => f._id === file._id);
+
+      if (exists) {
+        return { activeFileId: file._id };
+      }
+
+      return {
+        openFiles: [...state.openFiles, file],
+        activeFileId: file._id,
+      };
+    }),
+
+  closeFile: (fileId) =>
+    set((state) => {
+      const newFiles = state.openFiles.filter((f) => f._id !== fileId);
+
+      return {
+        openFiles: newFiles,
+        activeFileId:
+          state.activeFileId === fileId
+            ? newFiles.length
+              ? newFiles[newFiles.length - 1]._id
+              : null
+            : state.activeFileId,
+      };
+    }),
+
+  setActiveFile: (fileId) => set({ activeFileId: fileId }),
 
   /* ---------------- LOAD FOLDER ---------------- */
 
@@ -84,6 +135,19 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
     }
   },
 
+  /* ---------------- SELECT FILE ---------------- */
+
+  setSelectedFile: (parentId, fileId) =>
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [parentId]: {
+          ...state.cache[parentId],
+          selectedFileId: fileId,
+        },
+      },
+    })),
+
   /* ---------------- ADD ---------------- */
 
   addFile: (parentId, file) =>
@@ -122,6 +186,9 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
             ) || [],
         },
       },
+      openFiles: state.openFiles.map((f) =>
+        f._id === fileId ? { ...f, name: newName } : f,
+      ),
     })),
 
   renameFolder: (parentId, folderId, newName) =>
@@ -150,6 +217,7 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
             state.cache[parentId]?.files.filter((f) => f._id !== fileId) || [],
         },
       },
+      openFiles: state.openFiles.filter((f) => f._id !== fileId),
     })),
 
   deleteFolder: (parentId, folderId) =>

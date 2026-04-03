@@ -32,6 +32,7 @@ function FolderItem({
   const renameFolder = useExplorerstore((s) => s.renameFolder);
   const deleteFile = useExplorerstore((s) => s.deleteFile);
   const deleteFolder = useExplorerstore((s) => s.deleteFolder);
+  const openFile = useExplorerstore((s) => s.openFile);
 
   const folders = cache?.folders || [];
   const files = cache?.files || [];
@@ -42,6 +43,22 @@ function FolderItem({
   const isSelected = selected === item._id;
 
   /* ---------------- CREATE ---------------- */
+
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    console.log("Cloudinary URL:", data.secure_url);
+
+    return data.secure_url;
+  };
 
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
@@ -174,7 +191,10 @@ function FolderItem({
               onDelete={(id) => handleDelete(id, "file")}
             >
               <div
-                onClick={() => setSelected(file._id)}
+                onClick={() => {
+                  setSelected(file._id);
+                  openFile(file);
+                }}
                 style={{ paddingLeft: indent + 20 }}
                 className={`flex items-center gap-2 py-1 rounded
                 ${isSelectedFile ? "bg-[#37373d]" : "hover:bg-[#2a2d2e]"}`}
