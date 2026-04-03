@@ -2,3 +2,20 @@ join and playground folder has wrong architucher
 
 i think i should move the code in lib validate file and 
 for user Id we can use api.auth
+
+
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    console.log("Cloudinary URL:", data.secure_url);
+
+    return data.secure_url;
+  };

@@ -44,22 +44,6 @@ function FolderItem({
 
   /* ---------------- CREATE ---------------- */
 
-  const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    console.log("Cloudinary URL:", data.secure_url);
-
-    return data.secure_url;
-  };
-
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
 

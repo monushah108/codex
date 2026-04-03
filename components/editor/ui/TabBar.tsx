@@ -1,29 +1,60 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 
 import { Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useExplorerstore } from "@/lib/store/Explorerstore";
+import SaveFile from "../Module/saveFile";
 
 const TabBar = memo(function TabBar() {
+  const [openDialog, setOpenDialog] = useState(false);
   const openFiles = useExplorerstore((s) => s.openFiles);
   const activeFileId = useExplorerstore((s) => s.activeFileId);
   const closeFile = useExplorerstore((s) => s.closeFile);
+  const openFile = useExplorerstore((s) => s.openFile);
+  const setEdited = useExplorerstore((s) => s.setFileEdited);
+  const setActiveFile = useExplorerstore((s) => s.setActiveFile);
+
+  const nextFile = openFiles.find((f) => f._id !== activeFileId);
 
   return (
     <div className="h-8.75 bg-[#2d2d30] border-b border-[#2d2d30] flex items-center justify-between px-1 ">
-      <div className="flex items-center space-x-1 overflow-x-auto">
+      <div className="flex items-center gap-0.5 overflow-x-auto">
         {openFiles.map((file) => {
           const isActive = file._id === activeFileId;
           return (
             <Button
               key={file._id}
               variant="none"
-              className={`border-t-4 ${isActive ? "bg-blue-700/20 border-blue-600" : "border-transparent"}`}
+              className={`border-t-4  rounded-xs group ${isActive ? "bg-blue-700/20 border-blue-600" : "border-blue-600/60 bg-blue-600/10 hover:bg-[#3a3a3d]"} t`}
+              onClick={() => openFile(file)}
             >
               {file.name}
-              <span onClick={() => closeFile(file._id)}>
-                <X />
-              </span>
+
+              {file.isEdited ? (
+                <SaveFile
+                  open={openDialog}
+                  onCancel={() => setOpenDialog(false)}
+                  onDiscard={() => {
+                    setOpenDialog(false);
+                    setActiveFile(nextFile);
+                  }}
+                  onSave={() => {
+                    setOpenDialog(false);
+                    setEdited(activeFileId, true);
+                  }}
+                />
+              ) : (
+                <span
+                  className="group-hover:opacity-100 opacity-0 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+
+                    closeFile(file._id);
+                  }}
+                >
+                  <X />
+                </span>
+              )}
             </Button>
           );
         })}

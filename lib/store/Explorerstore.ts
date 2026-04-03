@@ -3,6 +3,7 @@ import { create } from "zustand";
 type FileItem = {
   _id: string;
   name: string;
+  isEdited?: boolean;
 };
 
 type FolderItem = {
@@ -21,21 +22,16 @@ type FolderChildren = {
 type ExplorerStore = {
   cache: Record<string, FolderChildren>;
 
-  /* IDE FILE STATE */
-
   openFiles: FileItem[];
   activeFileId: string | null;
 
   openFile: (file: FileItem) => void;
   closeFile: (fileId: string) => void;
   setActiveFile: (fileId: string) => void;
-
-  /* DIRECTORY */
+  setFileEdited: (fileId: string, edited: boolean) => void;
 
   loadFolder: (roomId: string, parentId: string) => Promise<void>;
   setSelectedFile: (parentId: string, fileId: string) => void;
-
-  /* CRUD */
 
   addFile: (parentId: string, file: FileItem) => void;
   addFolder: (parentId: string, folder: FolderItem) => void;
@@ -64,7 +60,7 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
       }
 
       return {
-        openFiles: [...state.openFiles, file],
+        openFiles: [...state.openFiles, { ...file, isEdited: false }],
         activeFileId: file._id,
       };
     }),
@@ -73,18 +69,26 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
     set((state) => {
       const newFiles = state.openFiles.filter((f) => f._id !== fileId);
 
+      let newActive = state.activeFileId;
+
+      if (state.activeFileId === fileId) {
+        newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
+      }
+
       return {
-        openFiles: newFiles,
-        activeFileId:
-          state.activeFileId === fileId
-            ? newFiles.length
-              ? newFiles[newFiles.length - 1]._id
-              : null
-            : state.activeFileId,
+        openFiles: [...newFiles],
+        activeFileId: newActive,
       };
     }),
 
   setActiveFile: (fileId) => set({ activeFileId: fileId }),
+
+  setFileEdited: (fileId, edited) =>
+    set((state) => ({
+      openFiles: state.openFiles.map((f) =>
+        f._id === fileId ? { ...f, isEdited: edited } : f,
+      ),
+    })),
 
   /* ---------------- LOAD FOLDER ---------------- */
 
