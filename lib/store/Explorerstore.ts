@@ -21,12 +21,21 @@ type ExplorerStore = {
   cache: Record<string, FolderChildren>;
 
   loadFolder: (roomId: string, parentId: string) => Promise<void>;
+
   addFile: (parentId: string, file: FileItem) => void;
   addFolder: (parentId: string, folder: FolderItem) => void;
+
+  renameFile: (parentId: string, fileId: string, newName: string) => void;
+  renameFolder: (parentId: string, folderId: string, newName: string) => void;
+
+  deleteFile: (parentId: string, fileId: string) => void;
+  deleteFolder: (parentId: string, folderId: string) => void;
 };
 
-export const useFilestore = create<ExplorerStore>((set, get) => ({
+export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   cache: {},
+
+  /* ---------------- LOAD FOLDER ---------------- */
 
   loadFolder: async (roomId, parentId) => {
     const cache = get().cache[parentId];
@@ -75,6 +84,8 @@ export const useFilestore = create<ExplorerStore>((set, get) => ({
     }
   },
 
+  /* ---------------- ADD ---------------- */
+
   addFile: (parentId, file) =>
     set((state) => ({
       cache: {
@@ -93,6 +104,63 @@ export const useFilestore = create<ExplorerStore>((set, get) => ({
         [parentId]: {
           ...state.cache[parentId],
           folders: [...(state.cache[parentId]?.folders || []), folder],
+        },
+      },
+    })),
+
+  /* ---------------- RENAME ---------------- */
+
+  renameFile: (parentId, fileId, newName) =>
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [parentId]: {
+          ...state.cache[parentId],
+          files:
+            state.cache[parentId]?.files.map((f) =>
+              f._id === fileId ? { ...f, name: newName } : f,
+            ) || [],
+        },
+      },
+    })),
+
+  renameFolder: (parentId, folderId, newName) =>
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [parentId]: {
+          ...state.cache[parentId],
+          folders:
+            state.cache[parentId]?.folders.map((f) =>
+              f._id === folderId ? { ...f, name: newName } : f,
+            ) || [],
+        },
+      },
+    })),
+
+  /* ---------------- DELETE ---------------- */
+
+  deleteFile: (parentId, fileId) =>
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [parentId]: {
+          ...state.cache[parentId],
+          files:
+            state.cache[parentId]?.files.filter((f) => f._id !== fileId) || [],
+        },
+      },
+    })),
+
+  deleteFolder: (parentId, folderId) =>
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [parentId]: {
+          ...state.cache[parentId],
+          folders:
+            state.cache[parentId]?.folders.filter((f) => f._id !== folderId) ||
+            [],
         },
       },
     })),

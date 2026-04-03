@@ -1,4 +1,3 @@
-import { getUserId } from "@/lib/getUserId";
 import Directory from "@/model/directory";
 import File from "@/model/file";
 import mongoose from "mongoose";
