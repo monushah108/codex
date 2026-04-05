@@ -28,7 +28,7 @@ type ExplorerStore = {
   openFile: (file: FileItem) => void;
   closeFile: (fileId: string) => void;
   setActiveFile: (fileId: string) => void;
-  setFileEdited: (fileId: string, edited: boolean) => void;
+  setFileEdited: (fileId: string, edited: boolean, code: string) => void;
 
   loadFolder: (roomId: string, parentId: string) => Promise<void>;
   setSelectedFile: (parentId: string, fileId: string) => void;
@@ -83,12 +83,13 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
 
   setActiveFile: (fileId) => set({ activeFileId: fileId }),
 
-  setFileEdited: (fileId, edited) =>
+  setFileEdited: (fileId, edited) => {
     set((state) => ({
       openFiles: state.openFiles.map((f) =>
         f._id === fileId ? { ...f, isEdited: edited } : f,
       ),
-    })),
+    }));
+  },
 
   /* ---------------- LOAD FOLDER ---------------- */
 

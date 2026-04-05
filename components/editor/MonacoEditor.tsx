@@ -14,9 +14,23 @@ export default function MonacoEditor() {
       id: "save-file",
       label: "Save File",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: () => {
-        console.log("Saving file...");
+      run: async () => {
         setEdited(activeFileId, false);
+
+        const content = editor.getModel().getValue();
+        const id = activeFileId;
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: JSON.stringify({ id, content }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await res.json();
+
+        console.log("Cloudinary URL:", data.secure_url);
       },
     });
   };
