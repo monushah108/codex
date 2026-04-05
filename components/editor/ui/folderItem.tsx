@@ -10,6 +10,7 @@ import { useState, memo } from "react";
 
 import { useExplorerstore } from "@/lib/store/Explorerstore";
 import ExplorerMenu from "../Module/ExplorerMenu";
+import { useCodestore } from "@/lib/store/Codestore";
 
 function FolderItem({
   item,
@@ -32,7 +33,7 @@ function FolderItem({
   const renameFolder = useExplorerstore((s) => s.renameFolder);
   const deleteFile = useExplorerstore((s) => s.deleteFile);
   const deleteFolder = useExplorerstore((s) => s.deleteFolder);
-  const openFile = useExplorerstore((s) => s.openFile);
+  const openFile = useCodestore((s) => s.openFile);
 
   const folders = cache?.folders || [];
   const files = cache?.files || [];
@@ -47,12 +48,19 @@ function FolderItem({
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
 
-    const res = await fetch(`/api/directory/${roomId}`, {
+    const endpoint =
+      creating.type === "file"
+        ? `/api/playground/${roomId}/files`
+        : `/api/playground/${roomId}/directory`;
+
+    const res = await fetch(endpoint, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         name: inputValue,
         parentId: item._id,
-        type: creating.type,
       }),
     });
 
@@ -75,15 +83,22 @@ function FolderItem({
   const submitRename = async (type) => {
     if (!renameValue.trim()) return;
 
-    await fetch(`/api/directory/${roomId}`, {
+    const endpoint =
+      type === "file"
+        ? `/api/playground/${roomId}/files`
+        : `/api/playground/${roomId}/directory`;
+
+    await fetch(endpoint, {
       method: "PATCH",
-      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         id: renamingId,
         name: renameValue,
-        type,
       }),
     });
+
     if (type === "file") renameFile(item._id, renamingId, renameValue);
     if (type === "folder") renameFolder(item._id, renamingId, renameValue);
 
@@ -93,10 +108,17 @@ function FolderItem({
   /* ---------------- DELETE ---------------- */
 
   const handleDelete = async (id, type) => {
-    await fetch(`/api/directory/${roomId}`, {
+    const endpoint =
+      type === "file"
+        ? `/api/playground/${roomId}/files`
+        : `/api/playground/${roomId}/directory`;
+
+    await fetch(endpoint, {
       method: "DELETE",
-      credentials: "include",
-      body: JSON.stringify({ id, type }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
     });
 
     if (type === "file") deleteFile(item._id, id);

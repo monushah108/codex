@@ -6,15 +6,12 @@ import { NextRequest } from "next/server";
 ========================= */
 
 export async function GET(request: NextRequest, { params }) {
-  const { id: roomId } = params;
+  const { roomId } = await params;
 
-  const parentId = request.nextUrl.searchParams.get("parentId");
+  const fileId = request.nextUrl.searchParams.get("fId");
 
   try {
-    const files = await File.find({
-      roomId,
-      parentDirId: parentId || null,
-    }).lean();
+    const files = await File.findById(fileId).lean();
 
     return Response.json(files);
   } catch (err) {
@@ -28,7 +25,7 @@ export async function GET(request: NextRequest, { params }) {
 ========================= */
 
 export async function POST(request: NextRequest, { params }) {
-  const { id: roomId } = params;
+  const { roomId } = await params;
 
   try {
     const { name, parentId } = await request.json();

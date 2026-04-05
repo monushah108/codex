@@ -33,7 +33,7 @@ function FileExplore({ roomId }) {
   async function getProjectDoc() {
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/directory/${roomId}`, {
+        const res = await fetch(`/api/playground/${roomId}/directory`, {
           credentials: "include",
         });
 

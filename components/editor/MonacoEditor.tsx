@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import TabBar from "./ui/TabBar";
 import { Code2 } from "lucide-react";
 import { Editor } from "@monaco-editor/react";
-import { useExplorerstore } from "@/lib/store/Explorerstore";
+import { useCodestore } from "@/lib/store/Codestore";
 
-export default function MonacoEditor() {
-  const activeFileId = useExplorerstore((s) => s.activeFileId);
+export default function MonacoEditor({ roomId }) {
+  const activeFileId = useCodestore((s) => s.activeFileId);
   const [code, setCode] = useState("// Your code here...");
-  const setEdited = useExplorerstore((s) => s.setFileEdited);
+  const cache = useCodestore((s) => s.code[activeFileId]);
+  const setEdited = useCodestore((s) => s.setFileEdited);
+  const saveFileContent = useCodestore((s) => s.saveFileContent);
 
   const handleMount = (editor, monaco) => {
     editor.addAction({
@@ -18,19 +20,9 @@ export default function MonacoEditor() {
         setEdited(activeFileId, false);
 
         const content = editor.getModel().getValue();
-        const id = activeFileId;
+        const fileId = activeFileId;
 
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: JSON.stringify({ id, content }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        const data = await res.json();
-
-        console.log("Cloudinary URL:", data.secure_url);
+        await saveFileContent(roomId, fileId, content);
       },
     });
   };
@@ -56,7 +48,7 @@ export default function MonacoEditor() {
             width="100%"
             theme="vs-dark"
             defaultLanguage="javascript"
-            value={code}
+            value={cache?.content}
             onMount={handleMount}
             onChange={(value) => {
               setCode(value || "");

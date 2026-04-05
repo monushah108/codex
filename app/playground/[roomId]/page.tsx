@@ -46,7 +46,7 @@ export default async function Page({ params }) {
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
           {/* Center Column */}
-          <CodeWindow />
+          <CodeWindow roomId={roomId} />
 
           <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 

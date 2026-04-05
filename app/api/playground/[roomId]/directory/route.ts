@@ -1,4 +1,5 @@
 import Directory from "@/model/directory";
+import File from "@/model/file";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
@@ -7,8 +8,8 @@ import { NextRequest } from "next/server";
 ========================= */
 
 export async function GET(request: NextRequest, { params }) {
-  const { id: roomId } = params;
-
+  const { roomId } = await params;
+  console.log("roomId", roomId);
   const parentId = request.nextUrl.searchParams.get("parentId");
 
   let parentObjectId = null;
@@ -39,10 +40,16 @@ export async function GET(request: NextRequest, { params }) {
       _id: { $ne: rootDir?._id },
     }).lean();
 
+    const files = await File.find({
+      roomId,
+      parentDirId: parentId || null,
+    }).lean();
+
     return Response.json(
       {
         rootDir,
         folders,
+        files,
       },
       { status: 200 },
     );
@@ -57,7 +64,7 @@ export async function GET(request: NextRequest, { params }) {
 ========================= */
 
 export async function POST(request: NextRequest, { params }) {
-  const { id: roomId } = params;
+  const { roomId } = await params;
 
   try {
     const body = await request.json();

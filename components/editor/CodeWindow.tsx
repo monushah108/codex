@@ -14,7 +14,7 @@ import { useLayout } from "@/context/layout-context";
 const Terminal = lazy(() => import("./Terminal"));
 const MonacoEditor = lazy(() => import("./MonacoEditor"));
 
-const CodeWindow = React.memo(function CodeWindow() {
+const CodeWindow = React.memo(function CodeWindow({ roomId }) {
   const { isCollapse } = useLayout();
 
   return (
@@ -23,7 +23,7 @@ const CodeWindow = React.memo(function CodeWindow() {
         {/* Code Editor */}
         <ResizablePanel defaultSize={60}>
           <Suspense fallback={<EditorSkeleton />}>
-            <MonacoEditor />
+            <MonacoEditor roomId={roomId} />
           </Suspense>
         </ResizablePanel>
 

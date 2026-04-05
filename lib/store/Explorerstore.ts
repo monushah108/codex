@@ -22,14 +22,6 @@ type FolderChildren = {
 type ExplorerStore = {
   cache: Record<string, FolderChildren>;
 
-  openFiles: FileItem[];
-  activeFileId: string | null;
-
-  openFile: (file: FileItem) => void;
-  closeFile: (fileId: string) => void;
-  setActiveFile: (fileId: string) => void;
-  setFileEdited: (fileId: string, edited: boolean, code: string) => void;
-
   loadFolder: (roomId: string, parentId: string) => Promise<void>;
   setSelectedFile: (parentId: string, fileId: string) => void;
 
@@ -45,51 +37,6 @@ type ExplorerStore = {
 
 export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   cache: {},
-
-  /* ---------------- OPEN FILES ---------------- */
-
-  openFiles: [],
-  activeFileId: null,
-
-  openFile: (file) =>
-    set((state) => {
-      const exists = state.openFiles.find((f) => f._id === file._id);
-
-      if (exists) {
-        return { activeFileId: file._id };
-      }
-
-      return {
-        openFiles: [...state.openFiles, { ...file, isEdited: false }],
-        activeFileId: file._id,
-      };
-    }),
-
-  closeFile: (fileId) =>
-    set((state) => {
-      const newFiles = state.openFiles.filter((f) => f._id !== fileId);
-
-      let newActive = state.activeFileId;
-
-      if (state.activeFileId === fileId) {
-        newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
-      }
-
-      return {
-        openFiles: [...newFiles],
-        activeFileId: newActive,
-      };
-    }),
-
-  setActiveFile: (fileId) => set({ activeFileId: fileId }),
-
-  setFileEdited: (fileId, edited) => {
-    set((state) => ({
-      openFiles: state.openFiles.map((f) =>
-        f._id === fileId ? { ...f, isEdited: edited } : f,
-      ),
-    }));
-  },
 
   /* ---------------- LOAD FOLDER ---------------- */
 
@@ -111,7 +58,9 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
     }));
 
     try {
-      const res = await fetch(`/api/directory/${roomId}?parentId=${parentId}`);
+      const res = await fetch(
+        `/api/playground/${roomId}/directory?parentId=${parentId}`,
+      );
       const data = await res.json();
 
       set((state) => ({
