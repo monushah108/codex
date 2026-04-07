@@ -13,7 +13,6 @@ const TabBar = memo(function TabBar() {
   const openFile = useCodestore((s) => s.openFile);
   const setEdited = useCodestore((s) => s.setFileEdited);
   const setActiveFile = useCodestore((s) => s.setActiveFile);
-  const loadFileContent = useCodestore((s) => s.loadFileContent);
 
   const nextFile = openFiles.find((f) => f._id !== activeFileId);
 
@@ -31,7 +30,6 @@ const TabBar = memo(function TabBar() {
               className={`border-t-4  rounded-xs group ${isActive ? "bg-blue-700/20 border-blue-600" : "border-blue-600/60 bg-blue-600/10 hover:bg-[#3a3a3d]"} t`}
               onClick={() => {
                 openFile(file);
-                loadFileContent(file.roomId, activeFileId);
               }}
             >
               {file.name}

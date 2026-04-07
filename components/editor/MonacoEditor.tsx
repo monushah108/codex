@@ -3,6 +3,7 @@ import TabBar from "./ui/TabBar";
 import { Code2 } from "lucide-react";
 import { Editor } from "@monaco-editor/react";
 import { useCodestore } from "@/lib/store/Codestore";
+import { getType } from "@/lib/features";
 
 export default function MonacoEditor({ roomId }) {
   const activeFileId = useCodestore((s) => s.activeFileId);
@@ -10,6 +11,7 @@ export default function MonacoEditor({ roomId }) {
   const cache = useCodestore((s) => s.code[activeFileId]);
   const setEdited = useCodestore((s) => s.setFileEdited);
   const saveFileContent = useCodestore((s) => s.saveFileContent);
+  const openFiles = useCodestore((s) => s.openFiles);
 
   const handleMount = (editor, monaco) => {
     editor.addAction({
@@ -26,6 +28,9 @@ export default function MonacoEditor({ roomId }) {
       },
     });
   };
+  const activeFile = openFiles.find((f) => f._id === activeFileId);
+
+  console.log(getType(activeFile?.name), activeFile?.name);
 
   return (
     <div className="h-full">
@@ -47,7 +52,7 @@ export default function MonacoEditor({ roomId }) {
             height="100%"
             width="100%"
             theme="vs-dark"
-            defaultLanguage="javascript"
+            defaultLanguage={getType(activeFile?.name)}
             value={cache?.content}
             onMount={handleMount}
             onChange={(value) => {

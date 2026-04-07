@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useCodestore } from "./Codestore";
 
 type FileItem = {
   _id: string;
@@ -129,21 +130,29 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   /* ---------------- RENAME ---------------- */
 
   renameFile: (parentId, fileId, newName) =>
-    set((state) => ({
-      cache: {
-        ...state.cache,
-        [parentId]: {
-          ...state.cache[parentId],
-          files:
-            state.cache[parentId]?.files.map((f) =>
-              f._id === fileId ? { ...f, name: newName } : f,
-            ) || [],
-        },
-      },
-      openFiles: state.openFiles.map((f) =>
+    set((state) => {
+      const codestore = useCodestore.getState();
+
+      const updatedOpenFiles = codestore.openFiles.map((f) =>
         f._id === fileId ? { ...f, name: newName } : f,
-      ),
-    })),
+      );
+
+      useCodestore.setState({
+        openFiles: updatedOpenFiles,
+      });
+      return {
+        cache: {
+          ...state.cache,
+          [parentId]: {
+            ...state.cache[parentId],
+            files:
+              state.cache[parentId]?.files.map((f) =>
+                f._id === fileId ? { ...f, name: newName } : f,
+              ) || [],
+          },
+        },
+      };
+    }),
 
   renameFolder: (parentId, folderId, newName) =>
     set((state) => ({
@@ -163,14 +172,11 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
 
   deleteFile: (parentId, fileId) =>
     set((state) => {
-      const newFiles = state.openFiles.filter((f) => f._id !== fileId);
+      const codestore = useCodestore.getState();
 
-      let newActive = state.activeFileId;
+      codestore.closeFile(fileId);
 
-      if (state.activeFileId === fileId) {
-        newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
-      }
-
+      delete codestore.code[fileId];
       return {
         cache: {
           ...state.cache,
@@ -181,8 +187,6 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
               [],
           },
         },
-        openFiles: newFiles,
-        activeFileId: newActive,
       };
     }),
 

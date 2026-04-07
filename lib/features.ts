@@ -1,3 +1,5 @@
+import mime from "mime-types";
+
 export const getOutputColor = (type: string) => {
   switch (type) {
     case "error":
@@ -29,3 +31,27 @@ export const formatte = (time: string) => {
     minute: "2-digit",
   });
 };
+
+const languageMap: Record<string, string> = {
+  js: "javascript",
+  ts: "typescript",
+  jsx: "javascript",
+  tsx: "typescript",
+  html: "html",
+  css: "css",
+  json: "json",
+  py: "python",
+  java: "java",
+  cpp: "cpp",
+  c: "c",
+};
+
+export function getType(fileName: string) {
+  const type = mime.lookup(fileName);
+
+  const ext = mime.extension(type);
+
+  if (!ext) return languageMap[fileName.split(".")[1]] || "plaintext";
+
+  return ext;
+}

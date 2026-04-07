@@ -12,7 +12,7 @@ type Codestore = {
   activeFileId: string | null;
 
   loadFileContent: (roomId: string, fileId: string) => Promise<void>;
-  openFile: (file: FileItem) => void;
+  openFile: (file: FileItem, roomId: string) => void;
   closeFile: (fileId: string) => void;
   setActiveFile: (fileId: string) => void;
   setFileEdited: (fileId: string, edited: boolean) => void;
@@ -29,25 +29,33 @@ export const useCodestore = create<Codestore>((set, get) => ({
   openFiles: [],
   activeFileId: null,
 
-  openFile: (file) =>
-    set((state) => {
-      const exists = state.openFiles.find((f) => f._id === file._id);
+  openFile: async (file, roomId) => {
+    const { openFiles } = get();
 
-      if (exists) {
-        return { activeFileId: file._id };
-      }
+    const exists = openFiles.find((f) => f._id === file._id);
 
-      return {
+    if (!exists) {
+      set((state) => ({
         openFiles: [...state.openFiles, { ...file, isEdited: false }],
         activeFileId: file._id,
-      };
-    }),
+      }));
+    } else {
+      set({ activeFileId: file._id });
+    }
+
+    // load content if not cached
+    await get().loadFileContent(roomId, file._id);
+  },
 
   closeFile: (fileId) =>
     set((state) => {
       const newFiles = state.openFiles.filter((f) => f._id !== fileId);
 
       let newActive = state.activeFileId;
+
+      if (state.activeFileId === fileId) {
+        newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
+      }
 
       if (state.activeFileId === fileId) {
         newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
@@ -71,7 +79,6 @@ export const useCodestore = create<Codestore>((set, get) => ({
 
   loadFileContent: async (roomId, fileId) => {
     const cache = get().code[fileId];
-
     if (cache?.loaded) return;
 
     set((state) => ({

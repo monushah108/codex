@@ -8,10 +8,11 @@ import { NextRequest } from "next/server";
 export async function GET(request: NextRequest, { params }) {
   const { roomId } = await params;
 
-  const fileId = request.nextUrl.searchParams.get("fId");
+  const fileId = request.nextUrl.searchParams.get("fileId");
 
   try {
     const files = await File.findById(fileId).lean();
+    console.log(fileId, files);
 
     return Response.json(files);
   } catch (err) {

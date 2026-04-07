@@ -199,7 +199,7 @@ function FolderItem({
               <div
                 onClick={() => {
                   setSelected(file._id);
-                  openFile(file);
+                  openFile(file, roomId);
                 }}
                 style={{ paddingLeft: indent + 20 }}
                 className={`flex items-center gap-2 py-1 rounded
