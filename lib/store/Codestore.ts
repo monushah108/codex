@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { getType } from "../features";
 
 type FileItem = {
   _id: string;
@@ -10,7 +11,9 @@ type Codestore = {
   code: Record<string, { loaded: boolean; loading: boolean; content?: string }>;
   openFiles: FileItem[];
   activeFileId: string | null;
-
+  outputs: { id: string; [key: string]: any }[];
+  runCode: (fileId: string, content?: string) => Promise<void>;
+  runCommand: (command: string, fileId: string) => void;
   loadFileContent: (roomId: string, fileId: string) => Promise<void>;
   openFile: (file: FileItem, roomId: string) => void;
   closeFile: (fileId: string) => void;
@@ -27,6 +30,7 @@ export const useCodestore = create<Codestore>((set, get) => ({
   code: {},
 
   openFiles: [],
+  outputs: [],
   activeFileId: null,
 
   openFile: async (file, roomId) => {
@@ -157,6 +161,61 @@ export const useCodestore = create<Codestore>((set, get) => ({
           },
         },
       }));
+    }
+  },
+
+  runCode: async (fileId) => {
+    const code = get().code[fileId]?.content;
+    const outputs = get().outputs;
+    const activeFile = get().openFiles.find((f) => f._id === fileId);
+    const langId = getType(activeFile?.name)?.id;
+
+    try {
+      const res = await fetch(
+        "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source_code: code,
+            language_id: langId,
+          }),
+        },
+      );
+      const data = await res.json();
+
+      set({ outputs: [...outputs, { id: crypto.randomUUID(), ...data }] });
+    } catch (err) {
+      console.error(err);
+
+      set({
+        outputs: [
+          ...outputs,
+          { id: crypto.randomUUID(), error: "Error running code" },
+        ],
+      });
+    }
+  },
+
+  runCommand: async (command, fileId) => {
+    const outputs = get().outputs;
+    if (command === "clear") {
+      console.log("Clearing outputs...");
+      setTimeout(() => {
+        outputs.length = 0;
+      }, 500);
+    } else if (command === "help") {
+      outputs.push({
+        id: crypto.randomUUID(),
+        stdout: "Available commands: clear, help, run code",
+      });
+    } else if (command === "run code") {
+      get().runCode(fileId);
+    } else {
+      outputs.push({
+        id: crypto.randomUUID(),
+        stderr: `Command not found: ${command}`,
+      });
     }
   },
 }));

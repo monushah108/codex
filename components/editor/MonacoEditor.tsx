@@ -7,8 +7,8 @@ import { getType } from "@/lib/features";
 
 export default function MonacoEditor({ roomId }) {
   const activeFileId = useCodestore((s) => s.activeFileId);
-  const [code, setCode] = useState("// Your code here...");
   const cache = useCodestore((s) => s.code[activeFileId]);
+  const [code, setCode] = useState("");
   const setEdited = useCodestore((s) => s.setFileEdited);
   const saveFileContent = useCodestore((s) => s.saveFileContent);
   const openFiles = useCodestore((s) => s.openFiles);
@@ -23,14 +23,11 @@ export default function MonacoEditor({ roomId }) {
 
         const content = editor.getModel().getValue();
         const fileId = activeFileId;
-
         await saveFileContent(roomId, fileId, content);
       },
     });
   };
   const activeFile = openFiles.find((f) => f._id === activeFileId);
-
-  console.log(getType(activeFile?.name), activeFile?.name);
 
   return (
     <div className="h-full">
@@ -52,7 +49,7 @@ export default function MonacoEditor({ roomId }) {
             height="100%"
             width="100%"
             theme="vs-dark"
-            defaultLanguage={getType(activeFile?.name)}
+            defaultLanguage={getType(activeFile?.name)?.language}
             value={cache?.content}
             onMount={handleMount}
             onChange={(value) => {

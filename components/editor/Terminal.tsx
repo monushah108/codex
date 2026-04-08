@@ -1,4 +1,4 @@
-"use client";
+import { useCodestore } from "@/lib/store/Codestore";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { ArrowBigRight, TerminalIcon, Trash } from "lucide-react";
 import { memo, useRef, useState } from "react";
@@ -6,44 +6,16 @@ import { memo, useRef, useState } from "react";
 const Terminal = memo(function Terminal() {
   const [userInput, setuserInput] = useState("");
   const TerminalRef = useRef(null);
+  const outputs = useCodestore((s) => s.outputs);
+  const activeFileId = useCodestore((s) => s.activeFileId);
+  const runCommand = useCodestore((s) => s.runCommand);
 
-  // const commands = {
-  //   help: "Available commands: run code, help, clear",
-  //   "run code": "Code run successful",
-  //   clear: () => setOutput([]),
-  // };
+  const handleExecuteCommand = (e: any) => {
+    e.preventDefault();
+    if (!userInput.trim()) return;
 
-  // const handleExecuteCommand = (e) => {
-  //   e.preventDefault();
-  //   const input = userInput.trim();
-
-  //   let outputType = "info";
-  //   let outputValue = "";
-
-  //   if (commands[input]) {
-  //     if (typeof commands[input] == "function") {
-  //       commands[input]();
-  //       return;
-  //     }
-  //     outputType = "success";
-  //     outputValue = commands[input];
-  //   } else {
-  //     outputType = "error";
-  //     outputValue = "command not found";
-  //   }
-
-  //   setOutput((pre) => [
-  //     ...pre,
-  //     {
-  //       id: crypto.randomUUID(),
-  //       cmd: userInput,
-  //       outputType,
-  //       outputValue,
-  //     },
-  //   ]);
-
-  //   setuserInput("");
-  // };
+    runCommand(userInput.trim(), activeFileId!);
+  };
 
   const prompt = () => (
     <div>
@@ -53,15 +25,14 @@ const Terminal = memo(function Terminal() {
 
   return (
     <div className="relative flex flex-col">
-      <div className="h-[35px] flex items-center justify-between px-3 py-1 border-b border-[#2d2d30] bg-[#252526]">
+      <div className="h-8.75 flex items-center justify-between px-3 py-1 border-b border-[#2d2d30] bg-[#252526]">
         <div className="flex flex-1 items-center gap-3 ">
           <TerminalIcon className="size-3" />
           <span className="text-xs">TERMINAL</span>
         </div>
+
         <div className="flex items-center gap-3">
-          <button
-          // onClick={() => setOutput([])}
-          >
+          <button>
             <Trash className="size-3" />
           </button>
         </div>
@@ -78,24 +49,19 @@ const Terminal = memo(function Terminal() {
               you can just run your code it's not so advance
             </p>
           </div>
-          {/* {output.map(({ id, outputValue, outputType, cmd }) => (
+
+          {outputs.map(({ id, stderr, stdout }) => (
             <div key={id}>
-              <div className="flex gap-1 p-2 items-center">
-                {prompt()}
-                <input
-                  className="outline-none flex-1 text-xs"
-                  disabled={!!outputValue}
-                  value={cmd}
-                />
-              </div>
-              <pre className={`ml-6 text-xs ${getOutputColor(outputType)}`}>
-                {outputValue}
+              <div className="flex gap-1 p-2 items-center">{prompt()}</div>
+              <pre
+                className={`ml-6 text-xs ${stdout ? "text-gray-300" : "text-red-500"} `}
+              >
+                {stdout || stderr}
               </pre>
             </div>
-          ))} */}
-          <form
-          //  onSubmit={handleExecuteCommand}
-          >
+          ))}
+
+          <form onSubmit={handleExecuteCommand}>
             <div
               className="flex items-center gap-1 p-2 group"
               ref={TerminalRef}

@@ -13,13 +13,15 @@ const TabBar = memo(function TabBar() {
   const openFile = useCodestore((s) => s.openFile);
   const setEdited = useCodestore((s) => s.setFileEdited);
   const setActiveFile = useCodestore((s) => s.setActiveFile);
+  const runCode = useCodestore((s) => s.runCode);
 
   const nextFile = openFiles.find((f) => f._id !== activeFileId);
 
-  const onRunCode = () => {};
-
   return (
-    <div className="h-8.75 bg-[#2d2d30] border-b border-[#2d2d30] flex items-center justify-between px-1 ">
+    <div
+      style={{ display: activeFileId ? "flex" : "none" }}
+      className="h-8.75 bg-[#2d2d30] border-b border-[#2d2d30]  items-center justify-between px-1 "
+    >
       <div className="flex items-center gap-0.5 overflow-x-auto">
         {openFiles.map((file) => {
           const isActive = file._id === activeFileId;
@@ -63,7 +65,9 @@ const TabBar = memo(function TabBar() {
       </div>
       <div className="space-x-1">
         <Button
-          onClick={onRunCode}
+          onClick={() => {
+            runCode(activeFileId!);
+          }}
           variant="none"
           size="xs"
           className="hover:bg-[#3a3a3d] text-[#d4d4d4]"

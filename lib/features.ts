@@ -32,26 +32,21 @@ export const formatte = (time: string) => {
   });
 };
 
-const languageMap: Record<string, string> = {
-  js: "javascript",
-  ts: "typescript",
-  jsx: "javascript",
-  tsx: "typescript",
-  html: "html",
-  css: "css",
-  json: "json",
-  py: "python",
-  java: "java",
-  cpp: "cpp",
-  c: "c",
+const languageMap: Record<string, { language: string; id: number }> = {
+  js: { language: "javascript", id: 63 },
+  jsx: { language: "javascript", id: 63 },
+  ts: { language: "typescript", id: 74 },
+  tsx: { language: "typescript", id: 74 },
+  py: { language: "python", id: 71 },
+  java: { language: "java", id: 62 },
+  cpp: { language: "cpp", id: 54 },
 };
-
 export function getType(fileName: string) {
   const type = mime.lookup(fileName);
 
   const ext = mime.extension(type);
 
-  if (!ext) return languageMap[fileName.split(".")[1]] || "plaintext";
+  if (!ext) return languageMap[fileName?.split(".")[1]] || "plaintext";
 
-  return ext;
+  return languageMap[ext] || "plaintext";
 }
