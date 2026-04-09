@@ -9,13 +9,23 @@ import {
 } from "@/components/ui/popover";
 
 import { authClient, useSession } from "@/lib/auth-client";
+import { useChatstore } from "@/lib/store/Chatstore";
+
 import { LogOut, SettingsIcon } from "lucide-react";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function Profile() {
   const { data: session } = useSession();
-
   const user = session?.user;
+  const setUser = useChatstore((state) => state.setUser);
+
+  useEffect(() => {
+    if (session?.user) {
+      setUser(user);
+    }
+  }, [session]);
+
   return (
     <Popover>
       <PopoverTrigger asChild>

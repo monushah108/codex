@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { Button } from "@/components/ui/button";
+import { useCodestore } from "@/lib/store/Codestore";
 
 type Props = {
   onSave: () => void;
@@ -21,6 +22,8 @@ type Props = {
 
 export default function SaveFile({ onSave, onDiscard }: Props) {
   const [open, setOpen] = useState(false);
+  const setEdited = useCodestore((s) => s.setFileEdited);
+  const activeFileId = useCodestore((s) => s.activeFileId);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -29,7 +32,7 @@ export default function SaveFile({ onSave, onDiscard }: Props) {
         <span className="size-2 bg-white rounded-full cursor-pointer"></span>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-100">
         <DialogHeader>
           <DialogTitle>Unsaved Changes</DialogTitle>
           <DialogDescription>
@@ -47,6 +50,7 @@ export default function SaveFile({ onSave, onDiscard }: Props) {
             onClick={() => {
               onDiscard();
               setOpen(false);
+              setEdited(activeFileId, false);
             }}
           >
             Discard

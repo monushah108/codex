@@ -5,3 +5,4 @@ for user Id we can use api.auth
 
 
   
+why i am not having to run connetcDb in every routes 

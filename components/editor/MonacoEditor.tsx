@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import TabBar from "./ui/TabBar";
 import { Code2 } from "lucide-react";
 import { Editor } from "@monaco-editor/react";
@@ -8,9 +8,9 @@ import { getType } from "@/lib/features";
 export default function MonacoEditor({ roomId }) {
   const activeFileId = useCodestore((s) => s.activeFileId);
   const cache = useCodestore((s) => s.code[activeFileId]);
-  const [code, setCode] = useState("");
   const setEdited = useCodestore((s) => s.setFileEdited);
   const saveFileContent = useCodestore((s) => s.saveFileContent);
+  const updateContent = useCodestore((s) => s.updateContent);
   const openFiles = useCodestore((s) => s.openFiles);
 
   const handleMount = (editor, monaco) => {
@@ -19,14 +19,14 @@ export default function MonacoEditor({ roomId }) {
       label: "Save File",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
       run: async () => {
-        setEdited(activeFileId, false);
-
         const content = editor.getModel().getValue();
-        const fileId = activeFileId;
-        await saveFileContent(roomId, fileId, content);
+        console.log(content);
+        await saveFileContent(roomId, activeFileId, content);
+        setEdited(activeFileId, false);
       },
     });
   };
+
   const activeFile = openFiles.find((f) => f._id === activeFileId);
 
   return (
@@ -46,14 +46,15 @@ export default function MonacoEditor({ roomId }) {
           </div>
         ) : (
           <Editor
+            key={activeFileId}
             height="100%"
             width="100%"
             theme="vs-dark"
             defaultLanguage={getType(activeFile?.name)?.language}
-            value={cache?.content}
+            value={cache?.content || "// your code is here..."}
             onMount={handleMount}
             onChange={(value) => {
-              setCode(value || "");
+              updateContent(activeFileId, value || "");
               setEdited(activeFileId, true);
             }}
             options={{

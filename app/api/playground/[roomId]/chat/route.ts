@@ -6,9 +6,36 @@ import Message from "@/model/message";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
+// export async function GET(request: NextRequest, { params }) {
+//   await connectDB();
+//   const { roomId } = await params;
+//   const cursor = request.nextUrl.searchParams.get("cursor");
+
+//   try {
+//     const chat = await Chat.findOne({ roomId }).select("_id");
+
+//     const msg = await Message.find({
+//       chatId: chat?._id,
+//     })
+//       .sort({ _id: -1 })
+//       .limit(20);
+
+//     return Response.json(
+//       {
+//         msgs: msg.reverse(),
+//         hasMore: msg.length === 20,
+//       },
+//       { status: 200 },
+//     );
+//   } catch (err) {
+//     console.log(err);
+//     return Response.json({ error: "server Error" }, { status: 500 });
+//   }
+// }
+
+export async function GET(request: NextRequest, { params }) {
   await connectDB();
-  const roomId = request.nextUrl.searchParams.get("roomId");
+  const { roomId } = await params;
   const cursor = request.nextUrl.searchParams.get("cursor");
 
   try {
@@ -28,23 +55,29 @@ export async function GET(request: NextRequest) {
 
     const userMap = new Map(users.map((u) => [u._id.toString(), u]));
 
-    const messagesWithUser = msg.map((m) => ({
-      ...m.toObject(),
+    const allMsgs = msg
+      .map((m) => ({
+        ...m.toObject(),
 
-      name: userMap.get(m.userId.toString())?.name,
-      image: userMap.get(m.userId.toString())?.image,
-    }));
+        name: userMap.get(m.userId.toString())?.name,
+        image: userMap.get(m.userId.toString())?.image,
+      }))
+      .reverse();
 
-    return Response.json(messagesWithUser, { status: 200 });
+    return Response.json(
+      { msgs: allMsgs, hasMore: msg.length === 20 },
+      { status: 200 },
+    );
   } catch (err) {
     console.log(err);
     return Response.json({ error: "server Error" }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }) {
   await connectDB();
-  const { content, roomId, msgId } = await request.json();
+  const { roomId } = await params;
+  const { content, msgId } = await request.json();
   const userId = await getUserId(request);
   const session = await mongoose.startSession();
 

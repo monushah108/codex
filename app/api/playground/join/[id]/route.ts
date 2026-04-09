@@ -73,7 +73,7 @@ export async function POST(request: NextRequest, { params }) {
 
   const { id: roomId } = await params;
   const body = await request.json();
-  const userId = await getUserId(request);
+  const userId = await getUser(request)?.id;
   const { password } = body;
 
   try {

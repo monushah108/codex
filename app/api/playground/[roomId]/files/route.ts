@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const { id, name } = await request.json();
 
-    const file = await File.findByIdAndUpdate(id, { name }, { new: true });
+    const file = await File.findByIdAndUpdate(id, { name });
 
     return Response.json(file);
   } catch (err) {
@@ -87,7 +87,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { id, content } = await request.json();
 
-    const file = await File.findByIdAndUpdate(id, { content }, { new: true });
+    const file = await File.findByIdAndUpdate(id, { content });
 
     return Response.json(file);
   } catch (err) {

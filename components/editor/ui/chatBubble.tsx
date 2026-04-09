@@ -1,5 +1,3 @@
-"use client";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -11,6 +9,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 import { formatte } from "@/lib/features";
+import { useChatstore } from "@/lib/store/Chatstore";
 import {
   CircleX,
   CopyIcon,
@@ -33,12 +32,13 @@ export default function ChatBubble({
   content,
   timeStamp,
   image,
-  getMsgs,
-  setMsgs,
+  roomId,
 }) {
   const [show, setShow] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editedMsg, setEditedMsg] = useState(content);
+  const deleteMsg = useChatstore((state) => state.deleteMsg);
+  const editMsg = useChatstore((state) => state.editMsg);
 
   const isLong = useMemo(() => content.length > 248, [content]);
 
@@ -48,11 +48,8 @@ export default function ChatBubble({
 
   const EditMsg = async (e) => {
     setIsEdit(false);
-    setMsgs((pre) =>
-      pre.map((i) => (i._id == id ? { ...i, content: editedMsg } : i)),
-    );
     try {
-      await fetch("/api/chat", {
+      await fetch(`/api/playground/${roomId}/chat`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -62,14 +59,14 @@ export default function ChatBubble({
       });
     } catch {
       toast.error("server error");
-      getMsgs();
     }
+    editMsg(id, editedMsg, roomId);
   };
 
   const DeleteMsg = async () => {
-    setMsgs((pre) => pre.filter((i) => i._id !== id));
+    deleteMsg(id, roomId);
     try {
-      await fetch("/api/chat", {
+      await fetch(`/api/playground/${roomId}/chat`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -80,7 +77,6 @@ export default function ChatBubble({
     } catch (err) {
       console.log(err);
       toast.error("server error");
-      getMsgs();
     }
   };
 

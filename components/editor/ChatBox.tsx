@@ -1,13 +1,6 @@
 "use client";
 import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
-import {
-  memo,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { memo, Suspense, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
 import ChatBubble from "./ui/chatBubble";
 // import { socket } from "@/lib/socket";
@@ -16,71 +9,40 @@ import { Input } from "../ui/input";
 
 import { useLayout } from "@/context/layout-context";
 import ChatBoxSkeleton from "./Skeleton/chatBoxSkeleton";
-import { toast } from "sonner";
+
 import { Toaster } from "../ui/sonner";
+import { useChatstore } from "@/lib/store/Chatstore";
+import { Spinner } from "../ui/spinner";
 
 const ChatBox = memo(function ChatBox({ roomId }) {
-  const [msgs, setMsgs] = useState<string[]>([]);
   const [content, setContent] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const { isCollapse } = useLayout();
+  const addMsg = useChatstore((state) => state.addMsg);
+  const loadMsg = useChatstore((state) => state.loadMsg);
+  const cache = useChatstore((state) => state.cache[roomId]);
+  const AllMsgs = cache?.msgs || [];
+  const loading = cache?.loading;
 
-  const getMsgs = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/chat?roomId=${roomId}&cursor=${123}`, {
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      setMsgs((pre) => [...pre, ...data]);
-    } catch (err) {
-      console.log(err);
-      toast.error("something went wrong!!");
-    }
-  }, [roomId]);
-
-  useEffect(() => {
-    getMsgs();
-  }, [getMsgs]);
-
-  const PostMsg = async () => {
+  const PostMsg = () => {
     if (!content.trim()) return;
     setContent("");
-
-    const msgId = crypto.randomUUID();
-
-    const tempMsg = {
-      _id: msgId,
-      content,
-      name: "You",
-      image: "",
-      timeStamp: new Date().toISOString(),
-    };
-
-    setMsgs((prev) => [...prev, tempMsg]);
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ content, roomId, msgId }),
-      });
-      const msg = await res.json();
-
-      setMsgs((prev) => prev.map((m) => (m._id === msg.msgId ? msg : m)));
-    } catch (err) {
-      console.log(err);
-      toast.error("Message failed");
-    }
+    addMsg(roomId, content);
   };
 
   useEffect(() => {
+    loadMsg(roomId, 0);
+  }, [roomId]);
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [msgs]);
+  }, [AllMsgs]);
+
+  const handleScroll = (e) => {
+    console.log(e);
+  };
+
+  console.log(AllMsgs);
 
   // useEffect(() => {
   //   socket.connect();
@@ -115,19 +77,22 @@ const ChatBox = memo(function ChatBox({ roomId }) {
           </div>
 
           <div className="flex-1 ">
-            <ScrollArea className="h-[740px] rounded-md p-3 ">
-              {!msgs.length ? (
-                <div className="h-[600px] flex items-center justify-center">
+            <ScrollArea
+              className="h-185 rounded-md p-3 "
+              onScroll={handleScroll}
+            >
+              {!AllMsgs?.length ? (
+                <div className="h-150 flex items-center justify-center">
                   <div className="flex flex-col gap-1 items-center justify-center   ">
                     <div className="rounded  animate-bounce p-2 text-white">
                       <MessageSquareCode className="size-8" />
                     </div>
-                    <p>No Conversationes!!</p>
+                    <p>No Conversations!!</p>
                   </div>
                 </div>
               ) : (
                 <>
-                  {msgs.map(({ _id, timeStamp, content, name, image }) => (
+                  {AllMsgs?.map(({ _id, timeStamp, content, name, image }) => (
                     <ChatBubble
                       key={_id}
                       name={name}
@@ -135,11 +100,18 @@ const ChatBox = memo(function ChatBox({ roomId }) {
                       timeStamp={timeStamp}
                       content={content}
                       image={image}
-                      setMsgs={setMsgs}
-                      getMsgs={getMsgs}
+                      roomId={roomId}
                     />
                   ))}
                   <div ref={endRef} />
+                  {loading && (
+                    <div>
+                      <Spinner />
+                      <span className="italic text-gray-500 text-sm font-semibold">
+                        loading msgs...
+                      </span>
+                    </div>
+                  )}
                 </>
               )}
             </ScrollArea>

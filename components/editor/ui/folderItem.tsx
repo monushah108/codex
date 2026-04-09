@@ -24,6 +24,7 @@ function FolderItem({
   const [inputValue, setInputValue] = useState("");
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const cache = useExplorerstore((s) => s.cache[item._id]);
   const loadFolder = useExplorerstore((s) => s.loadFolder);
@@ -129,6 +130,7 @@ function FolderItem({
     <Collapsible
       onOpenChange={(open) => {
         if (open) loadFolder(roomId, item._id);
+        setIsOpen(open);
       }}
     >
       {/* FOLDER ROW */}
@@ -143,11 +145,11 @@ function FolderItem({
         <CollapsibleTrigger
           onClick={() => setSelected(item._id)}
           style={{ paddingLeft: indent }}
-          className={` w-full flex items-center gap-1 py-1 rounded
+          className={` w-full flex items-center gap-1 py-1 rounded 
           ${isSelected ? "bg-[#37373d]" : "hover:bg-[#2a2d2e]"}`}
         >
           <ChevronRight
-            className={`w-4 h-4 transition-transform ${isSelected ? "rotate-90" : ""}`}
+            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
           />
 
           <Folder className="w-4 h-4 text-yellow-400" />
@@ -245,7 +247,7 @@ function FolderItem({
 
         {/* CREATE INPUT */}
 
-        {creating.parentId === item._id && (
+        {creating?.parentId === item._id && (
           <div
             style={{ paddingLeft: indent + 20 }}
             className="flex items-center gap-2 py-1"
@@ -261,6 +263,7 @@ function FolderItem({
                   setCreating({ parentId: null, type: null });
                 }
               }}
+              onBlur={() => setCreating({ parentId: null, type: null })}
               className="bg-transparent border border-[#3a3d3e] px-1 text-sm outline-none"
             />
           </div>

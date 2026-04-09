@@ -19,6 +19,7 @@ type Codestore = {
   closeFile: (fileId: string) => void;
   setActiveFile: (fileId: string) => void;
   setFileEdited: (fileId: string, edited: boolean) => void;
+  updateContent: (fileId: string, content: string) => void;
   saveFileContent: (
     roomId: string,
     fileId: string,
@@ -163,6 +164,17 @@ export const useCodestore = create<Codestore>((set, get) => ({
       }));
     }
   },
+
+  updateContent: (fileId, content) =>
+    set((state) => ({
+      code: {
+        ...state.code,
+        [fileId]: {
+          ...state.code[fileId],
+          content,
+        },
+      },
+    })),
 
   runCode: async (fileId) => {
     const code = get().code[fileId]?.content;
