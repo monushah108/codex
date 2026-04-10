@@ -40,7 +40,6 @@ export const useChatstore = create<Chatstore>((set, get) => ({
 
   loadMsg: async (roomId, cursor) => {
     const cache = get().cache[roomId];
-    const user = get()?.user;
 
     if (cache?.loaded) return;
 
@@ -147,7 +146,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
             ...state.cache,
             [roomId]: {
               ...cache,
-              msgs: cache.msgs.map((m) => (m.id === id ? formatMsg : m)),
+              msgs: cache.msgs.map((m) => (m._id === id ? formatMsg : m)),
             },
           },
         };
@@ -165,7 +164,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
             ...state.cache,
             [roomId]: {
               ...cache,
-              msgs: cache.msgs.filter((m) => m.id !== id),
+              msgs: cache.msgs.filter((m) => m._id !== id),
             },
           },
         };
@@ -183,7 +182,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           ...state.cache,
           [roomId]: {
             ...cache,
-            msgs: cache.msgs.filter((m) => m.id !== msgId),
+            msgs: cache.msgs.filter((m) => m._id !== msgId),
           },
         },
       };
@@ -201,7 +200,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           [roomId]: {
             ...cache,
             msgs: cache.msgs.map((m) =>
-              m.id === msgId ? { ...m, content: newContent } : m,
+              m._id === msgId ? { ...m, content: newContent } : m,
             ),
           },
         },

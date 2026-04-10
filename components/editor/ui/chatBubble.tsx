@@ -18,7 +18,7 @@ import {
   ReplyIcon,
 } from "lucide-react";
 import { Fira_Code } from "next/font/google";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const firaCode = Fira_Code({
@@ -26,14 +26,7 @@ const firaCode = Fira_Code({
   weight: ["400", "500"],
 });
 
-export default function ChatBubble({
-  id,
-  name,
-  content,
-  timeStamp,
-  image,
-  roomId,
-}) {
+function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
   const [show, setShow] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editedMsg, setEditedMsg] = useState(content);
@@ -48,6 +41,8 @@ export default function ChatBubble({
 
   const EditMsg = async (e) => {
     setIsEdit(false);
+    editMsg(roomId, id, editedMsg);
+    if (!editedMsg.trim()) return;
     try {
       await fetch(`/api/playground/${roomId}/chat`, {
         method: "PUT",
@@ -60,11 +55,11 @@ export default function ChatBubble({
     } catch {
       toast.error("server error");
     }
-    editMsg(id, editedMsg, roomId);
   };
 
   const DeleteMsg = async () => {
-    deleteMsg(id, roomId);
+    console.log(roomId, id);
+    deleteMsg(roomId, id);
     try {
       await fetch(`/api/playground/${roomId}/chat`, {
         method: "DELETE",
@@ -100,7 +95,7 @@ export default function ChatBubble({
         <div className="flex items-center gap-1">
           <Avatar className="cursor-pointer size-5">
             <AvatarImage src={image} />
-            <AvatarFallback>{name || "cx"}</AvatarFallback>
+            <AvatarFallback>{name?.[0]?.toUpperCase()}</AvatarFallback>
           </Avatar>
           <span className="capitalize text-xs">{name}</span>
         </div>
@@ -197,3 +192,5 @@ export default function ChatBubble({
     </div>
   );
 }
+
+export default memo(ChatBubble);

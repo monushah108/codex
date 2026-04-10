@@ -3,7 +3,7 @@ import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
 import { memo, Suspense, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
 import ChatBubble from "./ui/chatBubble";
-// import { socket } from "@/lib/socket";
+import { socket } from "@/lib/socket";
 import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
 
@@ -20,9 +20,8 @@ const ChatBox = memo(function ChatBox({ roomId }) {
   const { isCollapse } = useLayout();
   const addMsg = useChatstore((state) => state.addMsg);
   const loadMsg = useChatstore((state) => state.loadMsg);
-  const cache = useChatstore((state) => state.cache[roomId]);
-  const AllMsgs = cache?.msgs || [];
-  const loading = cache?.loading;
+  const AllMsgs = useChatstore((state) => state.cache[roomId]?.msgs);
+  const loading = useChatstore((state) => state.cache[roomId]?.loading);
 
   const PostMsg = () => {
     if (!content.trim()) return;
@@ -42,22 +41,16 @@ const ChatBox = memo(function ChatBox({ roomId }) {
     console.log(e);
   };
 
-  console.log(AllMsgs);
+  useEffect(() => {
+    socket.connect();
 
-  // useEffect(() => {
-  //   socket.connect();
+    socket.emit("create-room", roomId);
 
-  //   socket.emit("msg", "hello monu is here");
-
-  //   socket.on("recive", (data) => {
-  //     console.log(data);
-  //   });
-
-  //   return () => {
-  //     socket.off("connect", () => console.log("connected"));
-  //     socket.off("disconnect", () => console.log("disconnected"));
-  //   };
-  // }, []);
+    return () => {
+      socket.off("connect", () => console.log("connected"));
+      socket.off("disconnect", () => console.log("disconnected"));
+    };
+  }, []);
 
   return (
     <ResizablePanel
@@ -104,15 +97,15 @@ const ChatBox = memo(function ChatBox({ roomId }) {
                     />
                   ))}
                   <div ref={endRef} />
-                  {loading && (
-                    <div>
-                      <Spinner />
-                      <span className="italic text-gray-500 text-sm font-semibold">
-                        loading msgs...
-                      </span>
-                    </div>
-                  )}
                 </>
+              )}
+              {loading && (
+                <div className="flex items-center justify-center gap-1">
+                  <Spinner />
+                  <span className="italic text-gray-500 text-sm font-semibold">
+                    loading msgs...
+                  </span>
+                </div>
               )}
             </ScrollArea>
           </div>

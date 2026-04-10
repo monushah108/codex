@@ -23,7 +23,7 @@ app.prepare().then(() => {
 
       socket
         .to(serverName)
-        .emit("user-joined", { sId: socket.id, uId: userId });
+        .emit("joined-users", { sId: socket.id, uId: userId });
 
       // for msgs
       socket.on(`${serverName}:msg`, ({ roomId, msg }) => {
