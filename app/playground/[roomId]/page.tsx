@@ -55,7 +55,7 @@ export default async function Page({ params }) {
         </ResizablePanelGroup>
       </div>
 
-      <StatusBar />
+      <StatusBar roomId={roomId} />
     </div>
   );
 }

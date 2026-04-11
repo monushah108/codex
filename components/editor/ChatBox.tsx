@@ -1,9 +1,15 @@
 "use client";
 import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
-import { memo, Suspense, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ScrollArea } from "../ui/scroll-area";
 import ChatBubble from "./ui/chatBubble";
-import { socket } from "@/lib/socket";
 import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
 
@@ -13,44 +19,29 @@ import ChatBoxSkeleton from "./Skeleton/chatBoxSkeleton";
 import { Toaster } from "../ui/sonner";
 import { useChatstore } from "@/lib/store/Chatstore";
 import { Spinner } from "../ui/spinner";
+import useChat from "@/lib/useChat";
 
 const ChatBox = memo(function ChatBox({ roomId }) {
   const [content, setContent] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const { isCollapse } = useLayout();
-  const addMsg = useChatstore((state) => state.addMsg);
-  const loadMsg = useChatstore((state) => state.loadMsg);
+  const { sendMessage } = useChat(roomId);
   const AllMsgs = useChatstore((state) => state.cache[roomId]?.msgs);
   const loading = useChatstore((state) => state.cache[roomId]?.loading);
 
-  const PostMsg = () => {
+  const PostMsg = useCallback(() => {
     if (!content.trim()) return;
-    setContent("");
-    addMsg(roomId, content);
-  };
 
-  useEffect(() => {
-    loadMsg(roomId, 0);
-  }, [roomId]);
+    sendMessage(content);
+
+    setContent("");
+  }, [content, roomId, sendMessage]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [AllMsgs]);
 
-  const handleScroll = (e) => {
-    console.log(e);
-  };
-
-  useEffect(() => {
-    socket.connect();
-
-    socket.emit("create-room", roomId);
-
-    return () => {
-      socket.off("connect", () => console.log("connected"));
-      socket.off("disconnect", () => console.log("disconnected"));
-    };
-  }, []);
+  console.log(AllMsgs);
 
   return (
     <ResizablePanel
@@ -70,10 +61,7 @@ const ChatBox = memo(function ChatBox({ roomId }) {
           </div>
 
           <div className="flex-1 ">
-            <ScrollArea
-              className="h-185 rounded-md p-3 "
-              onScroll={handleScroll}
-            >
+            <ScrollArea className="h-185 rounded-md p-3 ">
               {!AllMsgs?.length ? (
                 <div className="h-150 flex items-center justify-center">
                   <div className="flex flex-col gap-1 items-center justify-center   ">

@@ -6,3 +6,7 @@ for user Id we can use api.auth
 
   
 why i am not having to run connetcDb in every routes 
+
+1. sare memebers show karo with img 
+2. room expiry add karo . 
+3. private room users ki expriy set karo 

@@ -25,7 +25,9 @@ type MsgCache = {
 type Chatstore = {
   cache: Record<string, MsgCache>;
   user: User | null;
+  members: User[];
   setUser: (user: User | null) => void;
+  setMembers: (members: User[]) => void;
   addMsg: (roomId: string, content: string) => Promise<MsgItem | void>;
   loadMsg: (roomId: string, cursor: string) => Promise<void>;
   deleteMsg: (roomId: string, msgId: string) => void;
@@ -35,8 +37,30 @@ type Chatstore = {
 export const useChatstore = create<Chatstore>((set, get) => ({
   cache: {},
   user: null,
+  members: [],
 
-  setUser: (user) => set({ user }),
+  setUser: (user) => {
+    if (!user) return;
+    set({ user });
+  },
+
+  setMembers: (members) => {
+    const user = get().user;
+
+    if (!user?.id) return;
+
+    set(() => ({
+      members: members.map((m: any) =>
+        m.uId === user.id
+          ? user
+          : {
+              id: m.uId,
+              name: "Unknown",
+              email: "",
+            },
+      ),
+    }));
+  },
 
   loadMsg: async (roomId, cursor) => {
     const cache = get().cache[roomId];
@@ -95,14 +119,14 @@ export const useChatstore = create<Chatstore>((set, get) => ({
     const user = get().user;
 
     const tempMsg: MsgItem = {
-      id,
+      _id: id,
       content,
       name: user?.name || "You",
       image: user?.image || "",
       timeStamp: new Date().toISOString(),
     };
 
-    // optimistic message
+    // optimistic
     set((state) => {
       const cache = state.cache[roomId];
       if (!cache) return state;
@@ -121,22 +145,12 @@ export const useChatstore = create<Chatstore>((set, get) => ({
     try {
       const res = await fetch(`/api/playground/${roomId}/chat`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, roomId, msgId: id }),
       });
 
       const data = await res.json();
 
-      const formatMsg = {
-        ...data,
-        name: user?.name || "You",
-        image: user?.image || "",
-      };
-
-      // replace temp message with real one
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
@@ -146,15 +160,13 @@ export const useChatstore = create<Chatstore>((set, get) => ({
             ...state.cache,
             [roomId]: {
               ...cache,
-              msgs: cache.msgs.map((m) => (m._id === id ? formatMsg : m)),
+              msgs: cache.msgs.map((m) => (m.id === id ? { ...data, id } : m)),
             },
           },
         };
       });
-    } catch (err) {
-      console.log(err);
-
-      // remove failed message
+    } catch {
+      // rollback
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
@@ -164,14 +176,13 @@ export const useChatstore = create<Chatstore>((set, get) => ({
             ...state.cache,
             [roomId]: {
               ...cache,
-              msgs: cache.msgs.filter((m) => m._id !== id),
+              msgs: cache.msgs.filter((m) => m.id !== id),
             },
           },
         };
       });
     }
   },
-
   deleteMsg: (roomId, msgId) => {
     set((state) => {
       const cache = state.cache[roomId];

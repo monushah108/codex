@@ -13,42 +13,36 @@ export async function GET(request: NextRequest, { params }) {
   const userId = await getUserId(request);
 
   try {
-    const isValidId = mongoose.Types.ObjectId.isValid(roomId);
-
-    if (!isValidId) {
-      return Response.json({ error: "not a valid id" }, { status: 400 });
+    if (!mongoose.Types.ObjectId.isValid(roomId)) {
+      return Response.json({ error: "Invalid room id" }, { status: 400 });
     }
 
-    const IsMember = await Member.findOne({ userId, roomId });
-
-    if (IsMember) {
-      return Response.json(
-        {
-          access: "granted",
-        },
-        { status: 200 },
-      );
-    }
-
-    const room = await Room.findOne({ _id: roomId });
+    const room = await Room.findById(roomId).lean();
 
     if (!room) {
       return Response.json(
-        { error: "this room no longer exists " },
+        { error: "This room no longer exists" },
         { status: 404 },
       );
     }
 
+    // check membership
+    const isMember = await Member.findOne({ userId, roomId }).lean();
+
+    if (isMember) {
+      return Response.json({ access: "granted" }, { status: 200 });
+    }
+
     const users = db.collection("user");
 
-    const user = await users.findOne({ _id: room.adminId });
-
-    // ✅ Private room → ask password
+    // PRIVATE ROOM
     if (room.type === "private") {
+      const admin = await users.findOne({ _id: room.adminId });
+
       return Response.json(
         {
-          admin_name: user?.name,
-          admin_img: user?.image,
+          admin_name: admin?.name,
+          admin_img: admin?.image,
           access: "password_required",
           createdAt: room.createdAt,
         },
@@ -56,7 +50,6 @@ export async function GET(request: NextRequest, { params }) {
       );
     }
 
-    // ✅ Public room → allow entry
     return Response.json(
       {
         access: "granted",

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, MicOff, UserSquare, Search, VolumeX, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useChatstore } from "@/lib/store/Chatstore";
 
 const peers = Array.from({ length: 20 }).map((_, i) => ({
   id: i,
@@ -22,6 +23,7 @@ const peers = Array.from({ length: 20 }).map((_, i) => ({
 export default function Membermodule() {
   const [search, setSearch] = useState("");
   const [muted, setMuted] = useState<number[]>([]);
+  const members = useChatstore((state) => state.members);
 
   const filteredPeers = useMemo(() => {
     return peers.filter((p) =>
@@ -47,43 +49,12 @@ export default function Membermodule() {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <div className="flex items-center gap-1 cursor-pointer">
-          <Users className="size-3" />
-          <span>3 online</span>
-          <div className="flex flex-1 -space-x-2">
-            <Avatar className="w-4 h-4 border-white border rounded-full">
-              <AvatarImage
-                src={`https://api.dicebear.com/6.x/initials/svg?seed=You`}
-                alt={`Avatar You`}
-                className="rounded-full"
-              />
-              <AvatarFallback>You</AvatarFallback>
-            </Avatar>
-            <Avatar className="w-4 h-4 border-white border rounded-full">
-              <AvatarImage
-                src={`https://api.dicebear.com/6.x/initials/svg?seed=You`}
-                alt={`Avatar You`}
-                className="rounded-full"
-              />
-              <AvatarFallback>You</AvatarFallback>
-            </Avatar>
-            <Avatar className="w-4 h-4 border-white border rounded-full">
-              <AvatarImage
-                src={`https://api.dicebear.com/6.x/initials/svg?seed=You`}
-                alt={`Avatar You`}
-                className="rounded-full"
-              />
-              <AvatarFallback>You</AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-      </DialogTrigger>
+      <DialogTrigger asChild></DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-[#1f1f22] text-[#e5e5e5] border border-white/10 rounded-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ">
               <UserSquare className="size-5 text-indigo-400" />
               <span>Peers</span>
               <span className="text-xs text-muted-foreground">
