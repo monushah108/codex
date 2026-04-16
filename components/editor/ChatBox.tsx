@@ -1,47 +1,64 @@
 "use client";
 import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
-import {
-  memo,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { memo, Suspense, useEffect, useRef, useState } from "react";
+
 import { ScrollArea } from "../ui/scroll-area";
 import ChatBubble from "./ui/chatBubble";
 import { ResizablePanel } from "../ui/resizable";
 import { Input } from "../ui/input";
+import { Toaster } from "../ui/sonner";
+import { Spinner } from "../ui/spinner";
 
 import { useLayout } from "@/context/layout-context";
 import ChatBoxSkeleton from "./Skeleton/chatBoxSkeleton";
-
-import { Toaster } from "../ui/sonner";
 import { useChatstore } from "@/lib/store/Chatstore";
-import { Spinner } from "../ui/spinner";
 import useChat from "@/lib/useChat";
 
 const ChatBox = memo(function ChatBox({ roomId }) {
   const [content, setContent] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+
   const { isCollapse } = useLayout();
   const { sendMessage } = useChat(roomId);
-  const AllMsgs = useChatstore((state) => state.cache[roomId]?.msgs);
-  const loading = useChatstore((state) => state.cache[roomId]?.loading);
 
-  const PostMsg = useCallback(() => {
-    if (!content.trim()) return;
+  const user = useChatstore((s) => s.user);
+  const msgs = useChatstore((s) => s.cache[roomId]?.msgs);
+  const loadMsg = useChatstore((s) => s.loadMsg);
+  const loading = useChatstore((s) => s.cache[roomId]?.loading);
+  const addMsg = useChatstore((s) => s.addMsg);
 
+  // 🔹 SEND MESSAGE (Optimistic + Socket)
+  const PostMsg = () => {
+    if (!content.trim() || !user) return;
+
+    const tempId = crypto.randomUUID();
+
+    // ✅ Optimistic message
+    addMsg(roomId, {
+      id: tempId,
+      content,
+      userId: user.id,
+      name: user.name,
+      image: user.image,
+      optimistic: true,
+    });
+
+    // ✅ Send to server
     sendMessage(content);
 
     setContent("");
-  }, [content, roomId, sendMessage]);
+  };
 
+  // 🔹 LOAD HISTORY
+  useEffect(() => {
+    if (!roomId) return;
+    loadMsg(roomId, "");
+  }, [roomId]);
+
+  // 🔹 AUTO SCROLL
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [AllMsgs]);
-
-  console.log(AllMsgs);
+  }, [msgs]);
 
   return (
     <ResizablePanel
@@ -52,7 +69,9 @@ const ChatBox = memo(function ChatBox({ roomId }) {
     >
       <Suspense fallback={<ChatBoxSkeleton />}>
         <Toaster />
-        <aside className={`flex justify-between flex-col h-full `}>
+
+        <aside className="flex flex-col h-full">
+          {/* HEADER */}
           <div className="flex items-center justify-between px-2 py-2 border-b border-[#2d2d30]">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-3" />
@@ -60,12 +79,13 @@ const ChatBox = memo(function ChatBox({ roomId }) {
             </div>
           </div>
 
-          <div className="flex-1 ">
-            <ScrollArea className="h-185 rounded-md p-3 ">
-              {!AllMsgs?.length ? (
-                <div className="h-150 flex items-center justify-center">
-                  <div className="flex flex-col gap-1 items-center justify-center   ">
-                    <div className="rounded  animate-bounce p-2 text-white">
+          {/* MESSAGES */}
+          <div className="flex-1">
+            <ScrollArea className="h-[calc(100vh-140px)] p-3">
+              {!msgs?.length ? (
+                <div className="flex h-full items-center justify-center">
+                  <div className="flex flex-col gap-1 items-center">
+                    <div className="animate-bounce p-2">
                       <MessageSquareCode className="size-8" />
                     </div>
                     <p>No Conversations!!</p>
@@ -73,24 +93,27 @@ const ChatBox = memo(function ChatBox({ roomId }) {
                 </div>
               ) : (
                 <>
-                  {AllMsgs?.map(({ _id, timeStamp, content, name, image }) => (
+                  {msgs.map((msg) => (
                     <ChatBubble
-                      key={_id}
-                      name={name}
-                      id={_id}
-                      timeStamp={timeStamp}
-                      content={content}
-                      image={image}
+                      key={msg.id}
+                      id={msg.id}
+                      name={msg.name}
+                      content={msg.content}
+                      image={msg.image}
+                      timeStamp={msg.createdAt}
                       roomId={roomId}
+                      optimistic={msg.optimistic}
+                      isOwn={msg.userId === user?.id}
                     />
                   ))}
                   <div ref={endRef} />
                 </>
               )}
+
               {loading && (
-                <div className="flex items-center justify-center gap-1">
+                <div className="flex items-center justify-center gap-2">
                   <Spinner />
-                  <span className="italic text-gray-500 text-sm font-semibold">
+                  <span className="text-sm text-gray-500 italic">
                     loading msgs...
                   </span>
                 </div>
@@ -98,21 +121,22 @@ const ChatBox = memo(function ChatBox({ roomId }) {
             </ScrollArea>
           </div>
 
+          {/* INPUT */}
           <div className="p-3 border-t border-[#2d2d30]">
-            <div className="flex items-center gap-2 bg-[#2d2d30] rounded px-3 py-2 focus-within:ring-1 focus-within:ring-[#007acc] transition-all">
+            <div className="flex items-center gap-2 bg-[#2d2d30] rounded px-3 py-2 focus-within:ring-1 focus-within:ring-[#007acc]">
               <Input
                 autoFocus
                 value={content}
-                onKeyDown={(e) => e.key == "Enter" && PostMsg()}
+                onKeyDown={(e) => e.key === "Enter" && PostMsg()}
                 onChange={(e) => setContent(e.target.value)}
-                className="flex-1 bg-transparent outline-none border-none text-sm text-[#cccccc] placeholder-[#6a6a6a]  min-h-8 resize-none max-h-15 "
+                className="flex-1 bg-transparent border-none text-sm text-[#ccc] placeholder-[#6a6a6a]"
                 placeholder="Type a message..."
               />
 
               <button
-                disabled={!content}
+                disabled={!content.trim()}
                 onClick={PostMsg}
-                className="p-2 rounded hover:bg-[#007acc] disabled:opacity-30 transition-colors "
+                className="p-2 rounded hover:bg-[#007acc] disabled:opacity-30"
               >
                 <SendIcon className="size-4" />
               </button>

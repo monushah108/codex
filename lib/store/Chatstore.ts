@@ -10,9 +10,11 @@ type User = {
 type MsgItem = {
   id: string;
   content: string;
-  image: string;
+  userId: string;
   name: string;
-  timeStamp: string;
+  image?: string;
+  createdAt: number;
+  optimistic?: boolean;
 };
 
 type MsgCache = {
@@ -22,13 +24,23 @@ type MsgCache = {
   hasMore?: boolean;
 };
 
+type Member = {
+  id: string;
+  name?: string;
+  image?: string;
+};
+
 type Chatstore = {
   cache: Record<string, MsgCache>;
   user: User | null;
-  members: User[];
+  members: Member[];
+
   setUser: (user: User | null) => void;
-  setMembers: (members: User[]) => void;
-  addMsg: (roomId: string, content: string) => Promise<MsgItem | void>;
+  setMembers: (members: any[]) => void;
+
+  addMsg: (roomId: string, msg: Partial<MsgItem>) => void;
+  confirmMsg: (roomId: string, tempId: string, realMsg: MsgItem) => void;
+
   loadMsg: (roomId: string, cursor: string) => Promise<void>;
   deleteMsg: (roomId: string, msgId: string) => void;
   editMsg: (roomId: string, msgId: string, newContent: string) => void;
@@ -39,94 +51,58 @@ export const useChatstore = create<Chatstore>((set, get) => ({
   user: null,
   members: [],
 
-  setUser: (user) => {
-    if (!user) return;
-    set({ user });
-  },
+  // 🔹 USER
+  setUser: (user) => set({ user }),
 
+  // 🔹 MEMBERS (from socket)
   setMembers: (members) => {
     const user = get().user;
 
-    if (!user?.id) return;
-
-    set(() => ({
-      members: members.map((m: any) =>
-        m.uId === user.id
-          ? user
-          : {
-              id: m.uId,
-              name: "Unknown",
-              email: "",
-            },
-      ),
-    }));
+    set({
+      members: members.map((m: any) => ({
+        id: m.uId,
+        name: m.uId === user?.id ? user.name : "Anonymous",
+        image: m.uId === user?.id ? user.image : undefined,
+      })),
+    });
   },
 
-  loadMsg: async (roomId, cursor) => {
-    const cache = get().cache[roomId];
-
-    if (cache?.loaded) return;
-
-    set((state) => ({
-      cache: {
-        ...state.cache,
-        [roomId]: {
-          msgs: [...(state.cache[roomId]?.msgs || [])],
-          loaded: false,
-          loading: true,
-        },
-      },
-    }));
-
-    try {
-      const res = await fetch(
-        `/api/playground/${roomId}/chat?cursor=${cursor}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      const data = await res.json();
-
-      set((state) => ({
-        cache: {
-          ...state.cache,
-          [roomId]: {
-            msgs: cache ? [...data?.msgs, ...cache?.msgs] : data?.msgs,
-            loaded: true,
-            loading: false,
-            hasMore: data.hasMore,
-          },
-        },
-      }));
-    } catch (err) {
-      console.log(err);
-
-      set((state) => ({
-        cache: {
-          ...state.cache,
-          [roomId]: {
-            ...state.cache[roomId],
-            loading: false,
-          },
-        },
-      }));
-    }
-  },
-
-  addMsg: async (roomId, content) => {
-    const id = crypto.randomUUID();
+  // 🔹 ADD MESSAGE (supports optimistic + socket)
+  addMsg: (roomId, msg) => {
     const user = get().user;
+    const id = msg.id || crypto.randomUUID();
 
-    const tempMsg: MsgItem = {
-      _id: id,
-      content,
-      name: user?.name || "You",
-      image: user?.image || "",
-      timeStamp: new Date().toISOString(),
+    const newMsg: MsgItem = {
+      id,
+      content: msg.content || "",
+      userId: msg.userId || user?.id || "",
+      name: msg.name || user?.name || "You",
+      image: msg.image || user?.image,
+      createdAt: msg.createdAt || Date.now(),
+      optimistic: msg.optimistic ?? false,
     };
 
-    // optimistic
+    set((state) => {
+      const cache = state.cache[roomId] || {
+        msgs: [],
+        loaded: true,
+        loading: false,
+      };
+
+      return {
+        cache: {
+          ...state.cache,
+          [roomId]: {
+            ...cache,
+            msgs: [...cache.msgs, newMsg],
+          },
+        },
+      };
+    });
+  },
+
+  // 🔹 CONFIRM OPTIMISTIC MESSAGE (replace temp with real)
+  confirmMsg: (roomId, tempId, realMsg) => {
     set((state) => {
       const cache = state.cache[roomId];
       if (!cache) return state;
@@ -136,53 +112,70 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           ...state.cache,
           [roomId]: {
             ...cache,
-            msgs: [...cache.msgs, tempMsg],
+            msgs: cache.msgs.map((m) =>
+              m.id === tempId ? { ...realMsg, optimistic: false } : m,
+            ),
           },
         },
       };
     });
+  },
+
+  // 🔹 LOAD HISTORY
+  loadMsg: async (roomId, cursor) => {
+    const cache = get().cache[roomId];
+
+    if (cache?.loading) return;
+
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [roomId]: {
+          ...(state.cache[roomId] || { msgs: [] }),
+          loading: true,
+        },
+      },
+    }));
 
     try {
-      const res = await fetch(`/api/playground/${roomId}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, roomId, msgId: id }),
-      });
+      const res = await fetch(
+        `/api/playground/${roomId}/chat?cursor=${cursor}`,
+        { credentials: "include" },
+      );
 
       const data = await res.json();
 
       set((state) => {
-        const cache = state.cache[roomId];
-        if (!cache) return state;
+        const existing = state.cache[roomId]?.msgs || [];
 
         return {
           cache: {
             ...state.cache,
             [roomId]: {
-              ...cache,
-              msgs: cache.msgs.map((m) => (m.id === id ? { ...data, id } : m)),
+              msgs: [...data.msgs, ...existing],
+              loaded: true,
+              loading: false,
+              hasMore: data.hasMore,
             },
           },
         };
       });
-    } catch {
-      // rollback
-      set((state) => {
-        const cache = state.cache[roomId];
-        if (!cache) return state;
+    } catch (err) {
+      console.error(err);
 
-        return {
-          cache: {
-            ...state.cache,
-            [roomId]: {
-              ...cache,
-              msgs: cache.msgs.filter((m) => m.id !== id),
-            },
+      set((state) => ({
+        cache: {
+          ...state.cache,
+          [roomId]: {
+            ...(state.cache[roomId] || { msgs: [] }),
+            loading: false,
           },
-        };
-      });
+        },
+      }));
     }
   },
+
+  // 🔹 DELETE
   deleteMsg: (roomId, msgId) => {
     set((state) => {
       const cache = state.cache[roomId];
@@ -193,13 +186,14 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           ...state.cache,
           [roomId]: {
             ...cache,
-            msgs: cache.msgs.filter((m) => m._id !== msgId),
+            msgs: cache.msgs.filter((m) => m.id !== msgId),
           },
         },
       };
     });
   },
 
+  // 🔹 EDIT
   editMsg: (roomId, msgId, newContent) => {
     set((state) => {
       const cache = state.cache[roomId];
@@ -211,7 +205,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           [roomId]: {
             ...cache,
             msgs: cache.msgs.map((m) =>
-              m._id === msgId ? { ...m, content: newContent } : m,
+              m.id === msgId ? { ...m, content: newContent } : m,
             ),
           },
         },

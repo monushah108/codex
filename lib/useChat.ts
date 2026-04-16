@@ -1,69 +1,111 @@
-import { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
+import { useEffect, useRef, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
+import * as Y from "yjs";
 import { useChatstore } from "./store/Chatstore";
-type Message = {
-  id: string;
-  content: string;
-  userId: string;
-  name: string;
-  image: string;
-};
 
 type Member = {
-  id: string;
-  name: string;
-  image: string;
-};
-
-type user = {
-  id: string;
-  name: string;
-  image: string;
+  sId: string;
+  uId: string;
 };
 
 export default function useChat(roomId: string) {
-  const addMsg = useChatstore((state) => state.addMsg);
-  const setMembers = useChatstore((state) => state.setMembers);
-  const user = useChatstore((state) => state.user);
-  const socketRef = useRef<any>();
+  const addMsg = useChatstore((s) => s.addMsg);
+  const setMembers = useChatstore((s) => s.setMembers);
+  const user = useChatstore((s) => s.user);
+
+  const socketRef = useRef<Socket | null>(null);
+  const ydocRef = useRef<Y.Doc | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !roomId) return;
 
-    socketRef.current = io("http://localhost:3000", {
-      query: {
-        userId: user.id,
+    const socket = io("http://localhost:3000", {
+      transports: ["websocket"],
+    });
+
+    socketRef.current = socket;
+
+    // 🔹 Create Yjs document
+    const ydoc = new Y.Doc();
+    ydocRef.current = ydoc;
+
+    // 🔹 CONNECT
+    socket.on("connect", () => {
+      console.log("connected:", socket.id);
+
+      socket.emit("room:join", {
         roomId,
-      },
+        userId: user.id,
+      });
     });
 
-    socketRef.current.on("connect", () => {
-      console.log(socketRef.current.id);
-    });
-
-    socketRef.current.on("receive_message", (message: Message) => {
-      // setMessages((prevMessages) => [...prevMessages, message]);
-      addMsg(roomId, message.content);
-    });
-
-    socketRef.current.on("members", (members: Member[]) => {
+    // 🔹 MEMBERS
+    socket.on("room:members", (members: Member[]) => {
       setMembers(members);
     });
 
+    // 🔹 CHAT RECEIVE
+    socket.on("chat:receive", (msg) => {
+      addMsg(roomId, msg);
+    });
+
+    // 🔹 YJS INIT (FULL STATE)
+    socket.on("yjs:init", (state: number[]) => {
+      const update = new Uint8Array(state);
+      Y.applyUpdate(ydoc, update);
+    });
+
+    // 🔹 YJS UPDATE (INCREMENTAL)
+    socket.on("yjs:update", (update: number[]) => {
+      Y.applyUpdate(ydoc, new Uint8Array(update));
+    });
+
+    // 🔹 LOCAL YJS CHANGES → SERVER
+    ydoc.on("update", (update: Uint8Array) => {
+      socket.emit("yjs:update", {
+        roomId,
+        update: Array.from(update),
+      });
+    });
+
     return () => {
-      socketRef.current.disconnect();
+      socket.disconnect();
+      ydoc.destroy();
     };
   }, [roomId, user]);
 
-  const joinRoom = (roomId: string) => {
-    if (!socketRef.current) return;
-    socketRef.current.emit("joinRoom", { roomId, userId: user?.id });
-  };
+  // 🔹 SEND CHAT MESSAGE
+  const sendMessage = useCallback(
+    (content: string) => {
+      const socket = socketRef.current;
+      if (!socket) return;
 
-  const sendMessage = (content: string) => {
-    if (!socketRef.current) return;
-    socketRef.current.emit("send_message", { content, roomId });
-  };
+      socket.emit("chat:send", {
+        roomId,
+        content,
+      });
+    },
+    [roomId],
+  );
 
-  return { user, joinRoom, sendMessage };
+  // 🔹 OPTIONAL: AWARENESS (cursor, name, etc.)
+  const sendAwareness = useCallback(
+    (awareness: any) => {
+      const socket = socketRef.current;
+      if (!socket) return;
+
+      socket.emit("yjs:awareness", {
+        roomId,
+        awareness,
+      });
+    },
+    [roomId],
+  );
+
+  return {
+    user,
+    sendMessage,
+    sendAwareness,
+    // ydoc: ydocRef.current,
+  };
 }
