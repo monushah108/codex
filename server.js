@@ -1,7 +1,6 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
-import * as Y from "yjs";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -36,7 +35,7 @@ app.prepare().then(() => {
       const s = io.sockets.sockets.get(id);
       return {
         sId: id,
-        uId: s?.data.userId,
+        uId: s?.data.user,
       };
     });
   };
@@ -45,9 +44,9 @@ app.prepare().then(() => {
     console.log("connected:", socket.id);
 
     // 🔹 JOIN ROOM
-    socket.on("room:join", ({ roomId, userId }) => {
+    socket.on("room:join", ({ roomId, user }) => {
       socket.join(roomId);
-      socket.data.userId = userId;
+      socket.data.user = user;
 
       const members = getRoomMembers(roomId);
       io.to(roomId).emit("room:members", members);
@@ -55,16 +54,31 @@ app.prepare().then(() => {
       // // Send initial Yjs state
       // const doc = getYDoc(roomId);
       // const state = Y.encodeStateAsUpdate(doc);
-      socket.emit("yjs:init", state);
+      // socket.emit("yjs:init", state);
     });
 
     // 🔹 CHAT MESSAGE
-    socket.on("chat:send", ({ roomId, content }) => {
-      io.to(roomId).emit("chat:receive", {
+    socket.on("chat:send", async ({ roomId, content }) => {
+      const user = socket.data.user;
+
+      const message = {
+        id: crypto.randomUUID(),
         content,
-        userId: socket.data.userId,
-        createdAt: Date.now(),
-      });
+        userId: user.id,
+        name: user.name,
+        image: user.image,
+        timeStamp: Date.now(),
+      };
+
+      io.to(roomId).emit("chat:receive", message);
+    });
+
+    socket.on("chat:delete", ({ msgId, roomId }) => {
+      io.to(roomId).emit("chat:delete", msgId);
+    });
+
+    socket.on("chat:edit", ({ msgId, newText, roomId }) => {
+      io.to(roomId).emit("chat:edit", { msgId, newText });
     });
 
     // 🔹 YJS SYNC (DOCUMENT UPDATES)

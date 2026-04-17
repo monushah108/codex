@@ -60,6 +60,8 @@ const ChatBox = memo(function ChatBox({ roomId }) {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
+  console.log(msgs);
+
   return (
     <ResizablePanel
       defaultSize={isCollapse.chat ? 20 : 0}
@@ -81,7 +83,7 @@ const ChatBox = memo(function ChatBox({ roomId }) {
 
           {/* MESSAGES */}
           <div className="flex-1">
-            <ScrollArea className="h-[calc(100vh-140px)] p-3">
+            <ScrollArea className="h-185 p-3 flex">
               {!msgs?.length ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="flex flex-col gap-1 items-center">
@@ -100,10 +102,8 @@ const ChatBox = memo(function ChatBox({ roomId }) {
                       name={msg.name}
                       content={msg.content}
                       image={msg.image}
-                      timeStamp={msg.createdAt}
+                      timeStamp={msg.timeStamp}
                       roomId={roomId}
-                      optimistic={msg.optimistic}
-                      isOwn={msg.userId === user?.id}
                     />
                   ))}
                   <div ref={endRef} />

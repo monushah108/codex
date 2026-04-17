@@ -12,7 +12,8 @@ export default function useChat(roomId: string) {
   const addMsg = useChatstore((s) => s.addMsg);
   const setMembers = useChatstore((s) => s.setMembers);
   const user = useChatstore((s) => s.user);
-
+  const deleteMsg = useChatstore((s) => s.deleteMsg);
+  const editMsg = useChatstore((s) => s.editMsg);
   const socketRef = useRef<Socket | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
 
@@ -35,7 +36,11 @@ export default function useChat(roomId: string) {
 
       socket.emit("room:join", {
         roomId,
-        userId: user.id,
+        user: {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+        },
       });
     });
 
@@ -46,7 +51,17 @@ export default function useChat(roomId: string) {
 
     // 🔹 CHAT RECEIVE
     socket.on("chat:receive", (msg) => {
-      addMsg(roomId, msg);
+      if (msg.userId !== user.id) {
+        addMsg(roomId, msg);
+      }
+    });
+
+    socket.on("chat:delete", (msgId) => {
+      deleteMsg(roomId, msgId);
+    });
+
+    socket.on("chat:edit", ({ msgId, newText }) => {
+      editMsg(roomId, msgId, newText);
     });
 
     // 🔹 YJS INIT (FULL STATE)
@@ -88,6 +103,33 @@ export default function useChat(roomId: string) {
     [roomId],
   );
 
+  const deleteMessage = useCallback(
+    (msgId: string) => {
+      const socket = socketRef.current;
+      if (!socket) return;
+
+      socket.emit("chat:delete", {
+        msgId,
+        roomId,
+      });
+    },
+    [roomId],
+  );
+
+  const editMessage = useCallback(
+    (msgId: string, newText: string) => {
+      const socket = socketRef.current;
+      if (!socket) return;
+
+      socket.emit("chat:edit", {
+        msgId,
+        roomId,
+        newText,
+      });
+    },
+    [roomId],
+  );
+
   // 🔹 OPTIONAL: AWARENESS (cursor, name, etc.)
   const sendAwareness = useCallback(
     (awareness: any) => {
@@ -105,7 +147,10 @@ export default function useChat(roomId: string) {
   return {
     user,
     sendMessage,
+    deleteMessage,
+    editMessage,
     sendAwareness,
+
     // ydoc: ydocRef.current,
   };
 }

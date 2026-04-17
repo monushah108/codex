@@ -6,33 +6,6 @@ import Message from "@/model/message";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
-// export async function GET(request: NextRequest, { params }) {
-//   await connectDB();
-//   const { roomId } = await params;
-//   const cursor = request.nextUrl.searchParams.get("cursor");
-
-//   try {
-//     const chat = await Chat.findOne({ roomId }).select("_id");
-
-//     const msg = await Message.find({
-//       chatId: chat?._id,
-//     })
-//       .sort({ _id: -1 })
-//       .limit(20);
-
-//     return Response.json(
-//       {
-//         msgs: msg.reverse(),
-//         hasMore: msg.length === 20,
-//       },
-//       { status: 200 },
-//     );
-//   } catch (err) {
-//     console.log(err);
-//     return Response.json({ error: "server Error" }, { status: 500 });
-//   }
-// }
-
 export async function GET(request: NextRequest, { params }) {
   await connectDB();
   const { roomId } = await params;
@@ -47,7 +20,8 @@ export async function GET(request: NextRequest, { params }) {
       chatId: chat?._id,
     })
       .sort({ _id: -1 })
-      .limit(20);
+      .limit(20)
+      .lean();
 
     const userIds = msg.map((m) => m.userId);
 
@@ -57,8 +31,10 @@ export async function GET(request: NextRequest, { params }) {
 
     const allMsgs = msg
       .map((m) => ({
-        ...m.toObject(),
-
+        id: m._id.toString(),
+        content: m.content,
+        userId: m.userId.toString(),
+        timeStamp: m.timeStamp,
         name: userMap.get(m.userId.toString())?.name,
         image: userMap.get(m.userId.toString())?.image,
       }))

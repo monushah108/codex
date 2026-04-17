@@ -13,7 +13,7 @@ type MsgItem = {
   userId: string;
   name: string;
   image?: string;
-  createdAt: number;
+  timeStamp: string;
   optimistic?: boolean;
 };
 
@@ -39,11 +39,10 @@ type Chatstore = {
   setMembers: (members: any[]) => void;
 
   addMsg: (roomId: string, msg: Partial<MsgItem>) => void;
-  confirmMsg: (roomId: string, tempId: string, realMsg: MsgItem) => void;
 
   loadMsg: (roomId: string, cursor: string) => Promise<void>;
   deleteMsg: (roomId: string, msgId: string) => void;
-  editMsg: (roomId: string, msgId: string, newContent: string) => void;
+  editMsg: (roomId: string, msgId: string, newText: string) => void;
 };
 
 export const useChatstore = create<Chatstore>((set, get) => ({
@@ -68,20 +67,23 @@ export const useChatstore = create<Chatstore>((set, get) => ({
   },
 
   // 🔹 ADD MESSAGE (supports optimistic + socket)
-  addMsg: (roomId, msg) => {
+  addMsg: async (roomId, msg) => {
     const user = get().user;
-    const id = msg.id || crypto.randomUUID();
+    if (!user) return;
 
-    const newMsg: MsgItem = {
-      id,
+    const tempId = crypto.randomUUID();
+
+    const optimisticMsg: MsgItem = {
+      id: tempId,
       content: msg.content || "",
-      userId: msg.userId || user?.id || "",
-      name: msg.name || user?.name || "You",
-      image: msg.image || user?.image,
-      createdAt: msg.createdAt || Date.now(),
-      optimistic: msg.optimistic ?? false,
+      userId: user.id,
+      name: user.name,
+      image: user.image,
+      timeStamp: new Date().toLocaleTimeString(),
+      optimistic: true,
     };
 
+    // 🔹 1. Optimistic UI update
     set((state) => {
       const cache = state.cache[roomId] || {
         msgs: [],
@@ -94,31 +96,74 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           ...state.cache,
           [roomId]: {
             ...cache,
-            msgs: [...cache.msgs, newMsg],
+            msgs: [...cache.msgs, optimisticMsg],
           },
         },
       };
     });
-  },
 
-  // 🔹 CONFIRM OPTIMISTIC MESSAGE (replace temp with real)
-  confirmMsg: (roomId, tempId, realMsg) => {
-    set((state) => {
-      const cache = state.cache[roomId];
-      if (!cache) return state;
-
-      return {
-        cache: {
-          ...state.cache,
-          [roomId]: {
-            ...cache,
-            msgs: cache.msgs.map((m) =>
-              m.id === tempId ? { ...realMsg, optimistic: false } : m,
-            ),
-          },
+    try {
+      // 🔹 2. Save to DB
+      const res = await fetch(`/api/playground/${roomId}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      };
-    });
+        body: JSON.stringify({
+          content: msg.content,
+          msgId: tempId,
+        }),
+      });
+
+      const savedMsg = await res.json();
+      console.log(savedMsg);
+
+      // 🔹 3. Replace optimistic msg with real msg
+      set((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
+
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: cache.msgs.map((m) =>
+                m.id === tempId || m.id === savedMsg.msgId
+                  ? {
+                      id: savedMsg._id,
+                      content: savedMsg.content,
+                      timeStamp: savedMsg.timeStamp,
+                      userId: savedMsg.userId,
+                      image: msg.image,
+                      name: msg.name,
+                      optimistic: false,
+                    }
+                  : m,
+              ),
+            },
+          },
+        };
+      });
+    } catch (err) {
+      // 🔹 4. Rollback on error
+      set((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
+
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: cache.msgs.filter((m) => m.id !== tempId),
+            },
+          },
+        };
+      });
+
+      console.error("Message failed:", err);
+    }
   },
 
   // 🔹 LOAD HISTORY
@@ -194,7 +239,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
   },
 
   // 🔹 EDIT
-  editMsg: (roomId, msgId, newContent) => {
+  editMsg: (roomId, msgId, newText) => {
     set((state) => {
       const cache = state.cache[roomId];
       if (!cache) return state;
@@ -205,7 +250,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           [roomId]: {
             ...cache,
             msgs: cache.msgs.map((m) =>
-              m.id === msgId ? { ...m, content: newContent } : m,
+              m.id === msgId ? { ...m, content: newText } : m,
             ),
           },
         },

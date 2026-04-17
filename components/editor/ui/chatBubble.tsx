@@ -33,7 +33,7 @@ function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
   const deleteMsg = useChatstore((state) => state.deleteMsg);
   const editMsg = useChatstore((state) => state.editMsg);
 
-  const isLong = useMemo(() => content.length > 248, [content]);
+  const isLong = useMemo(() => content?.length > 248, [content]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content);
