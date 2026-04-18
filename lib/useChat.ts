@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import * as Y from "yjs";
 import { useChatstore } from "./store/Chatstore";
+import { chatActions } from "./store/chatActions";
 
 type Member = {
   sId: string;
@@ -9,11 +10,9 @@ type Member = {
 };
 
 export default function useChat(roomId: string) {
-  const addMsg = useChatstore((s) => s.addMsg);
-  const setMembers = useChatstore((s) => s.setMembers);
-  const user = useChatstore((s) => s.user);
-  const deleteMsg = useChatstore((s) => s.deleteMsg);
-  const editMsg = useChatstore((s) => s.editMsg);
+  const { addLocalMsg, deleteLocalMsg, editLocalMsg, setMembers, user, cache } =
+    useChatstore();
+
   const socketRef = useRef<Socket | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
 
@@ -26,14 +25,11 @@ export default function useChat(roomId: string) {
 
     socketRef.current = socket;
 
-    // 🔹 Create Yjs document
     const ydoc = new Y.Doc();
     ydocRef.current = ydoc;
 
     // 🔹 CONNECT
     socket.on("connect", () => {
-      console.log("connected:", socket.id);
-
       socket.emit("room:join", {
         roomId,
         user: {
@@ -45,37 +41,37 @@ export default function useChat(roomId: string) {
     });
 
     // 🔹 MEMBERS
-    socket.on("room:members", (members: Member[]) => {
-      setMembers(members);
-    });
+    socket.on("room:members", setMembers);
 
-    // 🔹 CHAT RECEIVE
+    // 🔹 RECEIVE MESSAGE (DEDUP SAFE)
     socket.on("chat:receive", (msg) => {
-      if (msg.userId !== user.id) {
-        addMsg(roomId, msg);
-      }
+      const existing = cache[roomId]?.msgs || [];
+
+      const alreadyExists = existing.some((m) => m.id === msg.id);
+      if (alreadyExists) return;
+
+      addLocalMsg(roomId, msg);
     });
 
-    socket.on("chat:delete", (msgId) => {
-      deleteMsg(roomId, msgId);
+    // 🔹 DELETE
+    socket.on("chat:delete", ({ msgId }) => {
+      deleteLocalMsg(roomId, msgId);
     });
 
+    // 🔹 EDIT
     socket.on("chat:edit", ({ msgId, newText }) => {
-      editMsg(roomId, msgId, newText);
+      editLocalMsg(roomId, msgId, newText);
     });
 
-    // 🔹 YJS INIT (FULL STATE)
+    // 🔹 YJS
     socket.on("yjs:init", (state: number[]) => {
-      const update = new Uint8Array(state);
-      Y.applyUpdate(ydoc, update);
+      Y.applyUpdate(ydoc, new Uint8Array(state));
     });
 
-    // 🔹 YJS UPDATE (INCREMENTAL)
     socket.on("yjs:update", (update: number[]) => {
       Y.applyUpdate(ydoc, new Uint8Array(update));
     });
 
-    // 🔹 LOCAL YJS CHANGES → SERVER
     ydoc.on("update", (update: Uint8Array) => {
       socket.emit("yjs:update", {
         roomId,
@@ -87,41 +83,33 @@ export default function useChat(roomId: string) {
       socket.disconnect();
       ydoc.destroy();
     };
-  }, [roomId, user]);
+  }, [roomId]); // ✅ stable dependency
 
-  // 🔹 SEND CHAT MESSAGE
+  // 🔹 SEND
   const sendMessage = useCallback(
     (content: string) => {
-      const socket = socketRef.current;
-      if (!socket) return;
+      if (!content.trim()) return;
 
-      socket.emit("chat:send", {
-        roomId,
-        content,
-      });
+      // ✅ optimistic update
+      chatActions.addMsg(roomId, { content });
+
+      socketRef.current?.emit("chat:send", { roomId, content });
     },
     [roomId],
   );
 
+  // 🔹 DELETE
   const deleteMessage = useCallback(
     (msgId: string) => {
-      const socket = socketRef.current;
-      if (!socket) return;
-
-      socket.emit("chat:delete", {
-        msgId,
-        roomId,
-      });
+      socketRef.current?.emit("chat:delete", { msgId, roomId });
     },
     [roomId],
   );
 
+  // 🔹 EDIT
   const editMessage = useCallback(
     (msgId: string, newText: string) => {
-      const socket = socketRef.current;
-      if (!socket) return;
-
-      socket.emit("chat:edit", {
+      socketRef.current?.emit("chat:edit", {
         msgId,
         roomId,
         newText,
@@ -130,13 +118,9 @@ export default function useChat(roomId: string) {
     [roomId],
   );
 
-  // 🔹 OPTIONAL: AWARENESS (cursor, name, etc.)
   const sendAwareness = useCallback(
     (awareness: any) => {
-      const socket = socketRef.current;
-      if (!socket) return;
-
-      socket.emit("yjs:awareness", {
+      socketRef.current?.emit("yjs:awareness", {
         roomId,
         awareness,
       });
@@ -150,7 +134,5 @@ export default function useChat(roomId: string) {
     deleteMessage,
     editMessage,
     sendAwareness,
-
-    // ydoc: ydocRef.current,
   };
 }

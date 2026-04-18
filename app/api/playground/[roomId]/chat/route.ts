@@ -98,7 +98,7 @@ export async function POST(request: NextRequest, { params }) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { id } = await request.json();
+  const { msgId: id } = await request.json();
 
   try {
     await Message.findByIdAndDelete(id);
@@ -114,12 +114,12 @@ export async function PUT(request: NextRequest) {
   await connectDB();
   const body = await request.json();
 
-  const { id, editedMsg } = body;
+  const { msgId: id, newText } = body;
 
   try {
     const updatedMessage = await Message.findByIdAndUpdate(
       id,
-      { content: editedMsg },
+      { content: newText },
       { new: true },
     );
 

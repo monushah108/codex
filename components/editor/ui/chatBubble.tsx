@@ -5,11 +5,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import { Separator } from "@/components/ui/separator";
 
 import { formatte } from "@/lib/features";
 import { useChatstore } from "@/lib/store/Chatstore";
+import useChat from "@/lib/useChat";
+
 import {
   CircleX,
   CopyIcon,
@@ -17,8 +18,9 @@ import {
   EllipsisVertical,
   ReplyIcon,
 } from "lucide-react";
+
 import { Fira_Code } from "next/font/google";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const firaCode = Fira_Code({
@@ -26,74 +28,75 @@ const firaCode = Fira_Code({
   weight: ["400", "500"],
 });
 
-function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
+function ChatBubble({
+  id,
+  name,
+  content,
+  timeStamp,
+  image,
+  roomId,
+  edited,
+  pending, // 👈 optional if you use it
+}) {
   const [show, setShow] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editedMsg, setEditedMsg] = useState(content);
-  const deleteMsg = useChatstore((state) => state.deleteMsg);
-  const editMsg = useChatstore((state) => state.editMsg);
+
+  const { editMessage, deleteMessage } = useChat(roomId);
+
+  // 🔥 sync external updates
+  useEffect(() => {
+    setEditedMsg(content);
+  }, [content]);
 
   const isLong = useMemo(() => content?.length > 248, [content]);
 
+  // 🔹 COPY
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content);
+    toast.success("Copied");
   };
 
-  const EditMsg = async (e) => {
+  // 🔹 EDIT
+  const handleEdit = () => {
+    const text = editedMsg.trim();
+
+    if (!text) {
+      toast.error("Message cannot be empty");
+      return;
+    }
+
+    if (text === content) {
+      setIsEdit(false);
+      return;
+    }
+
+    // 🔥 optimistic update
+    useChatstore.getState().editMsg(roomId, id, text);
+
+    editMessage(id, text);
     setIsEdit(false);
-    editMsg(roomId, id, editedMsg);
-    if (!editedMsg.trim()) return;
-    try {
-      await fetch(`/api/playground/${roomId}/chat`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ id, editedMsg }),
-      });
-    } catch {
-      toast.error("server error");
-    }
   };
 
-  const DeleteMsg = async () => {
-    console.log(roomId, id);
-    deleteMsg(roomId, id);
-    try {
-      await fetch(`/api/playground/${roomId}/chat`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ id }),
-      });
-    } catch (err) {
-      console.log(err);
-      toast.error("server error");
-    }
-  };
+  // 🔹 DELETE
+  const handleDelete = () => {
+    // 🔥 optimistic update
+    useChatstore.getState().deleteMsg(roomId, id);
 
-  const replyMsg = async () => {};
+    deleteMessage(id);
+  };
 
   return (
     <div
-      key={id}
-      className={`${firaCode.className} 
-        bg-slate-800 
-        text-slate-200 
-        px-4 py-3 
-        rounded-lg 
-        max-w-md 
-        shadow-md 
-        mt-4`}
+      className={`${firaCode.className}
+        bg-slate-800 text-slate-200 
+        px-4 py-3 rounded-lg 
+        max-w-md shadow-md mt-4`}
     >
-      {/* Header */}
-
+      {/* HEADER */}
       <div className="flex justify-between items-center text-sm font-medium">
-        <div className="flex items-center gap-1">
-          <Avatar className="cursor-pointer size-5">
+        <div className="flex items-center gap-2">
+          <Avatar className="size-5">
             <AvatarImage src={image} />
             <AvatarFallback>{name?.[0]?.toUpperCase()}</AvatarFallback>
           </Avatar>
@@ -103,26 +106,34 @@ function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
         <div className="flex items-center gap-2 text-xs text-slate-400">
           {formatte(timeStamp).split("at")[1]}
 
+          {edited && (
+            <span className="text-[10px] italic text-slate-500">(edited)</span>
+          )}
+
+          {pending && (
+            <span className="text-[10px] text-yellow-400">(updating...)</span>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-1 rounded hover:bg-slate-700 transition">
+              <button className="p-1 rounded hover:bg-slate-700">
                 <EllipsisVertical className="size-4" />
               </button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
               align="end"
-              className="bg-slate-800 
-        text-slate-200  border-slate-800 shadow-md"
+              className="bg-slate-800 text-slate-200 border-slate-800"
             >
-              <DropdownMenuItem onClick={replyMsg}>
+              <DropdownMenuItem>
                 reply <ReplyIcon />
               </DropdownMenuItem>
+
               <DropdownMenuItem onClick={handleCopy}>
                 Copy <CopyIcon />
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={DeleteMsg} className="text-red-400">
+              <DropdownMenuItem onClick={handleDelete} className="text-red-400">
                 Delete <CircleX />
               </DropdownMenuItem>
 
@@ -136,7 +147,7 @@ function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
 
       <Separator className="my-2 bg-slate-600" />
 
-      {/* Code Content */}
+      {/* CONTENT */}
       {isEdit ? (
         <div className="space-y-2">
           <textarea
@@ -144,10 +155,10 @@ function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
             value={editedMsg}
             onChange={(e) => setEditedMsg(e.target.value)}
             className="w-full bg-slate-900 text-slate-200 
-               text-sm p-3 rounded-md 
-               border border-slate-700 
-               focus:outline-none focus:ring-2 focus:ring-blue-500
-               resize-none"
+              text-sm p-3 rounded-md 
+              border border-slate-700 
+              focus:outline-none focus:ring-2 focus:ring-blue-500
+              resize-none"
             rows={4}
           />
 
@@ -157,14 +168,14 @@ function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
                 setEditedMsg(content);
                 setIsEdit(false);
               }}
-              className="text-xs px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 transition"
+              className="text-xs px-3 py-1 rounded bg-slate-700"
             >
               Cancel
             </button>
 
             <button
-              onClick={EditMsg}
-              className="text-xs px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 transition"
+              onClick={handleEdit}
+              className="text-xs px-3 py-1 rounded bg-blue-600"
             >
               Save
             </button>
@@ -172,7 +183,7 @@ function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
         </div>
       ) : (
         <pre
-          className={`text-sm whitespace-pre-wrap break-words transition-all duration-300 ${
+          className={`text-sm whitespace-pre-wrap break-words ${
             !show && isLong ? "max-h-40 overflow-hidden" : ""
           }`}
         >
@@ -180,11 +191,11 @@ function ChatBubble({ id, name, content, timeStamp, image, roomId }) {
         </pre>
       )}
 
-      {/* Expand Toggle */}
-      {isLong && (
+      {/* EXPAND */}
+      {isLong && !isEdit && (
         <button
           onClick={() => setShow(!show)}
-          className="text-xs text-blue-400 mt-2 hover:text-blue-300 transition"
+          className="text-xs text-blue-400 mt-2"
         >
           {show ? "Show less" : "Read more"}
         </button>

@@ -2,10 +2,10 @@
 import { GitBranch, CheckCircle, Users } from "lucide-react";
 import Profile from "./ui/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useChatstore } from "@/lib/store/Chatstore";
+// import { useChatstore } from "@/lib/store/Chatstore";
 
 function StatusBar() {
-  const members = useChatstore((s) => s.members);
+  // const members = useChatstore((s) => s.members);
 
   return (
     <div className="bg-[#007acc] h-7 text-white flex items-center justify-between px-2 text-xs">
@@ -29,10 +29,10 @@ function StatusBar() {
         <div className="flex items-center gap-1 cursor-pointer">
           <Users className="size-3" />
 
-          <span>{members.length} online</span>
+          {/* <span>{members.length} online</span> */}
 
           {/* AVATARS */}
-          <div className="flex -space-x-2">
+          {/* <div className="flex -space-x-2">
             {members.slice(0, 3).map((m) => {
               const name = m.name || "U";
               const image = m.image || "";
@@ -49,14 +49,14 @@ function StatusBar() {
                 </Avatar>
               );
             })}
-          </div>
+          </div> */}
 
           {/* EXTRA COUNT */}
-          {members.length > 3 && (
+          {/* {members.length > 3 && (
             <span className="ml-1 text-[10px] opacity-80">
               +{members.length - 3}
             </span>
-          )}
+          )} */}
         </div>
       </div>
     </div>

@@ -31,16 +31,9 @@ const ChatBox = memo(function ChatBox({ roomId }) {
   const PostMsg = () => {
     if (!content.trim() || !user) return;
 
-    const tempId = crypto.randomUUID();
-
     // ✅ Optimistic message
     addMsg(roomId, {
-      id: tempId,
       content,
-      userId: user.id,
-      name: user.name,
-      image: user.image,
-      optimistic: true,
     });
 
     // ✅ Send to server
@@ -59,8 +52,6 @@ const ChatBox = memo(function ChatBox({ roomId }) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
-
-  console.log(msgs);
 
   return (
     <ResizablePanel
@@ -104,6 +95,7 @@ const ChatBox = memo(function ChatBox({ roomId }) {
                       image={msg.image}
                       timeStamp={msg.timeStamp}
                       roomId={roomId}
+                      edited={msg.edited}
                     />
                   ))}
                   <div ref={endRef} />

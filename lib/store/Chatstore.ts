@@ -6,7 +6,6 @@ type User = {
   email: string;
   image?: string;
 };
-
 type MsgItem = {
   id: string;
   content: string;
@@ -15,6 +14,8 @@ type MsgItem = {
   image?: string;
   timeStamp: string;
   optimistic?: boolean;
+  pending?: boolean;
+  edited?: boolean;
 };
 
 type MsgCache = {
@@ -81,6 +82,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
       image: user.image,
       timeStamp: new Date().toLocaleTimeString(),
       optimistic: true,
+      edited: false,
     };
 
     // 🔹 1. Optimistic UI update
@@ -119,6 +121,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
       console.log(savedMsg);
 
       // 🔹 3. Replace optimistic msg with real msg
+
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
@@ -128,19 +131,25 @@ export const useChatstore = create<Chatstore>((set, get) => ({
             ...state.cache,
             [roomId]: {
               ...cache,
-              msgs: cache.msgs.map((m) =>
-                m.id === tempId || m.id === savedMsg.msgId
-                  ? {
-                      id: savedMsg._id,
-                      content: savedMsg.content,
-                      timeStamp: savedMsg.timeStamp,
-                      userId: savedMsg.userId,
-                      image: msg.image,
-                      name: msg.name,
-                      optimistic: false,
-                    }
-                  : m,
-              ),
+              msgs: cache.msgs
+                .map((m) =>
+                  m.id === tempId
+                    ? {
+                        id: savedMsg._id,
+                        content: savedMsg.content,
+                        timeStamp: savedMsg.timeStamp,
+                        userId: savedMsg.userId,
+                        image: msg.image,
+                        name: msg.name,
+                        optimistic: false,
+                        edited: false,
+                      }
+                    : m,
+                )
+
+                .filter(
+                  (msg, i, arr) => arr.findIndex((m) => m.id === msg.id) === i,
+                ),
             },
           },
         };
@@ -221,40 +230,97 @@ export const useChatstore = create<Chatstore>((set, get) => ({
   },
 
   // 🔹 DELETE
-  deleteMsg: (roomId, msgId) => {
-    set((state) => {
-      const cache = state.cache[roomId];
-      if (!cache) return state;
-
-      return {
-        cache: {
-          ...state.cache,
-          [roomId]: {
-            ...cache,
-            msgs: cache.msgs.filter((m) => m.id !== msgId),
-          },
+  deleteMsg: async (roomId, msgId) => {
+    try {
+      await fetch(`/api/playground/${roomId}/chat`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
         },
-      };
-    });
+        credentials: "include",
+        body: JSON.stringify({ msgId }),
+      });
+      set((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
+
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: cache.msgs.filter((m) => m.id !== msgId),
+            },
+          },
+        };
+      });
+    } catch (err) {
+      console.log(err);
+
+      set((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache.msgs,
+              msgs: [...cache.msgs],
+            },
+          },
+        };
+      });
+    }
   },
-
   // 🔹 EDIT
-  editMsg: (roomId, msgId, newText) => {
-    set((state) => {
-      const cache = state.cache[roomId];
-      if (!cache) return state;
-
-      return {
-        cache: {
-          ...state.cache,
-          [roomId]: {
-            ...cache,
-            msgs: cache.msgs.map((m) =>
-              m.id === msgId ? { ...m, content: newText } : m,
-            ),
-          },
+  editMsg: async (roomId, msgId, newText) => {
+    try {
+      await fetch(`/api/playground/${roomId}/chat`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      };
-    });
+        credentials: "include",
+        body: JSON.stringify({ msgId, newText }),
+      });
+      set((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
+
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: cache.msgs.map((m) =>
+                m.id === msgId
+                  ? {
+                      ...m,
+                      content: newText,
+
+                      edited: m.content == newText ? true : false,
+                    }
+                  : m,
+              ),
+            },
+          },
+        };
+      });
+    } catch {
+      set((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
+
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: [...cache.msgs],
+            },
+          },
+        };
+      });
+    }
   },
 }));

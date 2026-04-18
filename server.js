@@ -74,11 +74,22 @@ app.prepare().then(() => {
     });
 
     socket.on("chat:delete", ({ msgId, roomId }) => {
-      io.to(roomId).emit("chat:delete", msgId);
+      const user = socket.data.user;
+
+      io.to(roomId).emit("chat:delete", {
+        msgId,
+        userId: user.id,
+      });
     });
 
     socket.on("chat:edit", ({ msgId, newText, roomId }) => {
-      io.to(roomId).emit("chat:edit", { msgId, newText });
+      const user = socket.data.user;
+
+      io.to(roomId).emit("chat:edit", {
+        msgId,
+        newText,
+        userId: user.id,
+      });
     });
 
     // 🔹 YJS SYNC (DOCUMENT UPDATES)
