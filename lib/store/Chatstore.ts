@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { chatAction } from "./chatActions";
 
 type User = {
   id: string;
@@ -13,8 +14,6 @@ type MsgItem = {
   name: string;
   image?: string;
   timeStamp: string;
-  optimistic?: boolean;
-  pending?: boolean;
   edited?: boolean;
 };
 
@@ -37,7 +36,7 @@ type Chatstore = {
   members: Member[];
 
   setUser: (user: User | null) => void;
-  setMembers: (members: any[]) => void;
+  setMembers: (members: Member[]) => void;
 
   addMsg: (roomId: string, msg: Partial<MsgItem>) => void;
 
@@ -51,15 +50,13 @@ export const useChatstore = create<Chatstore>((set, get) => ({
   user: null,
   members: [],
 
-  // 🔹 USER
   setUser: (user) => set({ user }),
 
-  // 🔹 MEMBERS (from socket)
   setMembers: (members) => {
     const user = get().user;
 
     set({
-      members: members.map((m: any) => ({
+      members: members.map((m) => ({
         id: m.uId,
         name: m.uId === user?.id ? user.name : "Anonymous",
         image: m.uId === user?.id ? user.image : undefined,
@@ -67,25 +64,12 @@ export const useChatstore = create<Chatstore>((set, get) => ({
     });
   },
 
-  // 🔹 ADD MESSAGE (supports optimistic + socket)
+  // 🔹 ADD MESSAGE
   addMsg: async (roomId, msg) => {
     const user = get().user;
     if (!user) return;
 
-    const tempId = crypto.randomUUID();
-
-    const optimisticMsg: MsgItem = {
-      id: tempId,
-      content: msg.content || "",
-      userId: user.id,
-      name: user.name,
-      image: user.image,
-      timeStamp: new Date().toLocaleTimeString(),
-      optimistic: true,
-      edited: false,
-    };
-
-    // 🔹 1. Optimistic UI update
+    // 1. optimistic UI
     set((state) => {
       const cache = state.cache[roomId] || {
         msgs: [],
@@ -98,30 +82,21 @@ export const useChatstore = create<Chatstore>((set, get) => ({
           ...state.cache,
           [roomId]: {
             ...cache,
-            msgs: [...cache.msgs, optimisticMsg],
+            msgs: [...cache.msgs],
           },
         },
       };
     });
 
     try {
-      // 🔹 2. Save to DB
-      const res = await fetch(`/api/playground/${roomId}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: msg.content,
-          msgId: tempId,
-        }),
-      });
+      // 2. API call (moved)
+      const savedMsg = await chatAction.addMsg(
+        roomId,
+        msg.content || "",
+        msg.id,
+      );
 
-      const savedMsg = await res.json();
-      console.log(savedMsg);
-
-      // 🔹 3. Replace optimistic msg with real msg
-
+      // 3. replace optimistic
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
@@ -131,31 +106,25 @@ export const useChatstore = create<Chatstore>((set, get) => ({
             ...state.cache,
             [roomId]: {
               ...cache,
-              msgs: cache.msgs
-                .map((m) =>
-                  m.id === tempId
-                    ? {
-                        id: savedMsg._id,
-                        content: savedMsg.content,
-                        timeStamp: savedMsg.timeStamp,
-                        userId: savedMsg.userId,
-                        image: msg.image,
-                        name: msg.name,
-                        optimistic: false,
-                        edited: false,
-                      }
-                    : m,
-                )
-
-                .filter(
-                  (msg, i, arr) => arr.findIndex((m) => m.id === msg.id) === i,
-                ),
+              msgs: cache.msgs.map((m) =>
+                m.id === msg.id
+                  ? {
+                      id: savedMsg._id,
+                      content: savedMsg.content,
+                      timeStamp: savedMsg.timeStamp,
+                      userId: savedMsg.userId,
+                      image: msg.image,
+                      name: msg.name,
+                      edited: false,
+                    }
+                  : m,
+              ),
             },
           },
         };
       });
     } catch (err) {
-      // 🔹 4. Rollback on error
+      // rollback
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
@@ -165,7 +134,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
             ...state.cache,
             [roomId]: {
               ...cache,
-              msgs: cache.msgs.filter((m) => m.id !== tempId),
+              msgs: cache.msgs.filter((m) => m.id !== msg.id),
             },
           },
         };
@@ -175,10 +144,9 @@ export const useChatstore = create<Chatstore>((set, get) => ({
     }
   },
 
-  // 🔹 LOAD HISTORY
+  // 🔹 LOAD
   loadMsg: async (roomId, cursor) => {
     const cache = get().cache[roomId];
-
     if (cache?.loading) return;
 
     set((state) => ({
@@ -192,12 +160,7 @@ export const useChatstore = create<Chatstore>((set, get) => ({
     }));
 
     try {
-      const res = await fetch(
-        `/api/playground/${roomId}/chat?cursor=${cursor}`,
-        { credentials: "include" },
-      );
-
-      const data = await res.json();
+      const data = await chatAction.loadMsg(roomId, cursor);
 
       set((state) => {
         const existing = state.cache[roomId]?.msgs || [];
@@ -232,14 +195,8 @@ export const useChatstore = create<Chatstore>((set, get) => ({
   // 🔹 DELETE
   deleteMsg: async (roomId, msgId) => {
     try {
-      await fetch(`/api/playground/${roomId}/chat`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ msgId }),
-      });
+      await chatAction.deleteMsg(roomId, msgId);
+
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
@@ -260,11 +217,12 @@ export const useChatstore = create<Chatstore>((set, get) => ({
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
+
         return {
           cache: {
             ...state.cache,
             [roomId]: {
-              ...cache.msgs,
+              ...cache,
               msgs: [...cache.msgs],
             },
           },
@@ -272,17 +230,12 @@ export const useChatstore = create<Chatstore>((set, get) => ({
       });
     }
   },
+
   // 🔹 EDIT
   editMsg: async (roomId, msgId, newText) => {
     try {
-      await fetch(`/api/playground/${roomId}/chat`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ msgId, newText }),
-      });
+      await chatAction.editMsg(roomId, msgId, newText);
+
       set((state) => {
         const cache = state.cache[roomId];
         if (!cache) return state;
@@ -297,7 +250,6 @@ export const useChatstore = create<Chatstore>((set, get) => ({
                   ? {
                       ...m,
                       content: newText,
-
                       edited: m.content == newText ? true : false,
                     }
                   : m,
@@ -324,3 +276,10 @@ export const useChatstore = create<Chatstore>((set, get) => ({
     }
   },
 }));
+
+/* 
+  ui - go to socket 
+  socket - zustand 
+  zustand - db 
+
+*/

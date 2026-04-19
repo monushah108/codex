@@ -9,24 +9,14 @@ const port = 3000;
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
-// Store Yjs docs per room
-// const docs = new Map<string, Y.Doc>();
-
-// const getYDoc = (roomId: string) => {
-//   let doc = docs.get(roomId);
-//   if (!doc) {
-//     doc = new Y.Doc();
-//     docs.set(roomId, doc);
-//   }
-//   return doc;
-// };
-
 app.prepare().then(() => {
   const httpServer = createServer(handler);
+
   const io = new Server(httpServer, {
     cors: { origin: "*" },
   });
 
+  // 🔹 Get members in a room
   const getRoomMembers = (roomId) => {
     const room = io.sockets.adapter.rooms.get(roomId);
     if (!room) return [];
@@ -41,40 +31,42 @@ app.prepare().then(() => {
   };
 
   io.on("connection", (socket) => {
-    console.log("connected:", socket.id);
+    console.log("✅ connected:", socket.id);
 
     // 🔹 JOIN ROOM
     socket.on("room:join", ({ roomId, user }) => {
+      if (!roomId || !user) return;
+
       socket.join(roomId);
       socket.data.user = user;
 
+      console.log(`👤 ${user.name} joined ${roomId}`);
+
       const members = getRoomMembers(roomId);
       io.to(roomId).emit("room:members", members);
-
-      // // Send initial Yjs state
-      // const doc = getYDoc(roomId);
-      // const state = Y.encodeStateAsUpdate(doc);
-      // socket.emit("yjs:init", state);
     });
 
-    // 🔹 CHAT MESSAGE
-    socket.on("chat:send", async ({ roomId, content }) => {
+    // 🔹 SEND MESSAGE (GROUP)
+    socket.on("chat:send", async ({ roomId, content, msgId }) => {
       const user = socket.data.user;
+      if (!user) return;
 
       const message = {
-        id: crypto.randomUUID(),
+        id: msgId,
         content,
         userId: user.id,
         name: user.name,
         image: user.image,
-        timeStamp: Date.now(),
+        timeStamp: new Date().toLocaleDateString(),
       };
 
       io.to(roomId).emit("chat:receive", message);
     });
 
+    // 🔹 DELETE MESSAGE
     socket.on("chat:delete", ({ msgId, roomId }) => {
       const user = socket.data.user;
+      if (!user) return;
 
       io.to(roomId).emit("chat:delete", {
         msgId,
@@ -82,8 +74,10 @@ app.prepare().then(() => {
       });
     });
 
+    // 🔹 EDIT MESSAGE
     socket.on("chat:edit", ({ msgId, newText, roomId }) => {
       const user = socket.data.user;
+      if (!user) return;
 
       io.to(roomId).emit("chat:edit", {
         msgId,
@@ -91,25 +85,6 @@ app.prepare().then(() => {
         userId: user.id,
       });
     });
-
-    // 🔹 YJS SYNC (DOCUMENT UPDATES)
-    // socket.on("yjs:update", ({ roomId, update }) => {
-    //   const doc = getYDoc(roomId);
-
-    //   // Apply update to server doc
-    //   Y.applyUpdate(doc, new Uint8Array(update));
-
-    //   // Broadcast to others
-    //   socket.to(roomId).emit("yjs:update", update);
-    // });
-
-    // // 🔹 YJS AWARENESS (CURSOR, USER PRESENCE)
-    // socket.on("yjs:awareness", ({ roomId, awareness }) => {
-    //   socket.to(roomId).emit("yjs:awareness", {
-    //     userId: socket.data.userId,
-    //     awareness,
-    //   });
-    // });
 
     // 🔹 DISCONNECT
     socket.on("disconnecting", () => {
@@ -122,11 +97,11 @@ app.prepare().then(() => {
     });
 
     socket.on("disconnect", () => {
-      console.log("disconnected:", socket.id);
+      console.log("❌ disconnected:", socket.id);
     });
   });
 
   httpServer.listen(port, () => {
-    console.log(`> Ready on http://${hostname}:${port}`);
+    console.log(`🚀 Ready on http://${hostname}:${port}`);
   });
 });

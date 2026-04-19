@@ -1,36 +1,20 @@
 import { useEffect, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
-import * as Y from "yjs";
 import { useChatstore } from "./store/Chatstore";
-import { chatActions } from "./store/chatActions";
-
-type Member = {
-  sId: string;
-  uId: string;
-};
 
 export default function useChat(roomId: string) {
-  const { addLocalMsg, deleteLocalMsg, editLocalMsg, setMembers, user, cache } =
-    useChatstore();
+  const { addMsg, deleteMsg, editMsg, setMembers, user } = useChatstore();
 
   const socketRef = useRef<Socket | null>(null);
-  const ydocRef = useRef<Y.Doc | null>(null);
 
   useEffect(() => {
     if (!user || !roomId) return;
 
-    const socket = io("http://localhost:3000", {
-      transports: ["websocket"],
-    });
-
-    socketRef.current = socket;
-
-    const ydoc = new Y.Doc();
-    ydocRef.current = ydoc;
+    socketRef.current = io("http://localhost:3000");
 
     // 🔹 CONNECT
-    socket.on("connect", () => {
-      socket.emit("room:join", {
+    socketRef.current.on("connect", () => {
+      socketRef.current.emit("room:join", {
         roomId,
         user: {
           id: user.id,
@@ -41,91 +25,121 @@ export default function useChat(roomId: string) {
     });
 
     // 🔹 MEMBERS
-    socket.on("room:members", setMembers);
-
-    // 🔹 RECEIVE MESSAGE (DEDUP SAFE)
-    socket.on("chat:receive", (msg) => {
-      const existing = cache[roomId]?.msgs || [];
-
-      const alreadyExists = existing.some((m) => m.id === msg.id);
-      if (alreadyExists) return;
-
-      addLocalMsg(roomId, msg);
+    socketRef.current.on("room:members", (members) => {
+      setMembers(members);
     });
 
+    // 🔹 RECEIVE MESSAGE
+    socketRef.current.on("chat:receive", (msg) => {
+      useChatstore.setState((state) => {
+        const cache = state.cache[roomId] || {
+          msgs: [],
+          loaded: true,
+          loading: false,
+        };
+
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: [...cache.msgs, msg],
+            },
+          },
+        };
+      });
+    });
     // 🔹 DELETE
-    socket.on("chat:delete", ({ msgId }) => {
-      deleteLocalMsg(roomId, msgId);
+    socketRef.current.on("chat:delete", ({ msgId }) => {
+      useChatstore.setState((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
+
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: cache.msgs.filter((m) => m.id !== msgId),
+            },
+          },
+        };
+      });
     });
 
     // 🔹 EDIT
-    socket.on("chat:edit", ({ msgId, newText }) => {
-      editLocalMsg(roomId, msgId, newText);
-    });
+    socketRef.current.on("chat:edit", ({ msgId, newText }) => {
+      useChatstore.setState((state) => {
+        const cache = state.cache[roomId];
+        if (!cache) return state;
 
-    // 🔹 YJS
-    socket.on("yjs:init", (state: number[]) => {
-      Y.applyUpdate(ydoc, new Uint8Array(state));
-    });
-
-    socket.on("yjs:update", (update: number[]) => {
-      Y.applyUpdate(ydoc, new Uint8Array(update));
-    });
-
-    ydoc.on("update", (update: Uint8Array) => {
-      socket.emit("yjs:update", {
-        roomId,
-        update: Array.from(update),
+        return {
+          cache: {
+            ...state.cache,
+            [roomId]: {
+              ...cache,
+              msgs: cache.msgs.map((m) =>
+                m.id === msgId ? { ...m, content: newText, edited: true } : m,
+              ),
+            },
+          },
+        };
       });
     });
 
     return () => {
-      socket.disconnect();
-      ydoc.destroy();
+      socketRef.current.disconnect();
     };
-  }, [roomId]); // ✅ stable dependency
+  }, [roomId, user, setMembers]);
 
   // 🔹 SEND
   const sendMessage = useCallback(
     (content: string) => {
       if (!content.trim()) return;
 
-      // ✅ optimistic update
-      chatActions.addMsg(roomId, { content });
+      const tempId = crypto.randomUUID();
 
-      socketRef.current?.emit("chat:send", { roomId, content });
+      addMsg(roomId, {
+        content,
+        id: tempId,
+        name: user?.name,
+        image: user?.image,
+      });
+
+      socketRef.current?.emit("chat:send", {
+        roomId,
+        content,
+        msgId: tempId,
+      });
     },
-    [roomId],
+    [roomId, addMsg, user],
   );
 
   // 🔹 DELETE
   const deleteMessage = useCallback(
     (msgId: string) => {
-      socketRef.current?.emit("chat:delete", { msgId, roomId });
+      deleteMsg(roomId, msgId);
+
+      socketRef.current?.emit("chat:delete", {
+        msgId,
+        roomId,
+      });
     },
-    [roomId],
+    [roomId, deleteMsg],
   );
 
   // 🔹 EDIT
   const editMessage = useCallback(
     (msgId: string, newText: string) => {
+      editMsg(roomId, msgId, newText);
+
       socketRef.current?.emit("chat:edit", {
         msgId,
-        roomId,
         newText,
-      });
-    },
-    [roomId],
-  );
-
-  const sendAwareness = useCallback(
-    (awareness: any) => {
-      socketRef.current?.emit("yjs:awareness", {
         roomId,
-        awareness,
       });
     },
-    [roomId],
+    [roomId, editMsg],
   );
 
   return {
@@ -133,6 +147,5 @@ export default function useChat(roomId: string) {
     sendMessage,
     deleteMessage,
     editMessage,
-    sendAwareness,
   };
 }

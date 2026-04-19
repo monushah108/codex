@@ -36,7 +36,7 @@ function ChatBubble({
   image,
   roomId,
   edited,
-  pending, // 👈 optional if you use it
+  pending,
 }) {
   const [show, setShow] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -72,7 +72,7 @@ function ChatBubble({
     }
 
     // 🔥 optimistic update
-    useChatstore.getState().editMsg(roomId, id, text);
+    // useChatstore.getState().editMsg(roomId, id, text);
 
     editMessage(id, text);
     setIsEdit(false);
@@ -81,7 +81,7 @@ function ChatBubble({
   // 🔹 DELETE
   const handleDelete = () => {
     // 🔥 optimistic update
-    useChatstore.getState().deleteMsg(roomId, id);
+    // useChatstore.getState().deleteMsg(roomId, id);
 
     deleteMessage(id);
   };
@@ -105,10 +105,6 @@ function ChatBubble({
 
         <div className="flex items-center gap-2 text-xs text-slate-400">
           {formatte(timeStamp).split("at")[1]}
-
-          {edited && (
-            <span className="text-[10px] italic text-slate-500">(edited)</span>
-          )}
 
           {pending && (
             <span className="text-[10px] text-yellow-400">(updating...)</span>
@@ -199,6 +195,10 @@ function ChatBubble({
         >
           {show ? "Show less" : "Read more"}
         </button>
+      )}
+
+      {edited && (
+        <span className="text-[10px] italic text-slate-500">(edited)</span>
       )}
     </div>
   );

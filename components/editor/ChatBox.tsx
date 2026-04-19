@@ -1,6 +1,13 @@
 "use client";
 import { MessageSquare, MessageSquareCode, SendIcon } from "lucide-react";
-import { memo, Suspense, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { ScrollArea } from "../ui/scroll-area";
 import ChatBubble from "./ui/chatBubble";
@@ -21,22 +28,12 @@ const ChatBox = memo(function ChatBox({ roomId }) {
   const { isCollapse } = useLayout();
   const { sendMessage } = useChat(roomId);
 
-  const user = useChatstore((s) => s.user);
   const msgs = useChatstore((s) => s.cache[roomId]?.msgs);
   const loadMsg = useChatstore((s) => s.loadMsg);
   const loading = useChatstore((s) => s.cache[roomId]?.loading);
-  const addMsg = useChatstore((s) => s.addMsg);
 
-  // 🔹 SEND MESSAGE (Optimistic + Socket)
   const PostMsg = () => {
-    if (!content.trim() || !user) return;
-
-    // ✅ Optimistic message
-    addMsg(roomId, {
-      content,
-    });
-
-    // ✅ Send to server
+    if (!content.trim()) return;
     sendMessage(content);
 
     setContent("");
@@ -76,8 +73,8 @@ const ChatBox = memo(function ChatBox({ roomId }) {
           <div className="flex-1">
             <ScrollArea className="h-185 p-3 flex">
               {!msgs?.length ? (
-                <div className="flex h-full items-center justify-center">
-                  <div className="flex flex-col gap-1 items-center">
+                <div className="flex h-full items-center justify-center ">
+                  <div className="flex flex-col flex-1 gap-1 items-center ">
                     <div className="animate-bounce p-2">
                       <MessageSquareCode className="size-8" />
                     </div>
