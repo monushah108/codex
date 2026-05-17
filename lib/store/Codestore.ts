@@ -84,14 +84,20 @@ export const useCodestore = create<Codestore>((set, get) => ({
 
   loadFileContent: async (roomId, fileId) => {
     const cache = get().code[fileId];
-    if (cache?.loaded) return;
+
+    // already loading
+    if (cache?.loading) return;
+
+    // already has content
+    if (cache?.loaded && cache?.content !== undefined) {
+      return;
+    }
 
     set((state) => ({
       code: {
         ...state.code,
         [fileId]: {
-          content: "",
-          loaded: false,
+          ...state.code[fileId],
           loading: true,
         },
       },
@@ -104,22 +110,42 @@ export const useCodestore = create<Codestore>((set, get) => ({
 
       const data = await res.json();
 
-      set((state) => ({
-        code: {
-          ...state.code,
-          [fileId]: {
-            content: data?.content,
-            loaded: true,
-            loading: false,
+      set((state) => {
+        const existing = state.code[fileId];
+
+        if (existing?.content && existing.content !== data?.content) {
+          return {
+            code: {
+              ...state.code,
+
+              [fileId]: {
+                ...existing,
+                loaded: true,
+                loading: false,
+              },
+            },
+          };
+        }
+
+        return {
+          code: {
+            ...state.code,
+
+            [fileId]: {
+              content: data?.content || "",
+              loaded: true,
+              loading: false,
+            },
           },
-        },
-      }));
+        };
+      });
     } catch (err) {
       console.error(err);
 
       set((state) => ({
         code: {
           ...state.code,
+
           [fileId]: {
             ...state.code[fileId],
             loading: false,
@@ -130,22 +156,38 @@ export const useCodestore = create<Codestore>((set, get) => ({
   },
 
   saveFileContent: async (roomId, fileId, content) => {
+    // optimistic update FIRST
+    set((state) => ({
+      code: {
+        ...state.code,
+
+        [fileId]: {
+          ...state.code[fileId],
+          content,
+        },
+      },
+    }));
+
     try {
-      const res = await fetch(`/api/playground/${roomId}/files`, {
+      await fetch(`/api/playground/${roomId}/files`, {
         method: "PUT",
-        body: JSON.stringify({ id: fileId, content }),
+
         headers: {
           "Content-Type": "application/json",
         },
-      });
 
-      const data = await res.json();
+        body: JSON.stringify({
+          id: fileId,
+          content,
+        }),
+      });
 
       set((state) => ({
         code: {
           ...state.code,
+
           [fileId]: {
-            content: data.content,
+            ...state.code[fileId],
             loaded: true,
             loading: false,
           },
@@ -153,15 +195,6 @@ export const useCodestore = create<Codestore>((set, get) => ({
       }));
     } catch (err) {
       console.error(err);
-      set((state) => ({
-        code: {
-          ...state.code,
-          [fileId]: {
-            ...state.code[fileId],
-            loading: false,
-          },
-        },
-      }));
     }
   },
 
