@@ -8,7 +8,7 @@ import PlayHeader from "@/components/editor/playHeader";
 
 import CodeWindow from "@/components/editor/CodeWindow";
 import FileExplore from "@/components/editor/FileExplore";
-import ChatBox from "@/components/editor/ChatBox";
+
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
@@ -47,11 +47,6 @@ export default async function Page({ params }) {
 
           {/* Center Column */}
           <CodeWindow roomId={roomId} />
-
-          <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
-
-          {/* Chat */}
-          <ChatBox roomId={roomId} />
         </ResizablePanelGroup>
       </div>
 
