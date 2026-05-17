@@ -4,6 +4,7 @@ import { Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCodestore } from "@/lib/store/Codestore";
 import SaveFile from "../Module/saveFile";
+import { useLayout } from "@/context/layout-context";
 
 const TabBar = memo(function TabBar() {
   const [openDialog, setOpenDialog] = useState(false);
@@ -16,6 +17,7 @@ const TabBar = memo(function TabBar() {
   const runCode = useCodestore((s) => s.runCode);
 
   const nextFile = openFiles.find((f) => f._id !== activeFileId);
+  const { toggle } = useLayout();
 
   return (
     <div
@@ -67,6 +69,7 @@ const TabBar = memo(function TabBar() {
         <Button
           onClick={() => {
             runCode(activeFileId!);
+            toggle("terminal");
           }}
           variant="none"
           size="xs"
