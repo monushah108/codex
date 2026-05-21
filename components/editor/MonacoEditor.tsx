@@ -1,180 +1,165 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import TabBar from "./ui/TabBar";
-import { Code2 } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { Editor } from "@monaco-editor/react";
-import { useCodestore } from "@/lib/store/Codestore";
+import { Code2 } from "lucide-react";
+
+import TabBar from "./ui/TabBar";
+
+import { socket } from "@/lib/socket";
 import { getType } from "@/lib/features";
-import * as Y from "yjs";
-import { MonacoBinding } from "y-monaco";
-import { WebsocketProvider } from "y-websocket";
-import type * as MonacoNamespace from "monaco-editor";
+import { useCodestore } from "@/lib/store/Codestore";
+import { useMonacoYjs } from "@/lib/yjs/useMonacoYjs";
 
-type MonacoEditorProps = {
-  roomId: string;
-};
+const COLORS = ["#ff4d4f", "#52c41a", "#1677ff", "#fa8c16"];
 
-export default function MonacoEditor({ roomId }: MonacoEditorProps) {
-  const activeFileId = useCodestore((s) => s.activeFileId);
-  const cache = useCodestore((s) =>
-    activeFileId ? s.code[activeFileId] : undefined,
+function MonacoEditor({ roomId, session }) {
+  const {
+    activeFileId,
+    openFiles,
+    code,
+    saveFileContent,
+    setFileEdited,
+    updateContent,
+  } = useCodestore();
+
+  const [editor, setEditor] = useState(null);
+  const savingRef = useRef(false);
+  const handleSaveRef = useRef(null);
+
+  // ACTIVE FILE
+  const activeFile = useMemo(
+    () => openFiles.find((f) => f._id === activeFileId),
+    [openFiles, activeFileId],
   );
-  const setEdited = useCodestore((s) => s.setFileEdited);
-  const saveFileContent = useCodestore((s) => s.saveFileContent);
-  const updateContent = useCodestore((s) => s.updateContent);
-  const openFiles = useCodestore((s) => s.openFiles);
 
-  const ydocRef = useRef<Y.Doc | null>(null);
-  const providerRef = useRef<WebsocketProvider | null>(null);
-  const bindingRef = useRef<MonacoBinding | null>(null);
-  const editorRef = useRef<MonacoNamespace.editor.IStandaloneCodeEditor | null>(
-    null,
-  );
+  // CACHED CONTENT — used as defaultValue on remount (key changes per file)
+  const cachedContent =
+    code[activeFileId]?.content ?? "// your code is here...";
 
-  const cleanup = () => {
-    if (bindingRef.current) {
-      bindingRef.current.destroy();
-      bindingRef.current = null;
-    }
-    if (providerRef.current) {
-      providerRef.current.destroy();
-      providerRef.current = null;
-    }
-    if (ydocRef.current) {
-      ydocRef.current.destroy();
-      ydocRef.current = null;
-    }
-  };
+  // USER
+  const user = useMemo(() => {
+    const name = session?.user?.name || "Anonymous";
+    return {
+      name,
+      color: COLORS[name.length % COLORS.length],
+    };
+  }, [session]);
 
+  // YJS — Yjs owns the editor model, do NOT use value/onChange props
+  useMonacoYjs({
+    editor,
+    socket,
+    roomId,
+    fileId: activeFileId,
+    user,
+  });
+
+  // SAVE
+  const handleSave = useCallback(async () => {
+    if (!editor || !activeFileId || savingRef.current) return;
+
+    try {
+      savingRef.current = true;
+
+      const content = editor.getValue();
+
+      // sync cache so reopening doesn't show stale content
+      updateContent(activeFileId, content);
+
+      await saveFileContent(roomId, activeFileId, content);
+
+      // clear the circle
+      setFileEdited(activeFileId, false);
+    } finally {
+      savingRef.current = false;
+    }
+  }, [
+    editor,
+    roomId,
+    activeFileId,
+    saveFileContent,
+    setFileEdited,
+    updateContent,
+  ]);
+
+  // Keep ref fresh so the keybinding never captures a stale closure
   useEffect(() => {
-    if (!activeFileId) return;
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
 
-    cleanup();
+  // MOUNT — register Ctrl+S once, call through ref
+  const handleMount = useCallback((editorInstance, monaco) => {
+    setEditor(editorInstance);
 
-    const ydoc = new Y.Doc();
-    ydocRef.current = ydoc;
-
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const url = `${protocol}://${window.location.host}/yjs`;
-    const docName = `${roomId}-${activeFileId}`;
-    const provider = new WebsocketProvider(url, docName, ydoc);
-    providerRef.current = provider;
-    provider.awareness.setLocalStateField("user", {
-      name: "Anonymous",
-    });
-
-    provider.on("status", ({ status }) => {
-      console.log("[yjs] status", status, "doc", docName);
-    });
-
-    const yText = ydoc.getText("monaco");
-    const initialValue = cache?.content || "";
-    if (yText.length === 0 && initialValue) {
-      yText.insert(0, initialValue);
-    }
-
-    const existingModel = editorRef.current?.getModel();
-    if (editorRef.current && existingModel) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const awareness = provider.awareness as any;
-      bindingRef.current = new MonacoBinding(
-        yText,
-        existingModel,
-        new Set([editorRef.current]),
-        awareness,
-      );
-    }
-
-    return () => cleanup();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, activeFileId]);
-
-  useEffect(() => {
-    return () => cleanup();
-  }, []);
-
-  const handleMount = (
-    editor: MonacoNamespace.editor.IStandaloneCodeEditor,
-    monaco: typeof MonacoNamespace,
-  ) => {
-    editorRef.current = editor;
-
-    editor.addAction({
+    editorInstance.addAction({
       id: "save-file",
       label: "Save File",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: async () => {
-        const content = editor.getModel()?.getValue();
-        if (!activeFileId || content === undefined) return;
-        await saveFileContent(roomId, activeFileId, content);
-        setEdited(activeFileId, false);
-      },
+      run: () => handleSaveRef.current?.(),
+    });
+  }, []); // no deps — ref handles freshness
+
+  // TRACK EDITS — show circle on user edits, skip Yjs flushes
+  useEffect(() => {
+    if (!editor || !activeFileId) return;
+
+    const disposable = editor.onDidChangeModelContent((e) => {
+      // isFlush = true → Yjs replaced the whole model (file switch), not a user edit
+      if (!e.isFlush) {
+        setFileEdited(activeFileId, true);
+      }
     });
 
-    const ydoc = ydocRef.current;
-    const provider = providerRef.current;
+    return () => disposable.dispose();
+  }, [editor, activeFileId, setFileEdited]);
 
-    const editorModel = editor.getModel();
-    if (ydoc && provider && !bindingRef.current && editorModel) {
-      const yText = ydoc.getText("monaco");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const awareness = provider.awareness as any;
-      bindingRef.current = new MonacoBinding(
-        yText,
-        editorModel,
-        new Set([editor]),
-        awareness,
-      );
-
-      if (yText.length === 0 && cache?.content) {
-        yText.insert(0, cache.content);
-      }
-    }
-  };
-
-  const activeFile = openFiles.find((f) => f._id === activeFileId);
-  const language = getType(activeFile?.name ?? "")?.language || "javascript";
+  // EMPTY STATE
+  if (!activeFileId) {
+    return (
+      <div className="h-full">
+        <TabBar />
+        <div className="flex h-full flex-col items-center justify-center bg-[#1e1e1e]">
+          <Code2 className="h-20 w-20 text-[#007acc]/30" />
+          <div className="mt-3 text-center">
+            <p className="text-lg text-white">No file open</p>
+            <p className="text-xs text-gray-400">Select a file from explorer</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full">
       <TabBar />
 
-      <div className="flex flex-col justify-center items-center bg-[#1e1e1e] h-full">
-        {!activeFileId ? (
-          <div className="flex items-center flex-col justify-center">
-            <Code2 className="w-20 h-20 text-[#007acc]/30" />
-            <div className="text-center">
-              <p className="text-lg mb-2">No file open</p>
-              <p className="text-xs text-gray-300/50">
-                Select a file from the explorer to start editing
-              </p>
-            </div>
-          </div>
-        ) : (
-          <Editor
-            key={activeFileId}
-            height="100%"
-            width="100%"
-            theme="vs-dark"
-            defaultLanguage={language}
-            defaultValue={cache?.content || "// your code is here..."}
-            onMount={handleMount}
-            onChange={(value) => {
-              if (!activeFileId) return;
-              updateContent(activeFileId, value || "");
-              setEdited(activeFileId, true);
-            }}
-            options={{
-              fontSize: 14,
-              fontFamily: "Fira Code, monospace",
-              minimap: { enabled: false },
-              lineNumbers: "on",
-              automaticLayout: true,
-            }}
-          />
-        )}
-      </div>
+      <Editor
+        height="100%"
+        width="100%"
+        theme="vs-dark"
+        defaultLanguage={getType(activeFile?.name)?.language}
+        onMount={handleMount}
+        options={{
+          fontSize: 14,
+          fontFamily: "Fira Code, monospace",
+
+          minimap: {
+            enabled: false,
+          },
+
+          lineNumbers: "on",
+
+          automaticLayout: true,
+
+          smoothScrolling: true,
+
+          scrollBeyondLastLine: false,
+        }}
+      />
     </div>
   );
 }
+
+export default memo(MonacoEditor);

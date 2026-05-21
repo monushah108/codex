@@ -36,7 +36,6 @@ export const useCodestore = create<Codestore>((set, get) => ({
 
   openFile: async (file, roomId) => {
     const { openFiles } = get();
-
     const exists = openFiles.find((f) => f._id === file._id);
 
     if (!exists) {
@@ -45,13 +44,25 @@ export const useCodestore = create<Codestore>((set, get) => ({
         activeFileId: file._id,
       }));
     } else {
-      set({ activeFileId: file._id });
+      // ← reset isEdited when switching back to a saved file
+      set((state) => ({
+        activeFileId: file._id,
+        openFiles: state.openFiles.map((f) =>
+          f._id === file._id
+            ? {
+                ...f,
+                isEdited:
+                  f.isEdited && get().code[f._id]?.content !== undefined
+                    ? false
+                    : f.isEdited,
+              }
+            : f,
+        ),
+      }));
     }
 
-    // load content if not cached
     await get().loadFileContent(roomId, file._id);
   },
-
   closeFile: (fileId) =>
     set((state) => {
       const newFiles = state.openFiles.filter((f) => f._id !== fileId);
@@ -85,11 +96,11 @@ export const useCodestore = create<Codestore>((set, get) => ({
   loadFileContent: async (roomId, fileId) => {
     const cache = get().code[fileId];
 
-    // already loading
     if (cache?.loading) return;
 
-    // already has content
+    // already loaded — just make sure circle is cleared
     if (cache?.loaded && cache?.content !== undefined) {
+      get().setFileEdited(fileId, false); // ← ADD THIS
       return;
     }
 
@@ -113,6 +124,8 @@ export const useCodestore = create<Codestore>((set, get) => ({
       set((state) => {
         const existing = state.code[fileId];
 
+        // IMPORTANT:
+        // don't overwrite edited local content
         if (existing?.content && existing.content !== data?.content) {
           return {
             code: {
@@ -197,7 +210,6 @@ export const useCodestore = create<Codestore>((set, get) => ({
       console.error(err);
     }
   },
-
   updateContent: (fileId, content) =>
     set((state) => ({
       code: {
