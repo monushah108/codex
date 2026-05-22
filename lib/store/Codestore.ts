@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { socket } from "../socket";
 import { getType } from "../features";
 
 type FileItem = {
@@ -7,181 +8,151 @@ type FileItem = {
   isEdited?: boolean;
 };
 
-type Codestore = {
-  code: Record<string, { loaded: boolean; loading: boolean; content?: string }>;
+type Output = {
+  id: string;
+  output: string;
+  error?: boolean;
+};
+
+type Store = {
+  code: Record<string, any>;
   openFiles: FileItem[];
   activeFileId: string | null;
-  outputs: { id: string; [key: string]: any }[];
-  runCode: (fileId: string, content?: string) => Promise<void>;
-  runCommand: (command: string, fileId: string) => void;
-  loadFileContent: (roomId: string, fileId: string) => Promise<void>;
-  openFile: (file: FileItem, roomId: string) => void;
+  outputs: Output[];
+
+  openFile: (file: FileItem, roomId: string) => Promise<void>;
+
   closeFile: (fileId: string) => void;
+
   setActiveFile: (fileId: string) => void;
+
   setFileEdited: (fileId: string, edited: boolean) => void;
+
   updateContent: (fileId: string, content: string) => void;
+
+  loadFileContent: (roomId: string, fileId: string) => Promise<void>;
+
   saveFileContent: (
     roomId: string,
     fileId: string,
     content: string,
   ) => Promise<void>;
+
+  runCode: (roomId: string, fileId: string) => void;
+
+  addOutput: (output: Output) => void;
+
+  clearOutputs: () => void;
 };
 
-export const useCodestore = create<Codestore>((set, get) => ({
-  code: {},
+export const useCodestore = create<Store>((set, get) => {
+  const updateCode = (fileId: string, data: any) =>
+    set((s) => ({
+      code: {
+        ...s.code,
+        [fileId]: {
+          ...s.code[fileId],
+          ...data,
+        },
+      },
+    }));
 
-  openFiles: [],
-  outputs: [],
-  activeFileId: null,
+  return {
+    code: {},
+    openFiles: [],
+    outputs: [],
+    activeFileId: null,
 
-  openFile: async (file, roomId) => {
-    const { openFiles } = get();
-    const exists = openFiles.find((f) => f._id === file._id);
-
-    if (!exists) {
-      set((state) => ({
-        openFiles: [...state.openFiles, { ...file, isEdited: false }],
+    // OPEN FILE
+    openFile: async (file, roomId) => {
+      set((s) => ({
         activeFileId: file._id,
+
+        openFiles: s.openFiles.some((f) => f._id === file._id)
+          ? s.openFiles
+          : [
+              ...s.openFiles,
+              {
+                ...file,
+                isEdited: false,
+              },
+            ],
       }));
-    } else {
-      // ← reset isEdited when switching back to a saved file
-      set((state) => ({
-        activeFileId: file._id,
-        openFiles: state.openFiles.map((f) =>
-          f._id === file._id
+
+      await get().loadFileContent(roomId, file._id);
+    },
+
+    // CLOSE
+    closeFile: (fileId) =>
+      set((s) => {
+        const files = s.openFiles.filter((f) => f._id !== fileId);
+
+        return {
+          openFiles: files,
+
+          activeFileId:
+            s.activeFileId === fileId
+              ? files.at(-1)?._id || null
+              : s.activeFileId,
+        };
+      }),
+
+    setActiveFile: (activeFileId) =>
+      set({
+        activeFileId,
+      }),
+
+    setFileEdited: (fileId, edited) =>
+      set((s) => ({
+        openFiles: s.openFiles.map((f) =>
+          f._id === fileId
             ? {
                 ...f,
-                isEdited:
-                  f.isEdited && get().code[f._id]?.content !== undefined
-                    ? false
-                    : f.isEdited,
+                isEdited: edited,
               }
             : f,
         ),
-      }));
-    }
+      })),
 
-    await get().loadFileContent(roomId, file._id);
-  },
-  closeFile: (fileId) =>
-    set((state) => {
-      const newFiles = state.openFiles.filter((f) => f._id !== fileId);
+    // CONTENT
+    updateContent: (fileId, content) =>
+      updateCode(fileId, {
+        content,
+      }),
 
-      let newActive = state.activeFileId;
+    loadFileContent: async (roomId, fileId) => {
+      const cache = get().code[fileId];
 
-      if (state.activeFileId === fileId) {
-        newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
-      }
+      if (cache?.loading || cache?.loaded) return;
 
-      if (state.activeFileId === fileId) {
-        newActive = newFiles.length ? newFiles[newFiles.length - 1]._id : null;
-      }
-
-      return {
-        openFiles: [...newFiles],
-        activeFileId: newActive,
-      };
-    }),
-
-  setActiveFile: (fileId) => set({ activeFileId: fileId }),
-
-  setFileEdited: (fileId, edited) => {
-    set((state) => ({
-      openFiles: state.openFiles.map((f) =>
-        f._id === fileId ? { ...f, isEdited: edited } : f,
-      ),
-    }));
-  },
-
-  loadFileContent: async (roomId, fileId) => {
-    const cache = get().code[fileId];
-
-    if (cache?.loading) return;
-
-    // already loaded — just make sure circle is cleared
-    if (cache?.loaded && cache?.content !== undefined) {
-      get().setFileEdited(fileId, false); // ← ADD THIS
-      return;
-    }
-
-    set((state) => ({
-      code: {
-        ...state.code,
-        [fileId]: {
-          ...state.code[fileId],
-          loading: true,
-        },
-      },
-    }));
-
-    try {
-      const res = await fetch(
-        `/api/playground/${roomId}/files?fileId=${fileId}`,
-      );
-
-      const data = await res.json();
-
-      set((state) => {
-        const existing = state.code[fileId];
-
-        // IMPORTANT:
-        // don't overwrite edited local content
-        if (existing?.content && existing.content !== data?.content) {
-          return {
-            code: {
-              ...state.code,
-
-              [fileId]: {
-                ...existing,
-                loaded: true,
-                loading: false,
-              },
-            },
-          };
-        }
-
-        return {
-          code: {
-            ...state.code,
-
-            [fileId]: {
-              content: data?.content || "",
-              loaded: true,
-              loading: false,
-            },
-          },
-        };
+      updateCode(fileId, {
+        loading: true,
       });
-    } catch (err) {
-      console.error(err);
 
-      set((state) => ({
-        code: {
-          ...state.code,
+      try {
+        const res = await fetch(
+          `/api/playground/${roomId}/files?fileId=${fileId}`,
+        );
 
-          [fileId]: {
-            ...state.code[fileId],
-            loading: false,
-          },
-        },
-      }));
-    }
-  },
+        const data = await res.json();
 
-  saveFileContent: async (roomId, fileId, content) => {
-    // optimistic update FIRST
-    set((state) => ({
-      code: {
-        ...state.code,
+        updateCode(fileId, {
+          content: data?.content || "",
+          loaded: true,
+          loading: false,
+        });
+      } catch {
+        updateCode(fileId, {
+          loading: false,
+        });
+      }
+    },
 
-        [fileId]: {
-          ...state.code[fileId],
-          content,
-        },
-      },
-    }));
+    saveFileContent: async (roomId, fileId, content) => {
+      updateCode(fileId, {
+        content,
+      });
 
-    try {
       await fetch(`/api/playground/${roomId}/files`, {
         method: "PUT",
 
@@ -195,84 +166,31 @@ export const useCodestore = create<Codestore>((set, get) => ({
         }),
       });
 
-      set((state) => ({
-        code: {
-          ...state.code,
+      get().setFileEdited(fileId, false);
+    },
 
-          [fileId]: {
-            ...state.code[fileId],
-            loaded: true,
-            loading: false,
-          },
-        },
-      }));
-    } catch (err) {
-      console.error(err);
-    }
-  },
-  updateContent: (fileId, content) =>
-    set((state) => ({
-      code: {
-        ...state.code,
-        [fileId]: {
-          ...state.code[fileId],
-          content,
-        },
-      },
-    })),
+    // RUN CODE
+    runCode: (roomId, fileId) => {
+      const file = get().openFiles.find((f) => f._id === fileId);
 
-  runCode: async (fileId) => {
-    const code = get().code[fileId]?.content;
-    const outputs = get().outputs;
-    const activeFile = get().openFiles.find((f) => f._id === fileId);
-    const langId = getType(activeFile?.name)?.id;
+      socket.emit("code:run", {
+        roomId,
 
-    try {
-      const res = await fetch(
-        "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            source_code: code,
-            language_id: langId,
-          }),
-        },
-      );
-      const data = await res.json();
+        code: get().code[fileId]?.content,
 
-      set({ outputs: [...outputs, { id: crypto.randomUUID(), ...data }] });
-    } catch (err) {
-      console.error(err);
+        languageId: getType(file?.name)?.id,
+      });
+    },
 
+    // TERMINAL
+    addOutput: (output) =>
+      set((s) => ({
+        outputs: [...s.outputs, output],
+      })),
+
+    clearOutputs: () =>
       set({
-        outputs: [
-          ...outputs,
-          { id: crypto.randomUUID(), error: "Error running code" },
-        ],
-      });
-    }
-  },
-
-  runCommand: async (command, fileId) => {
-    const outputs = get().outputs;
-    if (command === "clear") {
-      console.log("Clearing outputs...");
-      setTimeout(() => {
-        outputs.length = 0;
-      }, 500);
-    } else if (command === "help") {
-      outputs.push({
-        id: crypto.randomUUID(),
-        stdout: "Available commands: clear, help, run code",
-      });
-    } else if (command === "run code") {
-      get().runCode(fileId);
-    } else {
-      outputs.push({
-        id: crypto.randomUUID(),
-        stderr: `Command not found: ${command}`,
-      });
-    }
-  },
-}));
+        outputs: [],
+      }),
+  };
+});

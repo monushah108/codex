@@ -6,7 +6,7 @@ import { useCodestore } from "@/lib/store/Codestore";
 import SaveFile from "../Module/saveFile";
 import { useLayout } from "@/context/layout-context";
 
-const TabBar = memo(function TabBar() {
+const TabBar = memo(function TabBar({ roomId }) {
   const [openDialog, setOpenDialog] = useState(false);
   const openFiles = useCodestore((s) => s.openFiles);
   const activeFileId = useCodestore((s) => s.activeFileId);
@@ -68,14 +68,12 @@ const TabBar = memo(function TabBar() {
       <div className="space-x-1">
         <Button
           onClick={() => {
-            runCode(activeFileId!);
+            runCode(roomId, activeFileId!);
+
             toggle("terminal");
           }}
-          variant="none"
-          size="xs"
-          className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
         >
-          <Play className="size-4 " />
+          <Play className="size-4" />
           Run Code
         </Button>
       </div>

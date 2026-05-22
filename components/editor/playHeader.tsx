@@ -43,17 +43,6 @@ export default function PlayHeader() {
         >
           <PanelBottomOpen className="size-4" />
         </Button>
-
-        <Button
-          onClick={() => {
-            toggle("chat");
-          }}
-          variant="ghost"
-          size="xs"
-          className="hover:bg-[#3a3a3d] text-[#d4d4d4]"
-        >
-          <PanelRightClose className="size-4" />
-        </Button>
       </div>
     </div>
   );

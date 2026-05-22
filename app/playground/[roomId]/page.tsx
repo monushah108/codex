@@ -29,7 +29,7 @@ export default async function Page({ params }) {
   if (res.status == 403) {
     redirect(`/playground/join/${roomId}`);
   } else if (res.status == 400 || res.status == 404) {
-    redirect("/profile");
+    redirect("/");
   }
 
   return (
@@ -37,18 +37,16 @@ export default async function Page({ params }) {
       {/* Header */}
       <PlayHeader />
 
-      <div className="flex-1 w-full">
-        <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
-          {/* File Explorer */}
+      <ResizablePanelGroup orientation="horizontal" className="flex-1 w-full">
+        {/* File Explorer */}
 
-          <FileExplore roomId={roomId} />
+        <FileExplore roomId={roomId} />
 
-          <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
+        <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
 
-          {/* Center Column */}
-          <CodeWindow roomId={roomId} />
-        </ResizablePanelGroup>
-      </div>
+        {/* Center Column */}
+        <CodeWindow roomId={roomId} />
+      </ResizablePanelGroup>
 
       <StatusBar roomId={roomId} />
     </div>
