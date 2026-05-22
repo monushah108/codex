@@ -68,42 +68,99 @@ export async function GET(request: NextRequest, { params }) {
   }
 }
 
-export async function POST(request: NextRequest, { params }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   await connectDB();
 
-  const { id: roomId } = await params;
-  const body = await request.json();
-  const userId = await getUser(request)?.id;
-  const { password } = body;
+  const session = await mongoose.startSession();
 
   try {
-    const room = await Room.findById(roomId);
+    const { id: roomId } = await params;
+
+    const body = await request.json();
+
+    const { password } = body;
+
+    const userId = await getUserId(request);
+
+    session.startTransaction();
+
+    const room = await Room.findById(roomId).session(session);
 
     if (!room) {
+      await session.abortTransaction();
+
       return Response.json({ error: "Room not found" }, { status: 404 });
     }
 
-    const isPasswordValid = await room.comparePassword(password);
+    // EXPIRED ROOM
+    if (!room.isPermanent && room.expiresAt && room.expiresAt < new Date()) {
+      await session.abortTransaction();
 
-    if (!isPasswordValid) {
-      return Response.json({ error: "Invalid Credentials" }, { status: 401 });
+      return Response.json({ error: "Room expired" }, { status: 410 });
     }
 
-    const isMember = await Member.findOne({ userId, roomId });
-    if (isMember) {
-      return Response.json({ msg: "you have alredy joined" }, { status: 409 });
+    // ROOM FULL
+    if (room.currentUsers >= room.maxUsers) {
+      await session.abortTransaction();
+
+      return Response.json({ error: "Room is full" }, { status: 403 });
     }
 
-    console.log(isMember);
+    // PASSWORD CHECK
+    if (room.type === "private") {
+      const valid = await room.comparePassword(password);
 
-    await Member.insertOne({
+      if (!valid) {
+        await session.abortTransaction();
+
+        return Response.json({ error: "Invalid password" }, { status: 401 });
+      }
+    }
+
+    // ALREADY MEMBER
+    const existingMember = await Member.findOne({
       userId,
       roomId,
-    });
+    }).session(session);
 
-    return Response.json({ success: true }, { status: 201 });
-  } catch (err) {
-    console.log(err);
+    if (existingMember) {
+      await session.abortTransaction();
+
+      return Response.json({ error: "Already joined" }, { status: 409 });
+    }
+
+    await Member.create(
+      [
+        {
+          userId,
+          roomId,
+        },
+      ],
+      { session },
+    );
+
+    room.currentUsers += 1;
+
+    await room.save({ session });
+
+    await session.commitTransaction();
+
+    return Response.json(
+      {
+        success: true,
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    await session.abortTransaction();
+
+    console.error(error);
+
     return Response.json({ error: "Server Error" }, { status: 500 });
+  } finally {
+    session.endSession();
   }
 }

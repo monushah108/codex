@@ -53,7 +53,7 @@ export default function Header() {
             )}
           </Button>
 
-          <Link href="/login">
+          <Link href="/auth/sign-in">
             <Button
               variant="outline"
               className="font-medium dark:border-gray-700"
@@ -61,7 +61,7 @@ export default function Header() {
               Sign in
             </Button>
           </Link>
-          <Link href="/Auth">
+          <Link href="/auth/sign-up">
             <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium">
               Get Started
             </Button>
@@ -85,7 +85,7 @@ export default function Header() {
       {menuOpen && (
         <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-inner transition-all duration-300">
           <nav className="flex flex-col px-4 py-4 space-y-5">
-            {navItems.map((item, index) => (
+            {NavItems.map((item, index) => (
               <a
                 key={index}
                 href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
@@ -96,7 +96,7 @@ export default function Header() {
               </a>
             ))}
             <div className="flex flex-col gap-2 mt-8">
-              <Link href="/login">
+              <Link href="/auth/sign-in">
                 <Button
                   variant="outline"
                   className="font-medium dark:border-gray-700"
@@ -104,7 +104,7 @@ export default function Header() {
                   Sign in
                 </Button>
               </Link>
-              <Link href="/Auth">
+              <Link href="/auth/sign-up">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium">
                   Get Started
                 </Button>
