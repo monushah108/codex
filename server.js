@@ -69,48 +69,6 @@ app.prepare().then(() => {
         update,
       });
     });
-
-    socket.on("code:run", async ({ roomId, code, languageId }) => {
-      try {
-        const res = await fetch(
-          "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-            },
-
-            body: JSON.stringify({
-              source_code: code,
-              language_id: languageId,
-            }),
-          },
-        );
-
-        const data = await res.json();
-
-        const output =
-          data.stdout || data.stderr || data.compile_output || "No output";
-
-        io.to(roomId).emit("terminal:output", {
-          output,
-        });
-      } catch {
-        io.to(roomId).emit("terminal:output", {
-          output: "Execution Error",
-
-          error: true,
-        });
-      }
-    });
-
-    // TERMINAL COMMANDS
-    socket.on("terminal:command", ({ roomId, command }) => {
-      io.to(roomId).emit("terminal:output", {
-        output: `> ${command}`,
-      });
-    });
   });
 
   httpServer.listen(3000, () => {

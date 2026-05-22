@@ -14,7 +14,6 @@ const TabBar = memo(function TabBar({ roomId }) {
   const openFile = useCodestore((s) => s.openFile);
   const setEdited = useCodestore((s) => s.setFileEdited);
   const setActiveFile = useCodestore((s) => s.setActiveFile);
-  const runCode = useCodestore((s) => s.runCode);
 
   const nextFile = openFiles.find((f) => f._id !== activeFileId);
   const { toggle } = useLayout();
@@ -68,8 +67,6 @@ const TabBar = memo(function TabBar({ roomId }) {
       <div className="space-x-1">
         <Button
           onClick={() => {
-            runCode(roomId, activeFileId!);
-
             toggle("terminal");
           }}
         >

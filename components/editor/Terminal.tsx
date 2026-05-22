@@ -6,33 +6,14 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 
 import { ArrowBigRight, TerminalIcon, Trash } from "lucide-react";
 
-import { socket } from "@/lib/socket";
-
 import { useCodestore } from "@/lib/store/Codestore";
 
-const Terminal = memo(function Terminal({ roomId }) {
+const Terminal = memo(function Terminal() {
   const [input, setInput] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { outputs, addOutput, clearOutputs } = useCodestore();
-
-  // RECEIVE OUTPUT
-  useEffect(() => {
-    const handleOutput = (data: any) => {
-      addOutput({
-        id: crypto.randomUUID(),
-
-        output: data.output,
-
-        error: data.error,
-      });
-    };
-
-    socket.on("terminal:output", handleOutput);
-
-    return () => socket.off("terminal:output", handleOutput);
-  }, [addOutput]);
+  const { outputs, clearOutputs } = useCodestore();
 
   // AUTO SCROLL
   useEffect(() => {
@@ -46,11 +27,6 @@ const Terminal = memo(function Terminal({ roomId }) {
     e.preventDefault();
 
     if (!input.trim()) return;
-
-    socket.emit("terminal:command", {
-      roomId,
-      command: input,
-    });
 
     setInput("");
   };

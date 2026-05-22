@@ -1,6 +1,4 @@
 import { create } from "zustand";
-import { socket } from "../socket";
-import { getType } from "../features";
 
 type FileItem = {
   _id: string;
@@ -37,12 +35,6 @@ type Store = {
     fileId: string,
     content: string,
   ) => Promise<void>;
-
-  runCode: (roomId: string, fileId: string) => void;
-
-  addOutput: (output: Output) => void;
-
-  clearOutputs: () => void;
 };
 
 export const useCodestore = create<Store>((set, get) => {
@@ -168,29 +160,5 @@ export const useCodestore = create<Store>((set, get) => {
 
       get().setFileEdited(fileId, false);
     },
-
-    // RUN CODE
-    runCode: (roomId, fileId) => {
-      const file = get().openFiles.find((f) => f._id === fileId);
-
-      socket.emit("code:run", {
-        roomId,
-
-        code: get().code[fileId]?.content,
-
-        languageId: getType(file?.name)?.id,
-      });
-    },
-
-    // TERMINAL
-    addOutput: (output) =>
-      set((s) => ({
-        outputs: [...s.outputs, output],
-      })),
-
-    clearOutputs: () =>
-      set({
-        outputs: [],
-      }),
   };
 });
