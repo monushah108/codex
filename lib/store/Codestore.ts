@@ -12,10 +12,21 @@ type Output = {
   error?: boolean;
 };
 
+type CodeState = {
+  content: string;
+  loaded?: boolean;
+  loading?: boolean;
+  saving?: boolean;
+  generating?: boolean;
+};
+
 type Store = {
-  code: Record<string, any>;
+  code: Record<string, CodeState>;
+
   openFiles: FileItem[];
+
   activeFileId: string | null;
+
   outputs: Output[];
 
   openFile: (file: FileItem, roomId: string) => Promise<void>;
@@ -35,15 +46,21 @@ type Store = {
     fileId: string,
     content: string,
   ) => Promise<void>;
+
+  generateCode: (fileId: string, prompt: string) => Promise<void>;
 };
 
 export const useCodestore = create<Store>((set, get) => {
-  const updateCode = (fileId: string, data: any) =>
-    set((s) => ({
+  const updateCode = (fileId: string, data: Partial<CodeState>) =>
+    set((state) => ({
       code: {
-        ...s.code,
+        ...state.code,
+
         [fileId]: {
-          ...s.code[fileId],
+          ...(state.code[fileId] || {
+            content: "",
+          }),
+
           ...data,
         },
       },
@@ -51,21 +68,26 @@ export const useCodestore = create<Store>((set, get) => {
 
   return {
     code: {},
+
     openFiles: [],
-    outputs: [],
+
     activeFileId: null,
+
+    outputs: [],
 
     // OPEN FILE
     openFile: async (file, roomId) => {
-      set((s) => ({
+      set((state) => ({
         activeFileId: file._id,
 
-        openFiles: s.openFiles.some((f) => f._id === file._id)
-          ? s.openFiles
+        openFiles: state.openFiles.some((f) => f._id === file._id)
+          ? state.openFiles
           : [
-              ...s.openFiles,
+              ...state.openFiles,
+
               {
                 ...file,
+
                 isEdited: false,
               },
             ],
@@ -74,44 +96,51 @@ export const useCodestore = create<Store>((set, get) => {
       await get().loadFileContent(roomId, file._id);
     },
 
-    // CLOSE
+    // CLOSE FILE
     closeFile: (fileId) =>
-      set((s) => {
-        const files = s.openFiles.filter((f) => f._id !== fileId);
+      set((state) => {
+        const files = state.openFiles.filter((f) => f._id !== fileId);
 
         return {
           openFiles: files,
 
           activeFileId:
-            s.activeFileId === fileId
+            state.activeFileId === fileId
               ? files.at(-1)?._id || null
-              : s.activeFileId,
+              : state.activeFileId,
         };
       }),
 
+    // ACTIVE FILE
     setActiveFile: (activeFileId) =>
       set({
         activeFileId,
       }),
 
+    // EDIT STATUS
     setFileEdited: (fileId, edited) =>
-      set((s) => ({
-        openFiles: s.openFiles.map((f) =>
-          f._id === fileId
+      set((state) => ({
+        openFiles: state.openFiles.map((file) =>
+          file._id === fileId
             ? {
-                ...f,
+                ...file,
+
                 isEdited: edited,
               }
-            : f,
+            : file,
         ),
       })),
 
-    // CONTENT
-    updateContent: (fileId, content) =>
+    // UPDATE CONTENT
+    updateContent: (fileId, content) => {
       updateCode(fileId, {
         content,
-      }),
+      });
 
+      get().setFileEdited(fileId, true);
+    },
+
+    // LOAD FILE
     loadFileContent: async (roomId, fileId) => {
       const cache = get().code[fileId];
 
@@ -126,39 +155,108 @@ export const useCodestore = create<Store>((set, get) => {
           `/api/playground/${roomId}/files?fileId=${fileId}`,
         );
 
+        if (!res.ok) {
+          throw new Error("Failed to load file");
+        }
+
         const data = await res.json();
 
         updateCode(fileId, {
           content: data?.content || "",
+
           loaded: true,
+
           loading: false,
         });
-      } catch {
+      } catch (err) {
+        console.error(err);
+
         updateCode(fileId, {
           loading: false,
         });
       }
     },
 
+    // SAVE FILE
     saveFileContent: async (roomId, fileId, content) => {
       updateCode(fileId, {
+        saving: true,
+
         content,
       });
 
-      await fetch(`/api/playground/${roomId}/files`, {
-        method: "PUT",
+      try {
+        const res = await fetch(`/api/playground/${roomId}/files`, {
+          method: "PUT",
 
-        headers: {
-          "Content-Type": "application/json",
-        },
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-        body: JSON.stringify({
-          id: fileId,
-          content,
-        }),
+          body: JSON.stringify({
+            id: fileId,
+
+            content,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to save file");
+        }
+
+        get().setFileEdited(fileId, false);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        updateCode(fileId, {
+          saving: false,
+        });
+      }
+    },
+
+    // AI GENERATION
+    generateCode: async (fileId, prompt) => {
+      const existingContent = get().code[fileId]?.content || "";
+
+      updateCode(fileId, {
+        generating: true,
       });
 
-      get().setFileEdited(fileId, false);
+      try {
+        const res = await fetch("/api/ai/generate", {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            prompt,
+
+            content: existingContent,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Generation failed");
+        }
+
+        const data = await res.json();
+
+        updateCode(fileId, {
+          content: data.code,
+
+          generating: false,
+        });
+
+        get().setFileEdited(fileId, true);
+      } catch (err) {
+        console.error(err);
+
+        updateCode(fileId, {
+          generating: false,
+        });
+      }
     },
   };
 });
