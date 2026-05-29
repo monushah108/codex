@@ -223,7 +223,7 @@ export const useCodestore = create<Store>((set, get) => {
       });
 
       try {
-        const res = await fetch("/api/ai/generate", {
+        const res = await fetch("/api/ai", {
           method: "POST",
 
           headers: {
