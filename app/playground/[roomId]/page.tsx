@@ -11,6 +11,7 @@ import FileExplore from "@/components/editor/FileExplore";
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import Chat from "@/components/editor/chat";
 
 export default async function Page({ params }) {
   const { roomId } = await params;
@@ -46,6 +47,10 @@ export default async function Page({ params }) {
 
         {/* Center Column */}
         <CodeWindow roomId={roomId} />
+
+        <ResizableHandle className="bg-[#2d2d30] hover:bg-blue-500 transition-colors duration-200" />
+
+        <Chat />
       </ResizablePanelGroup>
 
       <StatusBar roomId={roomId} />

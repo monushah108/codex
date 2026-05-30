@@ -8,38 +8,38 @@ export async function POST(req: NextRequest) {
       "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
-
         headers: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-
           "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:3000",
+          "X-Title": "Codex",
         },
-
         body: JSON.stringify({
-          model: "qwen/qwen3-coder:free",
+          model: "deepseek/deepseek-v4-flash:free",
+
+          reasoning: {
+            enabled: true,
+          },
 
           messages: [
             {
               role: "system",
-
               content: `
 You are an expert software engineer.
 
 STRICT RULES:
-- Return ONLY raw code
+- Return ONLY code
 - No markdown
-- No explanation
-- No \`\`\`
-- Return complete valid file
+- No explanations
+- No code fences
+- Return complete code
+- Preserve imports
 - Preserve architecture
-- Do not omit imports
-- Do not truncate code
-              `,
+`,
             },
 
             {
               role: "user",
-
               content: `
 CURRENT FILE:
 
@@ -48,7 +48,7 @@ ${content}
 TASK:
 
 ${prompt}
-              `,
+`,
             },
           ],
         }),
@@ -57,7 +57,33 @@ ${prompt}
 
     const data = await response.json();
 
-    const code = data?.choices?.[0]?.message?.content || "";
+    console.log("STATUS:", response.status);
+    console.log("DATA:", JSON.stringify(data, null, 2));
+
+    if (!response.ok) {
+      return NextResponse.json(
+        {
+          error: data?.error ?? "OpenRouter Error",
+        },
+        {
+          status: response.status,
+        },
+      );
+    }
+
+    const code = data?.choices?.[0]?.message?.content;
+
+    if (!code) {
+      return NextResponse.json(
+        {
+          error: "Empty response from model",
+          raw: data,
+        },
+        {
+          status: 500,
+        },
+      );
+    }
 
     return NextResponse.json({
       code,
@@ -69,7 +95,6 @@ ${prompt}
       {
         error: "Failed to generate code",
       },
-
       {
         status: 500,
       },
