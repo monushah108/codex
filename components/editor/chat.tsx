@@ -65,7 +65,7 @@ export default function Chat() {
       const aiMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: data.message || "No response",
+        content: data.response || "No response",
       };
 
       setMessages((prev) => [...prev, aiMessage]);

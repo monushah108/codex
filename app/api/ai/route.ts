@@ -1,93 +1,95 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const MODELS = ["openai/gpt-oss-120b:free", "deepseek/deepseek-v4-flash:free"];
+
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, content } = await req.json();
+    const { message } = await req.json();
 
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "Codex",
-        },
-        body: JSON.stringify({
-          model: "deepseek/deepseek-v4-flash:free",
+    if (!message?.trim()) {
+      return NextResponse.json(
+        { error: "Message is required" },
+        { status: 400 },
+      );
+    }
 
-          reasoning: {
-            enabled: true,
-          },
+    let lastError: unknown = null;
 
-          messages: [
-            {
-              role: "system",
-              content: `
+    for (const model of MODELS) {
+      try {
+        const response = await fetch(
+          "https://openrouter.ai/api/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "http://localhost:3000",
+              "X-Title": "chat-codex",
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: "system",
+                  content: `
 You are an expert software engineer.
 
-STRICT RULES:
-- Return ONLY code
-- No markdown
-- No explanations
-- No code fences
-- Return complete code
-- Preserve imports
-- Preserve architecture
-`,
-            },
+RULES:
+- Return only the final code.
+- No markdown.
+- No explanations.
+- No code fences.
+- Keep imports.
+- Keep architecture.
+- Produce production-ready code.
+- If modifying code, return the full updated code.
+                  `.trim(),
+                },
+                {
+                  role: "user",
+                  content: message,
+                },
+              ],
+            }),
+          },
+        );
 
-            {
-              role: "user",
-              content: `
-CURRENT FILE:
+        const data = await response.json();
 
-${content}
+        console.log(`Model: ${model}`);
+        console.log("Status:", response.status);
 
-TASK:
+        if (!response.ok) {
+          lastError = data;
+          continue;
+        }
 
-${prompt}
-`,
-            },
-          ],
-        }),
+        const content = data?.choices?.[0]?.message?.content?.trim();
+
+        if (!content) {
+          lastError = "Empty model response";
+          continue;
+        }
+
+        return NextResponse.json({
+          response: content,
+          model,
+        });
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    return NextResponse.json(
+      {
+        error: "All models failed",
+        details: lastError,
+      },
+      {
+        status: 500,
       },
     );
-
-    const data = await response.json();
-
-    console.log("STATUS:", response.status);
-    console.log("DATA:", JSON.stringify(data, null, 2));
-
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          error: data?.error ?? "OpenRouter Error",
-        },
-        {
-          status: response.status,
-        },
-      );
-    }
-
-    const code = data?.choices?.[0]?.message?.content;
-
-    if (!code) {
-      return NextResponse.json(
-        {
-          error: "Empty response from model",
-          raw: data,
-        },
-        {
-          status: 500,
-        },
-      );
-    }
-
-    return NextResponse.json({
-      code,
-    });
   } catch (err) {
     console.error(err);
 
