@@ -3,6 +3,9 @@
 import { ResizablePanel } from "@/components/ui/resizable";
 import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import * as ScrollArea from "@radix-ui/react-scroll-area";
+import Msg from "./ui/msg";
+import { Spinner } from "../ui/spinner";
 
 type Message = {
   id: string;
@@ -89,9 +92,9 @@ export default function Chat() {
       minSize={20}
       className="border-l border-[#2d2d30]"
     >
-      <div className="flex h-full flex-col bg-[#1e1e1e]">
+      <div className="flex h-full min-h-0 flex-col bg-[#1e1e1e]">
         {/* Header */}
-        <div className="flex h-10 items-center justify-between border-b border-[#2d2d30] px-4">
+        <div className="flex h-12 shrink-0 items-center justify-between border-b border-[#2d2d30] bg-[#252526] px-4">
           <h2 className="text-sm font-medium text-zinc-200">Codex AI</h2>
 
           <button
@@ -103,55 +106,55 @@ export default function Chat() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${
-                msg.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${
-                  msg.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-[#252526] text-zinc-200"
-                }`}
-              >
-                {msg.content}
-              </div>
-            </div>
-          ))}
+        <ScrollArea.Root className="flex-1 overflow-hidden max-h-177">
+          <ScrollArea.Viewport className="h-full">
+            <div className="mx-auto max-w-4xl space-y-5 p-4">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[90%] lg:max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                      msg.role === "user"
+                        ? "bg-blue-600 text-white"
+                        : "border border-[#2d2d30] bg-[#252526] text-zinc-200"
+                    }`}
+                  >
+                    <Msg content={msg.content} />
+                  </div>
+                </div>
+              ))}
 
-          {loading && (
-            <div className="flex justify-start">
-              <div className="rounded-xl bg-[#252526] px-3 py-2 text-sm text-zinc-400">
-                Thinking...
-              </div>
-            </div>
-          )}
+              {loading && (
+                <div className="flex justify-start">
+                  <div className="flex items-center gap-2 text-sm text-zinc-400">
+                    <Spinner />
+                    <span>Generating...</span>
+                  </div>
+                </div>
+              )}
 
-          <div ref={bottomRef} />
-        </div>
+              <div ref={bottomRef} />
+            </div>
+          </ScrollArea.Viewport>
+          <ScrollArea.Scrollbar orientation="vertical">
+            <ScrollArea.Thumb />
+          </ScrollArea.Scrollbar>
+        </ScrollArea.Root>
 
         {/* Input */}
         <div className="border-t border-[#2d2d30] p-3">
           {/* Future Model Selector */}
-          <div className="mb-2 flex items-center gap-2">
-            <button className="rounded-md bg-[#252526] px-2 py-1 text-xs text-zinc-300 hover:bg-[#333]">
-              DeepSeek
-            </button>
-
-            <button className="rounded-md bg-[#252526] px-2 py-1 text-xs text-zinc-300 hover:bg-[#333]">
-              Workspace
-            </button>
-          </div>
-
-          <div
-            className="
+          <div className="mb-2 flex  flex-col gap-2">
+            <div
+              className="
               flex
               items-end
               gap-2
+              
               rounded-xl
               border
               border-[#3c3c3c]
@@ -161,14 +164,14 @@ export default function Chat() {
               transition-colors
               focus-within:border-blue-500
             "
-          >
-            <textarea
-              ref={textareaRef}
-              value={input}
-              rows={1}
-              maxLength={4000}
-              placeholder="Ask Codex AI..."
-              className="
+            >
+              <textarea
+                ref={textareaRef}
+                value={input}
+                rows={1}
+                maxLength={4000}
+                placeholder="Ask Codex AI..."
+                className="
                 flex-1
                 resize-none
                 bg-transparent
@@ -180,24 +183,24 @@ export default function Chat() {
                 max-h-[200px]
                 overflow-y-auto
               "
-              onChange={(e) => {
-                setInput(e.target.value);
+                onChange={(e) => {
+                  setInput(e.target.value);
 
-                e.target.style.height = "auto";
-                e.target.style.height = `${e.target.scrollHeight}px`;
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
-            />
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+              />
 
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || loading}
-              className="
+              <button
+                onClick={sendMessage}
+                disabled={!input.trim() || loading}
+                className="
                 flex
                 h-9
                 w-9
@@ -212,14 +215,15 @@ export default function Chat() {
                 disabled:bg-[#3c3c3c]
                 disabled:text-zinc-500
               "
-            >
-              <Send size={15} />
-            </button>
-          </div>
+              >
+                <Send size={15} />
+              </button>
+            </div>
 
-          <div className="mt-2 flex justify-between text-[11px] text-zinc-500">
-            <span>↵ Send • Shift + ↵ New line</span>
-            <span>{input.length}/4000</span>
+            <div className="mt-2 flex justify-between text-[11px] text-zinc-500">
+              <span>↵ Send • Shift + ↵ New line</span>
+              <span>{input.length}/4000</span>
+            </div>
           </div>
         </div>
       </div>
