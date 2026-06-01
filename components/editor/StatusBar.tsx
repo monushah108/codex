@@ -1,8 +1,11 @@
 "use client";
 import { GitBranch, CheckCircle, Users, Sparkles } from "lucide-react";
 import Profile from "./ui/profile";
+import { useLayout } from "@/context/layout-context";
 
 function StatusBar() {
+  const { toggle } = useLayout();
+
   return (
     <div className="bg-[#007acc] h-7 text-white flex items-center justify-between px-2 text-xs">
       {/* LEFT */}
@@ -23,7 +26,7 @@ function StatusBar() {
       {/* RIGHT */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 cursor-pointer">
-          <Sparkles className="size-3" />
+          <Sparkles className="size-3" onClick={() => toggle("chat")} />
           <Users className="size-3" />
         </div>
       </div>

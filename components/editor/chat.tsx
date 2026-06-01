@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Msg from "./ui/msg";
 import { Spinner } from "../ui/spinner";
+import { useLayout } from "@/context/layout-context";
 
 type Message = {
   id: string;
@@ -14,6 +15,7 @@ type Message = {
 };
 
 export default function Chat() {
+  const { isCollapse } = useLayout();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -88,7 +90,7 @@ export default function Chat() {
 
   return (
     <ResizablePanel
-      defaultSize={35}
+      defaultSize={isCollapse.chat ? 35 : 0}
       minSize={20}
       className="border-l border-[#2d2d30]"
     >
@@ -179,8 +181,7 @@ export default function Chat() {
                 text-zinc-100
                 placeholder:text-zinc-500
                 outline-none
-                min-h-[24px]
-                max-h-[200px]
+                
                 overflow-y-auto
               "
                 onChange={(e) => {

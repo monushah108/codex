@@ -6,8 +6,8 @@ import { useCodestore } from "@/lib/store/Codestore";
 import SaveFile from "../Module/saveFile";
 import { useLayout } from "@/context/layout-context";
 
-const TabBar = memo(function TabBar({ roomId }) {
-  const [openDialog, setOpenDialog] = useState(false);
+const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
   const openFiles = useCodestore((s) => s.openFiles);
   const activeFileId = useCodestore((s) => s.activeFileId);
   const closeFile = useCodestore((s) => s.closeFile);
@@ -32,7 +32,7 @@ const TabBar = memo(function TabBar({ roomId }) {
               variant="none"
               className={`border-t-4  rounded-xs group ${isActive ? "bg-blue-700/20 border-blue-600" : "border-blue-600/60 bg-blue-600/10 hover:bg-[#3a3a3d]"} t`}
               onClick={() => {
-                openFile(file);
+                setActiveFile(file._id);
               }}
             >
               {file.name}
