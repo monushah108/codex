@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { getType } from "../features";
 
 type FileItem = {
   _id: string;
@@ -8,8 +9,11 @@ type FileItem = {
 
 type Output = {
   id: string;
-  output: string;
-  error?: boolean;
+  stdout?: string;
+  stderr?: string;
+  compile_output?: string;
+  message?: string;
+  error?: string;
 };
 
 type CodeState = {
@@ -40,7 +44,8 @@ type Store = {
   updateContent: (fileId: string, content: string) => void;
 
   loadFileContent: (roomId: string, fileId: string) => Promise<void>;
-
+  runCode: (fileId: string, content?: string) => Promise<void>;
+  runCommand: (command: string, fileId: string) => Promise<void>;
   saveFileContent: (
     roomId: string,
     fileId: string,
@@ -211,6 +216,120 @@ export const useCodestore = create<Store>((set, get) => {
         updateCode(fileId, {
           saving: false,
         });
+      }
+    },
+    runCode: async (fileId) => {
+      const code = get().code[fileId]?.content;
+
+      if (!code?.trim()) {
+        set((state) => ({
+          outputs: [
+            ...state.outputs,
+            {
+              id: crypto.randomUUID(),
+              error: "No code to execute",
+            },
+          ],
+        }));
+        return;
+      }
+
+      const activeFile = get().openFiles.find((f) => f._id === fileId);
+
+      const langId = getType(activeFile?.name)?.id;
+
+      if (!langId) {
+        set((state) => ({
+          outputs: [
+            ...state.outputs,
+            {
+              id: crypto.randomUUID(),
+              error: "Unsupported file type",
+            },
+          ],
+        }));
+        return;
+      }
+
+      console.log(code, langId);
+      console.log(fileId, get().openFiles.find((f) => f._id === fileId)?.name);
+
+      try {
+        const res = await fetch(
+          "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              source_code: code,
+              language_id: langId,
+            }),
+          },
+        );
+
+        const data = await res.json();
+        console.log(data);
+
+        set((state) => ({
+          outputs: [
+            ...state.outputs,
+            {
+              id: crypto.randomUUID(),
+              stdout: data.stdout,
+              stderr: data.stderr,
+              compile_output: data.compile_output,
+              message: data.message,
+            },
+          ],
+        }));
+      } catch (err) {
+        console.error(err);
+
+        set((state) => ({
+          outputs: [
+            ...state.outputs,
+            {
+              id: crypto.randomUUID(),
+              error: "Failed to execute code",
+            },
+          ],
+        }));
+      }
+    },
+    runCommand: async (command, fileId) => {
+      switch (command.trim().toLowerCase()) {
+        case "clear":
+          set({ outputs: [] });
+          break;
+
+        case "help":
+          set((state) => ({
+            outputs: [
+              ...state.outputs,
+              {
+                id: crypto.randomUUID(),
+                stdout: "Available commands: help, clear, run code",
+              },
+            ],
+          }));
+          break;
+
+        case "run code":
+          await get().runCode(fileId);
+          break;
+
+        default:
+          set((state) => ({
+            outputs: [
+              ...state.outputs,
+              {
+                id: crypto.randomUUID(),
+                stderr: `Command not found: ${command}`,
+              },
+            ],
+          }));
       }
     },
 

@@ -14,9 +14,11 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
   const openFile = useCodestore((s) => s.openFile);
   const setEdited = useCodestore((s) => s.setFileEdited);
   const setActiveFile = useCodestore((s) => s.setActiveFile);
-
+  const runCode = useCodestore((s) => s.runCode);
   const nextFile = openFiles.find((f) => f._id !== activeFileId);
   const { toggle } = useLayout();
+
+  if (!activeFileId) return;
 
   return (
     <div
@@ -32,7 +34,7 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
               variant="none"
               className={`border-t-4  rounded-xs group ${isActive ? "bg-blue-700/20 border-blue-600" : "border-blue-600/60 bg-blue-600/10 hover:bg-[#3a3a3d]"} t`}
               onClick={() => {
-                setActiveFile(file._id);
+                openFile(file, roomId);
               }}
             >
               {file.name}
@@ -66,11 +68,14 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
       </div>
       <div className="space-x-1">
         <Button
+          variant="none"
           onClick={() => {
+            runCode(activeFileId);
+
             toggle("terminal");
           }}
         >
-          <Play className="size-4" />
+          <Play className="size-3" />
           Run Code
         </Button>
       </div>
