@@ -4,17 +4,27 @@ import {
 } from "@/components/ui/resizable";
 
 import StatusBar from "@/components/editor/StatusBar";
+
 import PlayHeader from "@/components/editor/playHeader";
 
 import CodeWindow from "@/components/editor/CodeWindow";
+
 import FileExplore from "@/components/editor/FileExplore";
 
 import { redirect } from "next/navigation";
+
 import { cookies } from "next/headers";
 import Chat from "@/components/editor/chat";
 
-export default async function Page({ params }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{
+    roomId: string;
+  }>;
+}) {
   const { roomId } = await params;
+
   const cookieStore = await cookies();
 
   const res = await fetch(
@@ -23,13 +33,50 @@ export default async function Page({ params }) {
       headers: {
         Cookie: cookieStore.toString(),
       },
-      next: { revalidate: 3600 },
+
+      cache: "no-store",
     },
   );
 
-  if (res.status == 403) {
+  //
+  // INVALID ROOM
+  //
+
+  if (res.status === 400 || res.status === 404) {
+    redirect("/");
+  }
+
+  //
+  // ROOM EXPIRED
+  //
+
+  if (res.status === 410) {
+    redirect("/");
+  }
+
+  const data = await res.json();
+
+  //
+  // ROOM FULL
+  //
+
+  if (data.access === "room_full") {
     redirect(`/playground/join/${roomId}`);
-  } else if (res.status == 400 || res.status == 404) {
+  }
+
+  //
+  // NOT MEMBER
+  //
+
+  if (res.status === 403) {
+    redirect(`/playground/join/${roomId}`);
+  }
+
+  //
+  // ACCESS DENIED
+  //
+
+  if (data.access !== "granted") {
     redirect("/");
   }
 

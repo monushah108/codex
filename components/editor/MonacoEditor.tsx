@@ -22,13 +22,10 @@ function MonacoEditor({ roomId, session }) {
     saveFileContent,
     setFileEdited,
     updateContent,
-    generateCode,
   } = useCodestore();
 
   const [editor, setEditor] = useState(null);
-
-  const generatingRef = useRef(false);
-
+  const savingRef = useRef(false);
   const handleSaveRef = useRef(null);
 
   // ACTIVE FILE
@@ -37,6 +34,7 @@ function MonacoEditor({ roomId, session }) {
     [openFiles, activeFileId],
   );
 
+  // CACHED CONTENT — used as defaultValue on remount (key changes per file)
   const cachedContent =
     code[activeFileId]?.content ?? "// your code is here...";
 
@@ -49,7 +47,7 @@ function MonacoEditor({ roomId, session }) {
     };
   }, [session]);
 
-  // YJS SYNC
+  // YJS — Yjs owns the editor model, do NOT use value/onChange props
   useMonacoYjs({
     editor,
     socket,
@@ -58,17 +56,25 @@ function MonacoEditor({ roomId, session }) {
     user,
   });
 
-  // SAVE LOGIC
+  // SAVE
   const handleSave = useCallback(async () => {
-    if (!editor || !activeFileId) return;
+    if (!editor || !activeFileId || savingRef.current) return;
 
-    const content = editor.getValue();
+    try {
+      savingRef.current = true;
 
-    updateContent(activeFileId, content);
+      const content = editor.getValue();
 
-    await saveFileContent(roomId, activeFileId, content);
+      // sync cache so reopening doesn't show stale content
+      updateContent(activeFileId, content);
 
-    setFileEdited(activeFileId, false);
+      await saveFileContent(roomId, activeFileId, content);
+
+      // clear the circle
+      setFileEdited(activeFileId, false);
+    } finally {
+      savingRef.current = false;
+    }
   }, [
     editor,
     roomId,
@@ -78,69 +84,29 @@ function MonacoEditor({ roomId, session }) {
     updateContent,
   ]);
 
+  // Keep ref fresh so the keybinding never captures a stale closure
   useEffect(() => {
     handleSaveRef.current = handleSave;
   }, [handleSave]);
 
-  // 🤖 AUTO AI GENERATION (MAIN FEATURE)
-  useEffect(() => {
-    if (!editor || !activeFileId) return;
-
-    const disposable = editor.onDidChangeModelContent(async (e) => {
-      if (e.isFlush) return;
-      if (generatingRef.current) return;
-
-      const value = editor.getValue();
-
-      const match = value.match(/\/\/\s*generate:(.*)/i);
-
-      if (!match) return;
-
-      const prompt = match[1]?.trim();
-
-      if (!prompt) return;
-
-      generatingRef.current = true;
-
-      try {
-        await generateCode(activeFileId, prompt);
-
-        const generated =
-          useCodestore.getState().code[activeFileId]?.content || "";
-
-        const model = editor.getModel();
-        if (!model) return;
-
-        editor.executeEdits("ai", [
-          {
-            range: model.getFullModelRange(),
-            text: generated,
-          },
-        ]);
-
-        editor.pushUndoStop();
-
-        setFileEdited(activeFileId, true);
-      } catch (err) {
-        console.error("AI generation failed:", err);
-      } finally {
-        generatingRef.current = false;
-      }
-    });
-
-    return () => disposable.dispose();
-  }, [editor, activeFileId, generateCode, setFileEdited]);
-
-  // MOUNT EDITOR
+  // MOUNT — register Ctrl+S once, call through ref
   const handleMount = useCallback((editorInstance, monaco) => {
     setEditor(editorInstance);
-  }, []);
 
-  // EDIT TRACKING
+    editorInstance.addAction({
+      id: "save-file",
+      label: "Save File",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+      run: () => handleSaveRef.current?.(),
+    });
+  }, []); // no deps — ref handles freshness
+
+  // TRACK EDITS — show circle on user edits, skip Yjs flushes
   useEffect(() => {
     if (!editor || !activeFileId) return;
 
     const disposable = editor.onDidChangeModelContent((e) => {
+      // isFlush = true → Yjs replaced the whole model (file switch), not a user edit
       if (!e.isFlush) {
         setFileEdited(activeFileId, true);
       }
@@ -154,10 +120,8 @@ function MonacoEditor({ roomId, session }) {
     return (
       <div className="h-full">
         <TabBar />
-
         <div className="flex h-full flex-col items-center justify-center bg-[#1e1e1e]">
           <Code2 className="h-20 w-20 text-[#007acc]/30" />
-
           <div className="mt-3 text-center">
             <p className="text-lg text-white">No file open</p>
             <p className="text-xs text-gray-400">Select a file from explorer</p>
@@ -172,20 +136,25 @@ function MonacoEditor({ roomId, session }) {
       <TabBar />
 
       <Editor
-        key={activeFileId}
         height="100%"
         width="100%"
         theme="vs-dark"
-        defaultValue={cachedContent}
         defaultLanguage={getType(activeFile?.name)?.language}
         onMount={handleMount}
         options={{
           fontSize: 14,
           fontFamily: "Fira Code, monospace",
-          minimap: { enabled: false },
+
+          minimap: {
+            enabled: false,
+          },
+
           lineNumbers: "on",
+
           automaticLayout: true,
+
           smoothScrolling: true,
+
           scrollBeyondLastLine: false,
         }}
       />

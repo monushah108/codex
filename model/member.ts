@@ -5,14 +5,13 @@ const memberSchema = new Schema(
     userId: {
       type: Schema.Types.ObjectId,
       required: true,
-      index: true,
+      ref: "User",
     },
 
     roomId: {
       type: Schema.Types.ObjectId,
       required: true,
       ref: "Room",
-      index: true,
     },
 
     role: {
@@ -20,6 +19,21 @@ const memberSchema = new Schema(
       enum: ["admin", "manager", "user"],
       default: "user",
     },
+
+    //
+    // REALTIME FEATURES
+    //
+
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
+
     joinedAt: {
       type: Date,
       default: Date.now,
@@ -30,11 +44,44 @@ const memberSchema = new Schema(
   },
 );
 
-memberSchema.index({ userId: 1, roomId: 1 }, { unique: true });
+//
+// UNIQUE MEMBER
+//
 
-memberSchema.index({ roomId: 1 });
+memberSchema.index(
+  {
+    userId: 1,
+    roomId: 1,
+  },
+  {
+    unique: true,
+  },
+);
 
-memberSchema.index({ userId: 1 });
+//
+// FAST ROOM MEMBER QUERY
+//
+
+memberSchema.index({
+  roomId: 1,
+});
+
+//
+// FAST USER ROOM QUERY
+//
+
+memberSchema.index({
+  userId: 1,
+});
+
+//
+// ONLINE USERS
+//
+
+memberSchema.index({
+  roomId: 1,
+  isOnline: 1,
+});
 
 const Member = models.Member || model("Member", memberSchema);
 

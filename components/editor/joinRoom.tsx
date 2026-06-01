@@ -1,120 +1,216 @@
 "use client";
+
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
-import { PasswordInput } from "../ui/password-input";
-import { Toaster } from "../ui/sonner";
-import { Spinner } from "../ui/spinner";
+
 import { useRouter } from "next/navigation";
+
 import { toast } from "sonner";
+
+import { Lock, Users, Clock3 } from "lucide-react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+
+import { Button } from "../ui/button";
+
+import { PasswordInput } from "../ui/password-input";
+
+import { Spinner } from "../ui/spinner";
+
+import { Toaster } from "../ui/sonner";
+
 import { formatte } from "@/lib/features";
 
-type joinType = {
+interface JoinRoomProps {
   owner: {
     admin_name: string;
     admin_img: string;
     createdAt: string;
+    currentUsers: number;
+    maxUsers: number;
+    isPermanent?: boolean;
+    expiresAt?: string;
   };
+
   roomId: string;
-};
+}
 
-export default function JoinRoom({ owner, roomId }: joinType) {
-  const [password, setPassword] = useState("12345678");
-  const [isLoading, setIsLoading] = useState(false);
-
+export default function JoinRoom({ owner, roomId }: JoinRoomProps) {
   const router = useRouter();
-  const handleStart = async () => {
-    if (!password) return;
+
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+
+  const [roomFull, setRoomFull] = useState(
+    owner.currentUsers >= owner.maxUsers,
+  );
+
+  const handleJoin = async () => {
+    if (!password) {
+      return toast.error("Password required");
+    }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
 
       const res = await fetch(`/api/playground/join/${roomId}`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password }),
+
         credentials: "include",
+
+        body: JSON.stringify({
+          password,
+        }),
       });
 
       const data = await res.json();
 
-      if (res.status == 401) {
-        toast.error(data.error || "Invalid password");
-        return;
-      } else if (res.status == 404) {
-        toast.error(
-          `${data.error} within 5 sec you will be redirect on home page`,
-        );
-        setTimeout(() => {
-          router.push("/");
-        }, 5000);
+      if (res.status === 201 || res.status === 409) {
+        toast.success("Joining room...");
+
+        return router.replace(`/playground/${roomId}`);
       }
 
-      if (res.status == 201 || res.status == 409) {
-        router.push(`/playground/${roomId}`);
+      if (res.status === 401) {
+        return toast.error(data.error);
       }
+
+      if (res.status === 403) {
+        setRoomFull(true);
+
+        return toast.error(data.error || "Room full");
+      }
+
+      if (res.status === 404 || res.status === 410) {
+        toast.error(data.error);
+
+        setTimeout(() => {
+          router.replace("/");
+        }, 2000);
+
+        return;
+      }
+
+      toast.error(data.error || "Something went wrong");
     } catch {
       toast.error("Server error");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
+
+  const meta = [
+    {
+      icon: Clock3,
+
+      text: `Created ${formatte(owner.createdAt)}`,
+    },
+
+    {
+      icon: Users,
+
+      text: `${owner.currentUsers}/${owner.maxUsers} members`,
+    },
+  ];
+
   return (
-    <div className="flex min-h-svh bg-[#1e1e1e] text-[#d4d4d4] items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-6 bg-[#252526] p-6 rounded-xl border border-[#2d2d30] shadow-lg">
-        {/* Room Info */}
-        <Toaster />
-        <div className="flex items-center gap-4 ">
-          <Avatar className="h-12 w-12 ">
-            <AvatarImage src={owner?.admin_img} />
-            <AvatarFallback className="bg-sky-500 text-black font-semibold">
-              CX
+    <div className="min-h-screen flex items-center justify-center bg-[#1e1e1e] px-4 text-[#d4d4d4]">
+      <Toaster />
+
+      <div className="w-full max-w-md space-y-6 rounded-2xl border border-[#2d2d30] bg-[#252526] p-6 shadow-xl">
+        {/* HEADER */}
+
+        <div className="flex gap-4">
+          <Avatar className="h-14 w-14 border border-[#3c3c3c]">
+            <AvatarImage src={owner.admin_img} />
+
+            <AvatarFallback className="bg-sky-500 text-black">
+              AD
             </AvatarFallback>
           </Avatar>
 
-          <div className="flex flex-col">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              {owner?.admin_name}
-              <span className="text-xs px-2 py-0.5 bg-sky-500/20 text-sky-400 rounded">
-                Admin
-              </span>
-            </h2>
+          <div className="flex-1 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold">{owner.admin_name}</h2>
 
-            <span className="text-xs text-gray-400">
-              Created • {formatte(owner?.createdAt)}
-            </span>
+              <Badge>Admin</Badge>
 
-            <span className="text-xs text-gray-400">
-              4 members already joined
-            </span>
+              <Badge color={owner.isPermanent ? "emerald" : "orange"}>
+                {owner.isPermanent ? "Permanent" : "Temporary"}
+              </Badge>
+            </div>
+
+            {meta.map(({ icon: Icon, text }, i) => (
+              <MetaItem key={i} icon={Icon} text={text} />
+            ))}
+
+            {!owner.isPermanent && owner.expiresAt && (
+              <MetaItem
+                icon={Clock3}
+                text={`Expires ${formatte(owner.expiresAt)}`}
+                color="text-orange-400"
+              />
+            )}
           </div>
         </div>
 
-        {/* Password */}
-        <PasswordInput
-          placeholder="Enter room password"
-          name="password"
-          value={password}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setPassword(e.target.value)
-          }
-        />
+        {/* ROOM FULL */}
 
-        {/* Button */}
+        {roomFull && (
+          <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+            Room is full
+          </div>
+        )}
+
+        {/* PASSWORD */}
+
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm text-gray-300">
+            <Lock className="h-4 w-4" />
+            Room Password
+          </label>
+
+          <PasswordInput
+            value={password}
+            placeholder="Enter room password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        {/* BUTTON */}
+
         <Button
-          onClick={handleStart}
-          disabled={isLoading || !password}
-          className="w-full gap-2 bg-sky-500 hover:bg-sky-600 transition-all"
+          onClick={handleJoin}
+          disabled={loading || roomFull || !password}
+          className="w-full bg-sky-500 hover:bg-sky-600"
         >
-          {isLoading ? (
-            <Spinner className="w-4 h-4" />
-          ) : (
-            <span className="text-sm">Start</span>
-          )}
+          {loading ? <Spinner className="h-4 w-4" /> : "Join Room"}
         </Button>
       </div>
     </div>
+  );
+}
+
+function MetaItem({ icon: Icon, text, color = "text-gray-400" }: any) {
+  return (
+    <div className={`flex items-center gap-2 text-xs ${color}`}>
+      <Icon className="h-3 w-3" />
+
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function Badge({ children, color = "sky" }: any) {
+  return (
+    <span
+      className={`rounded px-2 py-0.5 text-xs bg-${color}-500/20 text-${color}-400`}
+    >
+      {children}
+    </span>
   );
 }
