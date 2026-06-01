@@ -11,6 +11,12 @@ export default function ExplorerMenu({
   children,
   onRename,
   onDelete,
+}: {
+  id: string;
+  name: string;
+  children: React.ReactNode;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <ContextMenu key={id}>

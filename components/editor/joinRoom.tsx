@@ -9,7 +9,16 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatte } from "@/lib/features";
 
-export default function JoinRoom({ owner, roomId }) {
+type joinType = {
+  owner: {
+    admin_name: string;
+    admin_img: string;
+    createdAt: string;
+  };
+  roomId: string;
+};
+
+export default function JoinRoom({ owner, roomId }: joinType) {
   const [password, setPassword] = useState("12345678");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,7 +97,9 @@ export default function JoinRoom({ owner, roomId }) {
           placeholder="Enter room password"
           name="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setPassword(e.target.value)
+          }
         />
 
         {/* Button */}

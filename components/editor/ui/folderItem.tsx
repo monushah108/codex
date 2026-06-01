@@ -12,6 +12,19 @@ import { useExplorerstore } from "@/lib/store/Explorerstore";
 import ExplorerMenu from "../Module/ExplorerMenu";
 import { useCodestore } from "@/lib/store/Codestore";
 
+type Folderprop = {
+  item: any;
+  roomId: string;
+  creating: { parentId: string | null; type: "file" | "folder" | null };
+  setCreating: (value: {
+    parentId: string | null;
+    type: "file" | "folder" | null;
+  }) => void;
+  setSelected: (id: string) => void;
+  selected: string | null;
+  depth?: number;
+};
+
 function FolderItem({
   item,
   roomId,
@@ -20,9 +33,9 @@ function FolderItem({
   setSelected,
   selected,
   depth = 0,
-}) {
+}: Folderprop) {
   const [inputValue, setInputValue] = useState("");
-  const [renamingId, setRenamingId] = useState(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -76,12 +89,12 @@ function FolderItem({
 
   /* ---------------- RENAME ---------------- */
 
-  const handleRename = (id, name) => {
+  const handleRename = (id: string, name: string) => {
     setRenamingId(id);
     setRenameValue(name);
   };
 
-  const submitRename = async (type) => {
+  const submitRename = async (type: "file" | "folder"): Promise<void> => {
     if (!renameValue.trim()) return;
 
     const endpoint =
@@ -108,7 +121,10 @@ function FolderItem({
 
   /* ---------------- DELETE ---------------- */
 
-  const handleDelete = async (id, type) => {
+  const handleDelete = async (
+    id: string,
+    type: "file" | "folder",
+  ): Promise<void> => {
     const endpoint =
       type === "file"
         ? `/api/playground/${roomId}/files`
@@ -140,7 +156,7 @@ function FolderItem({
         id={item._id}
         name={item.name}
         onRename={handleRename}
-        onDelete={(id) => handleDelete(id, "folder")}
+        onDelete={(id: string) => handleDelete(id, "folder")}
       >
         <CollapsibleTrigger
           onClick={() => setSelected(item._id)}
@@ -192,11 +208,11 @@ function FolderItem({
               key={file._id}
               name={file.name}
               id={file._id}
-              onRename={(id, name) => {
+              onRename={(id: string, name: string) => {
                 setRenamingId(id);
                 setRenameValue(name);
               }}
-              onDelete={(id) => handleDelete(id, "file")}
+              onDelete={(id: string) => handleDelete(id, "file")}
             >
               <div
                 onClick={() => {
