@@ -13,8 +13,10 @@ const Terminal = memo(function Terminal({ roomId }) {
 
   const terminalRef = useRef<HTMLDivElement>(null);
 
-  const { outputs, activeFileId, runCommand } = useCodestore();
+  const { outputs, activeFileId, runCommand, clearOutputs } = useCodestore();
+  const code = useCodestore((s) => s.code);
 
+  const running = activeFileId ? code[activeFileId]?.running : false;
   // AUTO SCROLL
   useEffect(() => {
     terminalRef.current?.scrollIntoView({
@@ -43,25 +45,22 @@ const Terminal = memo(function Terminal({ roomId }) {
           TERMINAL
         </div>
 
-        <button >
+        <button onClick={clearOutputs}>
           <Trash className="size-3" />
         </button>
       </div>
 
-      <ScrollArea.Root
-        className="bg-[#1e1e1e] font-mono text-white"
-        style={{
-          height: "300px",
-        }}
-      >
+      <ScrollArea.Root className="h-[300px] bg-[#1e1e1e] font-mono text-white overflow-hidden">
         <ScrollArea.Viewport className="h-full w-full">
           {outputs.map((item) => (
             <div key={item.id} className="px-2 pb-2">
               <div className="flex items-center gap-1">{prompt()}</div>
 
               <pre
-                className={`ml-5 whitespace-pre-wrap text-xs ${
-                  item.error || item.stderr ? "text-red-500" : "text-gray-300"
+                className={`ml-5 whitespace-pre-wrap break-words rounded-md p-2 text-xs ${
+                  item.error || item.stderr
+                    ? "bg-red-950/30 text-red-400"
+                    : "bg-zinc-900 text-green-300"
                 }`}
               >
                 {item.stdout ||
@@ -85,8 +84,23 @@ const Terminal = memo(function Terminal({ roomId }) {
             </div>
           </form>
 
+          {running && (
+            <div className="px-2 py-1">
+              <div className="flex items-center gap-2 text-yellow-400 text-xs">
+                <span className="animate-spin">◌</span>
+                <span>Executing code...</span>
+              </div>
+            </div>
+          )}
+
           <div ref={terminalRef} />
         </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar
+          orientation="vertical"
+          className="w-2 bg-[#252526]"
+        >
+          <ScrollArea.Thumb className="bg-[#555] rounded-full" />
+        </ScrollArea.Scrollbar>
       </ScrollArea.Root>
     </div>
   );

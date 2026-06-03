@@ -119,7 +119,6 @@ function MonacoEditor({ roomId, session }) {
   if (!activeFileId) {
     return (
       <div className="h-full">
-        <TabBar />
         <div className="flex h-full flex-col items-center justify-center bg-[#1e1e1e]">
           <Code2 className="h-20 w-20 text-[#007acc]/30" />
           <div className="mt-3 text-center">
@@ -133,7 +132,7 @@ function MonacoEditor({ roomId, session }) {
 
   return (
     <div className="h-full">
-      <TabBar />
+      <TabBar roomId={roomId} />
 
       <Editor
         height="100%"

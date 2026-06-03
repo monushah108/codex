@@ -19,16 +19,16 @@ import { playSchema } from "@/lib/schema/playground";
 import { CircleAlert } from "lucide-react";
 
 export default function Form() {
-  const [roomName, setRoomName] = useState("codex-room");
+  const [name, setRoomName] = useState("codex");
   const [roomType, setRoomType] = useState<"public" | "private">("public");
   const [password, setPassword] = useState("12345678");
   const [maxUser, setMaxUser] = useState("3");
-  const [duration, setDuration] = useState("lifetime");
+  const [duration, setDuration] = useState(false);
 
   const [errors, setErrors] = useState<
     Partial<
       Record<
-        "maxUser" | "duration" | "password" | "roomName" | "roomType",
+        "maxUser" | "duration" | "password" | "name" | "roomType",
         string[]
       >
     >
@@ -45,17 +45,19 @@ export default function Form() {
   const handleForm = async (formData: FormData) => {
     startTransition(async () => {
       const newRoom = {
-        roomName: formData.get("roomName"),
-        roomType: roomType,
-        password: formData.get("password") || undefined,
-        maxUser: formData.get("maxUser"),
-        duration: duration,
+        name,
+        type: roomType,
+        password: roomType === "private" ? password : undefined,
+        maxUsers: maxUser,
+        duration,
       };
 
       const { success, data, error } = playSchema.safeParse(newRoom);
+      console.log(success, data, error, newRoom);
       if (!success) {
         const formatted = error.flatten().fieldErrors;
         setErrors(formatted);
+        console.log(formatted);
         return;
       }
 
@@ -100,17 +102,17 @@ export default function Form() {
           </FieldDescription>
 
           <Input
-            value={roomName}
+            value={name}
             onChange={(e) => setRoomName(e.target.value)}
-            name="roomName"
+            name="name"
             placeholder="Enter a room title"
-            className={inputErrorClass(errors.roomName)}
+            className={inputErrorClass(errors.name)}
           />
 
-          {errors.roomName && (
+          {errors.name && (
             <FieldError className="text-destructive text-xs flex items-center gap-1">
               <CircleAlert className="h-3 w-3" />
-              {errors.roomName[0]}
+              {errors.name[0]}
             </FieldError>
           )}
         </Field>
@@ -180,7 +182,7 @@ export default function Form() {
             <div className="flex items-center space-x-2">
               <RadioGroupItem
                 className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
-                value="lifetime"
+                value="true"
                 id="lifetime"
               />
               <FieldLabel htmlFor="lifetime">No Expiration</FieldLabel>
@@ -189,7 +191,7 @@ export default function Form() {
             <div className="flex items-center space-x-2">
               <RadioGroupItem
                 className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
-                value="one-week"
+                value="false"
                 id="week"
               />
               <FieldLabel htmlFor="week">Expires in 7 Days</FieldLabel>

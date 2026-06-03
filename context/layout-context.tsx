@@ -1,61 +1,76 @@
 "use client";
-import { createContext, useContext, useMemo, useState, ReactNode } from "react";
 
-/* ------------------ Types ------------------ */
+import { createContext, useContext, useState, ReactNode } from "react";
+
+type PanelName = "terminal" | "explorer" | "chat";
 
 type LayoutState = {
-  chat: boolean;
-  explorer: boolean;
   terminal: boolean;
+  explorer: boolean;
+  chat: boolean;
 };
 
 type LayoutContextType = {
-  isCollapse: LayoutState;
-  toggle: (key: keyof LayoutState) => void;
-  setCollapse: React.Dispatch<React.SetStateAction<LayoutState>>;
+  panels: LayoutState;
+  toggle: (panel: PanelName) => void;
+  open: (panel: PanelName) => void;
+  close: (panel: PanelName) => void;
+  setPanel: (panel: PanelName, value: boolean) => void;
 };
 
-type LayoutProviderProps = {
-  children: ReactNode;
-};
+const LayoutContext = createContext<LayoutContextType | null>(null);
 
-/* ------------------ Context ------------------ */
-
-const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
-
-/* ------------------ Provider ------------------ */
-
-export function LayoutProvider({ children }: LayoutProviderProps) {
-  const [isCollapse, setCollapse] = useState<LayoutState>({
-    chat: false,
-    explorer: false,
+export function LayoutProvider({ children }: { children: ReactNode }) {
+  const [panels, setPanels] = useState<LayoutState>({
     terminal: false,
+    explorer: false,
+    chat: false,
   });
 
-  const toggle = (key: keyof LayoutState) => {
-    setCollapse((prev) => ({
+  const toggle = (panel: PanelName) => {
+    setPanels((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [panel]: !prev[panel],
     }));
   };
 
-  const methods = useMemo(
-    () => ({
-      isCollapse,
-      toggle,
-      setCollapse,
-    }),
-    [isCollapse],
-  );
+  const open = (panel: PanelName) => {
+    setPanels((prev) => ({
+      ...prev,
+      [panel]: true,
+    }));
+  };
+
+  const close = (panel: PanelName) => {
+    setPanels((prev) => ({
+      ...prev,
+      [panel]: false,
+    }));
+  };
+
+  const setPanel = (panel: PanelName, value: boolean) => {
+    setPanels((prev) => ({
+      ...prev,
+      [panel]: value,
+    }));
+  };
 
   return (
-    <LayoutContext.Provider value={methods}>{children}</LayoutContext.Provider>
+    <LayoutContext.Provider
+      value={{
+        isCollapse: panels,
+        toggle,
+        open,
+        close,
+        setPanel,
+      }}
+    >
+      {children}
+    </LayoutContext.Provider>
   );
 }
 
-/* ------------------ Custom Hook ------------------ */
-
-export function useLayout(): LayoutContextType {
+export function useLayout() {
   const context = useContext(LayoutContext);
 
   if (!context) {

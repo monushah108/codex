@@ -2,21 +2,21 @@ import { z } from "zod";
 
 export const playSchema = z
   .object({
-    roomName: z
+    name: z
       .string("plz enter your room name")
       .max(8, "name must be at most 8 characters"),
 
-    maxUser: z
+    maxUsers: z
       .string("you have to enter max participants")
       .max(4, "max users can be at most 4"),
 
-    roomType: z.enum(["public", "private"]),
+    type: z.enum(["public", "private"]),
     duration: z.string().min(1, "error"),
 
     password: z.string().max(8, "password must be at most 8 digits").optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.roomType === "private" && !data.password) {
+    if (data.type === "private" && !data.password) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["password"],

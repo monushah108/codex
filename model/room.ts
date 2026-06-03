@@ -46,31 +46,17 @@ const roomSchema = new Schema(
       required: true,
     },
 
-    rootDirId: {
-      type: Schema.Types.ObjectId,
-      ref: "Directory",
-      required: true,
-    },
-
     maxUsers: {
       type: Number,
       required: true,
-      min: 1,
-      max: 4,
       default: 2,
-    },
-
-    currentUsers: {
-      type: Number,
-      default: 1,
-      min: 1,
     },
 
     //
     // ROOM EXPIRY
     //
 
-    isPermanent: {
+    duration: {
       type: Boolean,
       default: false,
     },
@@ -80,7 +66,7 @@ const roomSchema = new Schema(
 
       default: function () {
         // EXPIRE AFTER 7 DAYS
-        if (!this.isPermanent) {
+        if (!this.duration) {
           return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         }
 
@@ -121,7 +107,7 @@ roomSchema.index(
     expireAfterSeconds: 0,
 
     partialFilterExpression: {
-      isPermanent: false,
+      duration: false,
     },
   },
 );
@@ -149,12 +135,6 @@ roomSchema.methods.comparePassword = async function (enteredPassword: string) {
 //
 // VALIDATE USER LIMIT
 //
-
-roomSchema.pre("save", function () {
-  if (this.currentUsers > this.maxUsers) {
-    throw new Error("Current users exceed maximum limit");
-  }
-});
 
 const Room = models.Room || model("Room", roomSchema);
 

@@ -22,8 +22,8 @@ type CodeState = {
   loading?: boolean;
   saving?: boolean;
   generating?: boolean;
+  running?: boolean;
 };
-
 type Store = {
   code: Record<string, CodeState>;
 
@@ -46,6 +46,7 @@ type Store = {
   loadFileContent: (roomId: string, fileId: string) => Promise<void>;
   runCode: (fileId: string, content?: string) => Promise<void>;
   runCommand: (command: string, fileId: string) => Promise<void>;
+  clearOutputs: () => void;
   saveFileContent: (
     roomId: string,
     fileId: string,
@@ -251,8 +252,21 @@ export const useCodestore = create<Store>((set, get) => {
         return;
       }
 
-      console.log(code, langId);
-      console.log(fileId, get().openFiles.find((f) => f._id === fileId)?.name);
+      updateCode(fileId, {
+        running: true,
+      });
+
+      const loadingId = crypto.randomUUID();
+
+      set((state) => ({
+        outputs: [
+          ...state.outputs,
+          {
+            id: loadingId,
+            stdout: "⏳ Running code...",
+          },
+        ],
+      }));
 
       try {
         const res = await fetch(
@@ -270,11 +284,10 @@ export const useCodestore = create<Store>((set, get) => {
         );
 
         const data = await res.json();
-        console.log(data);
 
         set((state) => ({
           outputs: [
-            ...state.outputs,
+            ...state.outputs.filter((o) => o.id !== loadingId),
             {
               id: crypto.randomUUID(),
               stdout: data.stdout,
@@ -289,15 +302,20 @@ export const useCodestore = create<Store>((set, get) => {
 
         set((state) => ({
           outputs: [
-            ...state.outputs,
+            ...state.outputs.filter((o) => o.id !== loadingId),
             {
               id: crypto.randomUUID(),
               error: "Failed to execute code",
             },
           ],
         }));
+      } finally {
+        updateCode(fileId, {
+          running: false,
+        });
       }
     },
+    clearOutputs: () => set({ outputs: [] }),
     runCommand: async (command, fileId) => {
       switch (command.trim().toLowerCase()) {
         case "clear":
