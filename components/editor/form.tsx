@@ -22,7 +22,6 @@ export default function Form() {
   const [name, setRoomName] = useState("codex");
   const [roomType, setRoomType] = useState<"public" | "private">("public");
   const [password, setPassword] = useState("12345678");
-  const [maxUser, setMaxUser] = useState("3");
   const [duration, setDuration] = useState(false);
 
   const [errors, setErrors] = useState<
@@ -48,7 +47,6 @@ export default function Form() {
         name,
         type: roomType,
         password: roomType === "private" ? password : undefined,
-        maxUsers: maxUser,
         duration,
       };
 
@@ -57,7 +55,7 @@ export default function Form() {
       if (!success) {
         const formatted = error.flatten().fieldErrors;
         setErrors(formatted);
-        console.log(formatted);
+
         return;
       }
 
@@ -77,12 +75,16 @@ export default function Form() {
 
         if (response.status === 201) {
           toast.success("Room created successfully!");
-          router.push(`/playground/${result.room.id}`);
+          router.push(`/playground/${result.roomId}`);
         }
 
         if (response.status === 422) {
           toast.error(result.error || "Validation failed");
         }
+        if (response.status === 409) {
+          toast.error(result.error || "A room with this name already exists");
+        }
+
         setErrors({});
       } catch (err) {
         console.log(err);
@@ -183,41 +185,20 @@ export default function Form() {
               <RadioGroupItem
                 className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
                 value="true"
-                id="lifetime"
+                id="true"
               />
-              <FieldLabel htmlFor="lifetime">No Expiration</FieldLabel>
+              <FieldLabel htmlFor="true">No Expiration</FieldLabel>
             </div>
 
             <div className="flex items-center space-x-2">
               <RadioGroupItem
                 className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
                 value="false"
-                id="week"
+                id="false"
               />
-              <FieldLabel htmlFor="week">Expires in 7 Days</FieldLabel>
+              <FieldLabel htmlFor="false">Expires in 7 Days</FieldLabel>
             </div>
           </RadioGroup>
-        </Field>
-
-        {/* Max Users */}
-        <Field>
-          <FieldLabel>Maximum Participants</FieldLabel>
-
-          <Input
-            type="number"
-            placeholder="Maximum participants"
-            value={maxUser}
-            onChange={(e) => setMaxUser(e.target.value)}
-            name="maxUser"
-            className={inputErrorClass(errors.maxUser)}
-          />
-
-          {errors.maxUser && (
-            <FieldError className="text-destructive text-xs flex items-center gap-1">
-              <CircleAlert className="h-3 w-3" />
-              {errors.maxUser[0]}
-            </FieldError>
-          )}
         </Field>
 
         <Button type="submit" className="w-full" disabled={isPending}>

@@ -1,10 +1,4 @@
-import { db } from "@/lib/auth";
-
 import { connectDB } from "@/lib/db";
-
-import { getUserId } from "@/lib/getUserId";
-
-import Member from "@/model/member";
 
 import Room from "@/model/room";
 
@@ -28,12 +22,6 @@ export async function GET(
   try {
     const { roomId } = await params;
 
-    const userId = await getUserId(request);
-
-    //
-    // VALIDATE ROOM ID
-    //
-
     if (!mongoose.Types.ObjectId.isValid(roomId)) {
       return Response.json(
         {
@@ -44,10 +32,6 @@ export async function GET(
         },
       );
     }
-
-    //
-    // GET ROOM
-    //
 
     const room = await Room.findById(roomId).lean();
 
@@ -61,10 +45,6 @@ export async function GET(
         },
       );
     }
-
-    //
-    // ROOM EXPIRED
-    //
 
     if (
       !room.isPermanent &&
@@ -81,52 +61,15 @@ export async function GET(
       );
     }
 
-    //
-    // CHECK MEMBER
-    //
-
-    const isMember = await Member.findOne({
-      userId,
-      roomId,
-    }).lean();
-
-    //
-    // MEMBERS ALWAYS ALLOWED
-    //
-
-    if (isMember) {
+    if (room.type === "private") {
       return Response.json(
         {
-          access: "granted",
-
-          currentUsers: room.currentUsers,
-
-          maxUsers: room.maxUsers,
-
-          roomName: room.name,
-
+          error: "This is a private room",
+          roomId: room._id,
+          name: room.name,
           type: room.type,
-        },
-        {
-          status: 200,
-        },
-      );
-    }
-
-    //
-    // ROOM FULL
-    //
-
-    if (room.currentUsers >= room.maxUsers) {
-      return Response.json(
-        {
-          access: "room_full",
-
-          error: "Room is full",
-
-          currentUsers: room.currentUsers,
-
-          maxUsers: room.maxUsers,
+          duration: room.duration,
+          expiresAt: room.expiresAt,
         },
         {
           status: 403,
@@ -134,61 +77,7 @@ export async function GET(
       );
     }
 
-    //
-    // PUBLIC ROOM
-    //
-
-    if (room.type === "public") {
-      return Response.json(
-        {
-          access: "granted",
-
-          currentUsers: room.currentUsers,
-
-          maxUsers: room.maxUsers,
-
-          roomName: room.name,
-
-          type: room.type,
-        },
-        {
-          status: 200,
-        },
-      );
-    }
-
-    //
-    // PRIVATE ROOM
-    //
-
-    const users = db.collection("user");
-
-    const admin = await users.findOne({
-      _id: room.adminId,
-    });
-
-    return Response.json(
-      {
-        access: "password_required",
-
-        admin_name: admin?.name,
-
-        admin_img: admin?.image,
-
-        createdAt: room.createdAt,
-
-        currentUsers: room.currentUsers,
-
-        maxUsers: room.maxUsers,
-
-        isPermanent: room.isPermanent,
-
-        expiresAt: room.expiresAt,
-      },
-      {
-        status: 403,
-      },
-    );
+    return Response.json({ msg: "granted", roomId: room._id }, { status: 201 });
   } catch (err) {
     console.error(err);
 

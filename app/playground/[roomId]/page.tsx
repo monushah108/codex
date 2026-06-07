@@ -25,60 +25,48 @@ export default async function Page({
 }) {
   const { roomId } = await params;
 
-  const cookieStore = await cookies();
+  // const cookieStore =  await cookies();
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/playground/${roomId}`,
-    {
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
+  // const res = await fetch(
+  //   `${process.env.NEXT_PUBLIC_API_URL}/api/playground/${roomId}`,
+  //   {
+  //     headers: {
+  //       Cookie: cookieStore.toString(),
+  //     },
 
-      cache: "no-store",
-    },
-  );
+  //     cache: "no-store",
+  //   },
+  // );
 
   //
   // INVALID ROOM
   //
 
-  if (res.status === 400 || res.status === 404) {
-    redirect("/");
-  }
+  // if (res.status === 400 || res.status === 404) {
+  //   redirect("/");
+  // }
 
   //
   // ROOM EXPIRED
   //
 
-  if (res.status === 410) {
-    redirect("/");
-  }
+  // if (res.status === 410) {
+  //   redirect("/");
+  // }
 
-  const data = await res.json();
-
-  //
-  // ROOM FULL
-  //
-
-  if (data.access === "room_full") {
-    redirect(`/playground/join/${roomId}`);
-  }
+  // const data = await res.json();
 
   //
   // NOT MEMBER
   //
 
-  if (res.status === 403) {
-    redirect(`/playground/join/${roomId}`);
-  }
+  // if (res.status === 403) {
+  //   redirect(`/playground/join/${roomId}`);
+  // }
 
   //
   // ACCESS DENIED
   //
-
-  if (data.access !== "granted") {
-    redirect("/");
-  }
 
   return (
     <div className=" flex flex-col min-h-svh  bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">

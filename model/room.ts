@@ -46,10 +46,10 @@ const roomSchema = new Schema(
       required: true,
     },
 
-    maxUsers: {
-      type: Number,
+    rootDirId: {
+      type: Schema.Types.ObjectId,
+      ref: "Directory",
       required: true,
-      default: 2,
     },
 
     //

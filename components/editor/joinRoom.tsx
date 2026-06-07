@@ -69,20 +69,16 @@ export default function JoinRoom({ owner, roomId }: JoinRoomProps) {
 
       const data = await res.json();
 
-      if (res.status === 201 || res.status === 409) {
+      if (res.status === 201) {
         toast.success("Joining room...");
 
         return router.replace(`/playground/${roomId}`);
       }
 
-      if (res.status === 401) {
-        return toast.error(data.error);
-      }
-
       if (res.status === 403) {
         setRoomFull(true);
 
-        return toast.error(data.error || "Room full");
+        return toast.error(data.error);
       }
 
       if (res.status === 404 || res.status === 410) {

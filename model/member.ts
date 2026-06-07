@@ -20,20 +20,6 @@ const memberSchema = new Schema(
       default: "user",
     },
 
-    //
-    // REALTIME FEATURES
-    //
-
-    isOnline: {
-      type: Boolean,
-      default: false,
-    },
-
-    lastSeen: {
-      type: Date,
-      default: Date.now,
-    },
-
     joinedAt: {
       type: Date,
       default: Date.now,
