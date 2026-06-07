@@ -91,12 +91,11 @@ export default function Chat() {
   return (
     <ResizablePanel
       defaultSize={isCollapse.chat ? 35 : 0}
-      minSize={20}
-      className="border-l border-[#2d2d30]"
+      className="border-l border-[#2d2d30] "
     >
       <div className="flex h-full min-h-0 flex-col bg-[#1e1e1e]">
         {/* Header */}
-        <div className="flex h-12 shrink-0 items-center justify-between border-b border-[#2d2d30] bg-[#252526] px-4">
+        <div className="flex h-12  items-center justify-between border-b border-[#2d2d30] bg-[#252526] px-4">
           <h2 className="text-sm font-medium text-zinc-200">Codex AI</h2>
 
           <button
