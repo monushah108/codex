@@ -11,10 +11,10 @@ import CodeWindow from "@/components/editor/CodeWindow";
 
 import FileExplore from "@/components/editor/FileExplore";
 
-import { redirect } from "next/navigation";
-
 import { cookies } from "next/headers";
 import Chat from "@/components/editor/chat";
+import NoRoom from "@/components/editor/ui/noRoom";
+import PrivateRoom from "@/components/editor/ui/privateRoom";
 
 export default async function Page({
   params,
@@ -25,48 +25,24 @@ export default async function Page({
 }) {
   const { roomId } = await params;
 
-  // const cookieStore =  await cookies();
+  const cookieStore = await cookies();
 
-  // const res = await fetch(
-  //   `${process.env.NEXT_PUBLIC_API_URL}/api/playground/${roomId}`,
-  //   {
-  //     headers: {
-  //       Cookie: cookieStore.toString(),
-  //     },
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/playground/${roomId}`,
+    {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
 
-  //     cache: "no-store",
-  //   },
-  // );
-
-  //
-  // INVALID ROOM
-  //
-
-  // if (res.status === 400 || res.status === 404) {
-  //   redirect("/");
-  // }
-
-  //
-  // ROOM EXPIRED
-  //
-
-  // if (res.status === 410) {
-  //   redirect("/");
-  // }
-
-  // const data = await res.json();
-
-  //
-  // NOT MEMBER
-  //
-
-  // if (res.status === 403) {
-  //   redirect(`/playground/join/${roomId}`);
-  // }
-
-  //
-  // ACCESS DENIED
-  //
+      cache: "no-store",
+    },
+  );
+  console.log(res.status);
+  if (res.status === 400 || res.status === 404) {
+    return <NoRoom />;
+  } else if (res.status === 403) {
+    return <PrivateRoom />;
+  }
 
   return (
     <div className=" flex flex-col min-h-svh  bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">

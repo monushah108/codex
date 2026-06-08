@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/db";
+import { getUserId } from "@/lib/getUserId";
 
 import Room from "@/model/room";
 
@@ -18,6 +19,7 @@ export async function GET(
   },
 ) {
   await connectDB();
+  const userId = await getUserId(request);
 
   try {
     const { roomId } = await params;
@@ -60,8 +62,12 @@ export async function GET(
         },
       );
     }
-
-    if (room.type === "private") {
+    console.log(
+      room.type === "private" && room.adminId != userId,
+      room.adminId,
+      userId,
+    );
+    if (room.type === "private" && room.adminId != userId) {
       return Response.json(
         {
           error: "This is a private room",

@@ -20,7 +20,7 @@ export default function Profile() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Avatar className="cursor-pointer size-5">
+        <Avatar className="cursor-pointer size-7">
           <AvatarImage src={user?.image || ""} />
           <AvatarFallback>{user?.name?.charAt(0) || "M"}</AvatarFallback>
         </Avatar>
@@ -28,29 +28,38 @@ export default function Profile() {
 
       <PopoverContent
         align="end"
-        className="max-w-max p-0 bg-[#1e1e1e] text-[#d4d4d4] border border-white/10 rounded-xl shadow-2xl"
+        className="
+    max-w-max
+    p-0
+    bg-background
+    text-foreground
+    border
+    rounded-xl
+    shadow-xl
+  "
       >
-        <div className="px-4 py-3 border-b border-white/10">
+        <div className="px-4 py-3 border-b">
           <p className="text-sm font-medium">{user?.name}</p>
-          <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {user?.email}
+          </p>
         </div>
 
         <div className="p-1  flex items-center justify-between">
           <Button
-            variant="none"
+            variant="ghost"
             onClick={async () => {
               await authClient.signOut();
-              // router.replace("/auth/signin");
             }}
-            className="flex items-center px-4 py-2 text-sm hover:bg-red-500/10 text-red-400"
+            className="flex items-center px-4 py-2 text-sm hover:bg-red-600/10 text-red-500"
           >
             <LogOut size={16} className="mr-2" />
             Logout
           </Button>
           <Link href="/setting">
             <Button
-              variant="none"
-              className="bg-transparent text-[#d4d4d4] hover:rotate-180"
+              variant="ghost"
+              className="bg-transparent  hover:rotate-180"
             >
               <SettingsIcon className="size-5" />
             </Button>

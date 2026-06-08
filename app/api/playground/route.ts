@@ -4,8 +4,6 @@ import { getUserId } from "@/lib/getUserId";
 import { playSchema } from "@/lib/schema/playground";
 import Directory from "@/model/directory";
 
-import Member from "@/model/member";
-
 import Room from "@/model/room";
 
 import mongoose, { Types } from "mongoose";
@@ -43,15 +41,6 @@ export async function POST(request: NextRequest) {
         rootDirId,
         duration: duration ?? true,
         expiresAt: duration ? null : expiresAt,
-      },
-      { session },
-    );
-
-    await Member.insertOne(
-      {
-        userId,
-        roomId,
-        role: "admin",
       },
       { session },
     );

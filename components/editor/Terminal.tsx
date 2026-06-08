@@ -50,6 +50,13 @@ const Terminal = memo(function Terminal({ roomId }) {
         </button>
       </div>
 
+      <div className="flex items-center gap-2 px-3 py-1 mb-5 mt-2">
+        <TerminalIcon className="size-4 text-gray-300 animate-pulse" />
+        <span className="text-xs text-gray-500">
+          this is not so advance terminal you can see output of your code
+        </span>
+      </div>
+
       <ScrollArea.Root className="h-[300px] bg-[#1e1e1e] font-mono text-white overflow-hidden">
         <ScrollArea.Viewport className="h-full w-full">
           {outputs.map((item) => (

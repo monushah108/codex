@@ -1,3 +1,4 @@
+import { connectDB } from "@/lib/db";
 import Directory from "@/model/directory";
 import File from "@/model/file";
 import mongoose from "mongoose";
@@ -8,6 +9,7 @@ import { NextRequest } from "next/server";
 ========================= */
 
 export async function GET(request: NextRequest, { params }) {
+  await connectDB();
   const { roomId } = await params;
   console.log("roomId", roomId);
   const parentId = request.nextUrl.searchParams.get("parentId");
@@ -64,6 +66,7 @@ export async function GET(request: NextRequest, { params }) {
 ========================= */
 
 export async function POST(request: NextRequest, { params }) {
+  await connectDB();
   const { roomId } = await params;
 
   try {
@@ -92,6 +95,7 @@ export async function POST(request: NextRequest, { params }) {
 ========================= */
 
 export async function DELETE(request: NextRequest) {
+  await connectDB();
   try {
     const { id } = await request.json();
 
@@ -109,6 +113,7 @@ export async function DELETE(request: NextRequest) {
 ========================= */
 
 export async function PATCH(request: NextRequest) {
+  await connectDB();
   try {
     const { id, name } = await request.json();
 

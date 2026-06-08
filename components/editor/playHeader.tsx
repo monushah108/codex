@@ -1,6 +1,6 @@
 "use client";
 import { Binary, PanelBottomOpen, PanelLeftOpen } from "lucide-react";
-import InviteModule from "./Module/inviteModule";
+
 import { Button } from "../ui/button";
 import { useLayout } from "@/context/layout-context";
 
@@ -16,8 +16,6 @@ export default function PlayHeader() {
             codex
           </span>
         </div>
-
-        <InviteModule />
       </div>
 
       <div className="flex  items-center">
