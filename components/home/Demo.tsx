@@ -3,7 +3,10 @@ import { motion } from "framer-motion";
 
 export default function Demo() {
   return (
-    <section className="relative px-6 py-20 max-w-7xl mx-auto overflow-hidden">
+    <section
+      id="demo"
+      className="relative px-6 py-20 max-w-7xl mx-auto overflow-hidden"
+    >
       <div className="flex items-center justify-center flex-col gap-8 text-center">
         <div className="space-y-3 ">
           <h2 className="text-gray-900 dark:text-white mb-4">

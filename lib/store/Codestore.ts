@@ -351,7 +351,6 @@ export const useCodestore = create<Store>((set, get) => {
       }
     },
 
-    // AI GENERATION
     generateCode: async (fileId, prompt) => {
       const existingContent = get().code[fileId]?.content || "";
 

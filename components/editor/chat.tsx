@@ -107,7 +107,7 @@ export default function Chat() {
         </div>
 
         {/* Messages */}
-        <ScrollArea.Root className="flex-1 overflow-hidden max-h-177">
+        <ScrollArea.Root className="flex-1 overflow-hidden max-h-175">
           <ScrollArea.Viewport className="h-full">
             <div className="mx-auto max-w-4xl space-y-5 p-4">
               {messages.map((msg) => (
@@ -137,7 +137,6 @@ export default function Chat() {
                   </div>
                 </div>
               )}
-
               <div ref={bottomRef} />
             </div>
           </ScrollArea.Viewport>

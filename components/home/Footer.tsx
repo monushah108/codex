@@ -4,7 +4,10 @@ import { SocialLinks, FooterLinks } from "../constant/main-constant.js";
 
 export default function Footer() {
   return (
-    <footer className="bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800">
+    <footer
+      id="footer"
+      className="bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800"
+    >
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           {/* Brand */}

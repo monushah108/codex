@@ -38,6 +38,10 @@ export function useMonacoYjs({ editor, socket, roomId, fileId, user }) {
 
       const model = editor.getModel();
 
+      if (!model) {
+        return;
+      }
+
       binding = new MonacoBinding(yText, model, new Set([editor]), awareness);
 
       // SOCKET SYNC

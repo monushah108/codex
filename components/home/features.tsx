@@ -3,7 +3,7 @@ import { Featuresprops } from "../constant/main-constant.js";
 
 export default function Features() {
   return (
-    <section className="px-6 py-20 max-w-7xl mx-auto space-y-12">
+    <section className="px-6 py-20 max-w-7xl mx-auto space-y-12" id="features">
       <div className="text-center mb-16">
         <h2 className="text-gray-900 mb-4">
           Everything You Need to Code Together

@@ -6,7 +6,10 @@ import { Testimonials } from "../constant/main-constant";
 
 export default function Testimonial() {
   return (
-    <section className="px-10 py-20 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 relative overflow-hidden">
+    <section
+      id="testimonials"
+      className="px-10 py-20 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 relative overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto flex items-center flex-col gap-8 ">
         <h2 className="font-medium">Trusted by Developers Worldwid</h2>
         <p className="text-sm">

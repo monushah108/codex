@@ -20,7 +20,7 @@ export default function Profile() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Avatar className="cursor-pointer size-7">
+        <Avatar className="cursor-pointer size-5.5">
           <AvatarImage src={user?.image || ""} />
           <AvatarFallback>{user?.name?.charAt(0) || "M"}</AvatarFallback>
         </Avatar>

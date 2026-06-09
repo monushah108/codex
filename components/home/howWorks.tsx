@@ -2,7 +2,7 @@ import { Steps } from "../constant/main-constant.js";
 
 export default function HowWorks() {
   return (
-    <section className="px-6 py-20 bg-white dark:bg-gray-950">
+    <section id="how-it-works" className="px-6 py-20 bg-white dark:bg-gray-950">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-gray-900 dark:text-white mb-4">How It Works</h2>

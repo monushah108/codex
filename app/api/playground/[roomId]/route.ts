@@ -62,11 +62,7 @@ export async function GET(
         },
       );
     }
-    console.log(
-      room.type === "private" && room.adminId != userId,
-      room.adminId,
-      userId,
-    );
+
     if (room.type === "private" && room.adminId != userId) {
       return Response.json(
         {

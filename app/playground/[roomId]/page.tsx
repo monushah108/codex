@@ -37,7 +37,7 @@ export default async function Page({
       cache: "no-store",
     },
   );
-  console.log(res.status);
+
   if (res.status === 400 || res.status === 404) {
     return <NoRoom />;
   } else if (res.status === 403) {
@@ -45,7 +45,7 @@ export default async function Page({
   }
 
   return (
-    <div className=" flex flex-col min-h-svh  bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
+    <div className=" flex flex-col min-h-svh max-h-svh  bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden">
       {/* Header */}
       <PlayHeader />
 
