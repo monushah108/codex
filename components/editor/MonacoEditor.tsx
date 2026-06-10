@@ -13,6 +13,8 @@ import { useCodestore } from "@/lib/store/Codestore";
 import { useMonacoYjs } from "@/lib/yjs/useMonacoYjs";
 import { Spinner } from "../ui/spinner";
 
+import debounce from "lodash/debounce";
+
 const COLORS = ["#ff4d4f", "#52c41a", "#1677ff", "#fa8c16"];
 
 function MonacoEditor({ roomId, session }) {
@@ -54,32 +56,34 @@ function MonacoEditor({ roomId, session }) {
   });
 
   // SAVE
-  const handleSave = useCallback(async () => {
-    if (!editor || !activeFileId || savingRef.current) return;
+  const handleSave = useMemo(
+    () =>
+      debounce(async () => {
+        if (!editor || !activeFileId || savingRef.current) return;
 
-    try {
-      savingRef.current = true;
+        try {
+          savingRef.current = true;
 
-      const content = editor.getValue();
+          const content = editor.getValue();
 
-      // sync cache so reopening doesn't show stale content
-      updateContent(activeFileId, content);
+          updateContent(activeFileId, content);
 
-      await saveFileContent(roomId, activeFileId, content);
+          await saveFileContent(roomId, activeFileId, content);
 
-      // clear the circle
-      setFileEdited(activeFileId, false);
-    } finally {
-      savingRef.current = false;
-    }
-  }, [
-    editor,
-    roomId,
-    activeFileId,
-    saveFileContent,
-    setFileEdited,
-    updateContent,
-  ]);
+          setFileEdited(activeFileId, false);
+        } finally {
+          savingRef.current = false;
+        }
+      }, 1000), // wait 1 second
+    [
+      editor,
+      roomId,
+      activeFileId,
+      saveFileContent,
+      setFileEdited,
+      updateContent,
+    ],
+  );
 
   // Keep ref fresh so the keybinding never captures a stale closure
   useEffect(() => {
@@ -158,11 +162,8 @@ function MonacoEditor({ roomId, session }) {
             },
 
             lineNumbers: "on",
-
             automaticLayout: true,
-
             smoothScrolling: true,
-
             scrollBeyondLastLine: false,
           }}
         />

@@ -16,6 +16,7 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
   const setActiveFile = useCodestore((s) => s.setActiveFile);
   const runCode = useCodestore((s) => s.runCode);
   const nextFile = openFiles.find((f) => f._id !== activeFileId);
+  const running = useCodestore((s) => s.code[activeFileId]?.running);
   const { open } = useLayout();
 
   if (!activeFileId) return;
@@ -68,12 +69,14 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
       </div>
       <div className="space-x-1">
         <Button
+          disabled={running}
           variant="none"
           onClick={() => {
             runCode(activeFileId);
 
             open("terminal");
           }}
+          className="disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Play className="size-3" />
           Run Code

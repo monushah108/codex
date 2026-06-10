@@ -17,12 +17,9 @@ export function useMonacoYjs({ editor, socket, roomId, fileId, user }) {
     async function init() {
       const { MonacoBinding } = await import("y-monaco");
 
-      // DOC
       const ydoc = new Y.Doc();
-
       ydocRef.current = ydoc;
 
-      // AWARENESS
       awareness = new Awareness(ydoc);
 
       awareness.setLocalStateField("user", {
@@ -30,21 +27,14 @@ export function useMonacoYjs({ editor, socket, roomId, fileId, user }) {
         color: user.color,
       });
 
-      const yText = ydoc.getText(fileId);
-
-      if (yText.length === 0 && editor.getValue()) {
-        yText.insert(0, editor.getValue());
-      }
-
       const model = editor.getModel();
 
-      if (!model) {
-        return;
-      }
+      if (!model) return;
+
+      const yText = ydoc.getText("document");
 
       binding = new MonacoBinding(yText, model, new Set([editor]), awareness);
 
-      // SOCKET SYNC
       const cleanup = setupYjsSocketSync({
         socket,
         ydoc,

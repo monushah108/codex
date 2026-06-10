@@ -187,7 +187,6 @@ export const useCodestore = create<Store>((set, get) => {
     saveFileContent: async (roomId, fileId, content) => {
       updateCode(fileId, {
         saving: true,
-
         content,
       });
 
@@ -211,6 +210,11 @@ export const useCodestore = create<Store>((set, get) => {
         }
 
         get().setFileEdited(fileId, false);
+
+        updateCode(fileId, {
+          content,
+          saving: false,
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -246,6 +250,7 @@ export const useCodestore = create<Store>((set, get) => {
             {
               id: crypto.randomUUID(),
               error: "Unsupported file type",
+              loading: false,
             },
           ],
         }));
@@ -264,6 +269,8 @@ export const useCodestore = create<Store>((set, get) => {
           {
             id: loadingId,
             stdout: "⏳ Running code...",
+            loading: true,
+            loaded: false,
           },
         ],
       }));
@@ -294,9 +301,15 @@ export const useCodestore = create<Store>((set, get) => {
               stderr: data.stderr,
               compile_output: data.compile_output,
               message: data.message,
+              loading: false,
+              loaded: true,
             },
           ],
         }));
+
+        updateCode(fileId, {
+          running: false,
+        });
       } catch (err) {
         console.error(err);
 
