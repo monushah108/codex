@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/db";
+import { consumeToken } from "@/lib/rateLimiter";
 import Directory from "@/model/directory";
 import File from "@/model/file";
 import mongoose from "mongoose";
@@ -11,7 +12,6 @@ import { NextRequest } from "next/server";
 export async function GET(request: NextRequest, { params }) {
   await connectDB();
   const { roomId } = await params;
-  console.log("roomId", roomId);
   const parentId = request.nextUrl.searchParams.get("parentId");
 
   let parentObjectId = null;
@@ -34,7 +34,11 @@ export async function GET(request: NextRequest, { params }) {
   } else {
     parentObjectId = new mongoose.Types.ObjectId(parentId);
   }
+  const { success } = consumeToken(request);
 
+  if (!success) {
+    return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
   try {
     const folders = await Directory.find({
       roomId,
@@ -68,6 +72,11 @@ export async function GET(request: NextRequest, { params }) {
 export async function POST(request: NextRequest, { params }) {
   await connectDB();
   const { roomId } = await params;
+  const { success } = consumeToken(request);
+
+  if (!success) {
+    return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
 
   try {
     const body = await request.json();
@@ -96,14 +105,42 @@ export async function POST(request: NextRequest, { params }) {
 
 export async function DELETE(request: NextRequest) {
   await connectDB();
+
+  const { success } = consumeToken(request);
+
+  if (!success) {
+    return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
+
   try {
     const { id } = await request.json();
 
-    await Directory.findByIdAndDelete(id);
+    async function deleteFolderRecursively(folderId: mongoose.Types.ObjectId) {
+      // Find immediate child folders
+      const childFolders = await Directory.find({
+        parentDirId: folderId,
+      });
 
-    return Response.json({ message: "folder deleted" });
+      // Delete descendants first
+      for (const child of childFolders) {
+        await deleteFolderRecursively(child._id);
+      }
+
+      // Delete files inside this folder
+      await File.deleteMany({
+        parentDirId: folderId,
+      });
+
+      // Delete the folder itself
+      await Directory.findByIdAndDelete(folderId);
+    }
+
+    await deleteFolderRecursively(new mongoose.Types.ObjectId(id));
+
+    return Response.json({ message: "folder deleted" }, { status: 200 });
   } catch (err) {
     console.error(err);
+
     return Response.json({ error: "delete failed" }, { status: 500 });
   }
 }
@@ -114,6 +151,12 @@ export async function DELETE(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   await connectDB();
+  const { success } = consumeToken(request);
+
+  if (!success) {
+    return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
+
   try {
     const { id, name } = await request.json();
 

@@ -1,3 +1,4 @@
+import { consumeToken } from "@/lib/rateLimiter";
 import File from "@/model/file";
 import { NextRequest } from "next/server";
 
@@ -28,6 +29,12 @@ export async function GET(request: NextRequest, { params }) {
 export async function POST(request: NextRequest, { params }) {
   const { roomId } = await params;
 
+  const { success } = consumeToken(request);
+
+  if (!success) {
+    return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
+
   try {
     const { name, parentId } = await request.json();
 
@@ -54,6 +61,12 @@ export async function POST(request: NextRequest, { params }) {
 ========================= */
 
 export async function DELETE(request: NextRequest) {
+  const { success } = consumeToken(request);
+
+  if (!success) {
+    return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
+
   try {
     const { id } = await request.json();
 
@@ -73,7 +86,11 @@ export async function DELETE(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const { id, name } = await request.json();
+    const { success } = consumeToken(request);
 
+    if (!success) {
+      return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+    }
     const file = await File.findByIdAndUpdate(id, { name });
 
     return Response.json(file);
@@ -86,7 +103,11 @@ export async function PATCH(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const { id, content } = await request.json();
+    const { success } = consumeToken(request);
 
+    if (!success) {
+      return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+    }
     const file = await File.findByIdAndUpdate(id, { content });
 
     return Response.json(file);

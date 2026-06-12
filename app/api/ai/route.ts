@@ -1,8 +1,15 @@
+import { consumeToken } from "@/lib/rateLimiter";
 import { NextRequest, NextResponse } from "next/server";
 
 const MODELS = ["openai/gpt-oss-120b:free", "deepseek/deepseek-v4-flash:free"];
 
 export async function POST(req: NextRequest) {
+  const { success } = consumeToken(req);
+
+  if (!success) {
+    return Response.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
+
   try {
     const { message } = await req.json();
 

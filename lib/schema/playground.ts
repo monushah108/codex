@@ -4,7 +4,7 @@ export const playSchema = z
   .object({
     name: z
       .string("plz enter your room name")
-      .max(8, "name must be at most 8 characters"),
+      .max(15, "name must be at most 15 characters"),
 
     type: z.enum(["public", "private"]),
     duration: z.string().min(1, "error"),

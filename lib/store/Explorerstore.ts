@@ -23,7 +23,11 @@ type FolderChildren = {
 type ExplorerStore = {
   cache: Record<string, FolderChildren>;
 
-  loadFolder: (roomId: string, parentId: string) => Promise<void>;
+  loadFolder: (
+    roomId: string,
+    parentId: string,
+    force?: boolean,
+  ) => Promise<void>;
   setSelectedFile: (parentId: string, fileId: string) => void;
 
   addFile: (parentId: string, file: FileItem) => void;
@@ -41,18 +45,16 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
 
   /* ---------------- LOAD FOLDER ---------------- */
 
-  loadFolder: async (roomId, parentId) => {
+  loadFolder: async (roomId, parentId, force = false) => {
     const cache = get().cache[parentId];
 
-    if (cache?.loaded) return;
+    if (!force && cache?.loaded) return;
 
     set((state) => ({
       cache: {
         ...state.cache,
         [parentId]: {
-          folders: [],
-          files: [],
-          loaded: false,
+          ...(state.cache[parentId] || {}),
           loading: true,
         },
       },
@@ -62,6 +64,7 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
       const res = await fetch(
         `/api/playground/${roomId}/directory?parentId=${parentId}`,
       );
+
       const data = await res.json();
 
       set((state) => ({
@@ -116,7 +119,8 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
       },
     })),
 
-  addFolder: (parentId, folder) =>
+  addFolder: (parentId, folder) => {
+    console.log(get().cache[parentId]);
     set((state) => ({
       cache: {
         ...state.cache,
@@ -125,8 +129,8 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
           folders: [...(state.cache[parentId]?.folders || []), folder],
         },
       },
-    })),
-
+    }));
+  },
   /* ---------------- RENAME ---------------- */
 
   renameFile: (parentId, fileId, newName) =>
@@ -173,9 +177,7 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   deleteFile: (parentId, fileId) =>
     set((state) => {
       const codestore = useCodestore.getState();
-
       codestore.closeFile(fileId);
-
       delete codestore.code[fileId];
       return {
         cache: {
@@ -191,15 +193,42 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
     }),
 
   deleteFolder: (parentId, folderId) =>
-    set((state) => ({
-      cache: {
-        ...state.cache,
-        [parentId]: {
-          ...state.cache[parentId],
-          folders:
-            state.cache[parentId]?.folders.filter((f) => f._id !== folderId) ||
-            [],
-        },
-      },
-    })),
+    set((state) => {
+      const newCache = { ...state.cache };
+      const codestore = useCodestore.getState();
+
+      function removeFolderRecursively(id: string) {
+        const currentFolder = newCache[id];
+
+        if (!currentFolder) return;
+
+        // Close and remove files from CodeStore
+        currentFolder.files.forEach((file) => {
+          codestore.closeFile(file._id);
+          delete codestore.code[file._id];
+        });
+
+        // Delete child folders first
+        currentFolder.folders.forEach((folder) => {
+          removeFolderRecursively(folder._id);
+        });
+
+        // Delete this folder from cache
+        delete newCache[id];
+      }
+
+      // Remove all descendants
+      removeFolderRecursively(folderId);
+
+      // Remove folder reference from parent
+      newCache[parentId] = {
+        ...newCache[parentId],
+        folders:
+          newCache[parentId]?.folders.filter((f) => f._id !== folderId) || [],
+      };
+
+      return {
+        cache: newCache,
+      };
+    }),
 }));

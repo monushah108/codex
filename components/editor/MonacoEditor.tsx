@@ -11,7 +11,6 @@ import { socket } from "@/lib/socket";
 import { getType } from "@/lib/features";
 import { useCodestore } from "@/lib/store/Codestore";
 import { useMonacoYjs } from "@/lib/yjs/useMonacoYjs";
-import { Spinner } from "../ui/spinner";
 
 import debounce from "lodash/debounce";
 
@@ -114,7 +113,7 @@ function MonacoEditor({ roomId, session }) {
     });
 
     return () => disposable.dispose();
-  }, [editor, activeFileId, setFileEdited]);
+  }, [editor, activeFileId]);
 
   const fileState = code[activeFileId];
 
@@ -137,37 +136,28 @@ function MonacoEditor({ roomId, session }) {
     <div className="h-full">
       <TabBar roomId={roomId} />
 
-      {!fileState?.loaded ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#1e1e1e]">
-          <div className="text-sm text-gray-400">
-            <Spinner className="mr-2 inline-block animate-spin text-gray-400" />
-            <p>fetching data from server</p>
-          </div>
-        </div>
-      ) : (
-        <Editor
-          key={activeFileId}
-          height="100%"
-          width="100%"
-          theme="vs-dark"
-          defaultValue={fileState?.content}
-          defaultLanguage={getType(activeFile?.name)?.language}
-          onMount={handleMount}
-          options={{
-            fontSize: 14,
-            fontFamily: "Fira Code, monospace",
+      <Editor
+        key={activeFileId}
+        height="100%"
+        width="100%"
+        theme="vs-dark"
+        defaultValue={fileState?.content}
+        defaultLanguage={getType(activeFile?.name)?.language}
+        onMount={handleMount}
+        options={{
+          fontSize: 14,
+          fontFamily: "Fira Code, monospace",
 
-            minimap: {
-              enabled: false,
-            },
+          minimap: {
+            enabled: false,
+          },
 
-            lineNumbers: "on",
-            automaticLayout: true,
-            smoothScrolling: true,
-            scrollBeyondLastLine: false,
-          }}
-        />
-      )}
+          lineNumbers: "on",
+          automaticLayout: true,
+          smoothScrolling: true,
+          scrollBeyondLastLine: false,
+        }}
+      />
     </div>
   );
 }

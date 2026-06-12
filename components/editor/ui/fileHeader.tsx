@@ -4,19 +4,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  File,
-  FilePlus,
-  Folder,
-  FolderPlus,
-  MoreHorizontal,
-  Repeat2,
-} from "lucide-react";
+import { FilePlus, FolderPlus, MoreHorizontal, Repeat2 } from "lucide-react";
 
 export function FileHeader({
   handleCreateFile,
   handleCreateFolder,
-  getProjectDoc,
+  handleRefresh,
 }) {
   return (
     <div className="flex flex-col  py-1 border-b border-[#2d2d30] text-xs text-gray-400 gap-2">
@@ -47,7 +40,7 @@ export function FileHeader({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              getProjectDoc();
+              handleRefresh();
             }}
             className="p-1 rounded hover:bg-[#3a3d3e]"
           >

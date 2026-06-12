@@ -10,12 +10,14 @@ import { FileHeader } from "./ui/fileHeader";
 import FolderItem from "./ui/folderItem";
 import NoFolder from "./ui/noFolder";
 import { Spinner } from "../ui/spinner";
-
+import { useExplorerstore } from "@/lib/store/Explorerstore";
+import debounce from "lodash/debounce";
 function FileExplore({ roomId }) {
   const exRef = useRef<PanelImperativeHandle>(null);
   const { isCollapse } = useLayout();
   const [doc, setDoc] = useState(null);
   const [selected, setSelected] = useState(null);
+  const { loadFolder } = useExplorerstore();
 
   const [creating, setCreating] = useState({
     parentId: null,
@@ -67,6 +69,10 @@ function FileExplore({ roomId }) {
     });
   };
 
+  const handleRefresh = debounce(() => {
+    loadFolder(roomId, selected || doc?.rootDir?._id, true);
+  }, 500);
+
   if (error) {
     return (
       <div className="p-2 text-red-400 text-sm">Explorer Error: {error}</div>
@@ -84,7 +90,7 @@ function FileExplore({ roomId }) {
         <div className="flex flex-col h-full border-r border-[#2d2d30] bg-[#1e1e1e] text-gray-300">
           {/* Explorer Header */}
           <FileHeader
-            getProjectDoc={getProjectDoc}
+            handleRefresh={handleRefresh}
             handleCreateFile={handleCreateFile}
             handleCreateFolder={handleCreateFolder}
           />

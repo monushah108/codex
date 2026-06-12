@@ -143,7 +143,7 @@ export const useCodestore = create<Store>((set, get) => {
         content,
       });
 
-      get().setFileEdited(fileId, true);
+      // get().setFileEdited(fileId, true);
     },
 
     // LOAD FILE
@@ -398,7 +398,7 @@ export const useCodestore = create<Store>((set, get) => {
           generating: false,
         });
 
-        get().setFileEdited(fileId, true);
+        // get().setFileEdited(fileId, true);
       } catch (err) {
         console.error(err);
 
