@@ -15,7 +15,7 @@ const Terminal = lazy(() => import("./Terminal"));
 const MonacoEditor = lazy(() => import("./MonacoEditor"));
 
 const CodeWindow = React.memo(function CodeWindow({ roomId }) {
-  const { isCollapse } = useLayout();
+  const { panels } = useLayout();
 
   return (
     <ResizablePanel defaultSize={60}>
@@ -31,7 +31,7 @@ const CodeWindow = React.memo(function CodeWindow({ roomId }) {
 
         {/* Terminal */}
         <ResizablePanel
-          defaultSize={isCollapse.terminal ? 40 : 0}
+          defaultSize={panels.terminal ? 40 : 0}
           minSize={0}
           collapsible
           collapsedSize={0}

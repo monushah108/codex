@@ -13,7 +13,6 @@ export async function GET(request: NextRequest, { params }) {
 
   try {
     const files = await File.findById(fileId).lean();
-    console.log(fileId, files);
 
     return Response.json(files);
   } catch (err) {

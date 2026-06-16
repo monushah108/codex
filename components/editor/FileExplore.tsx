@@ -10,14 +10,15 @@ import { FileHeader } from "./ui/fileHeader";
 import FolderItem from "./ui/folderItem";
 import NoFolder from "./ui/noFolder";
 import { Spinner } from "../ui/spinner";
-import { useExplorerstore } from "@/lib/store/Explorerstore";
+
 import debounce from "lodash/debounce";
+import { useExplorerstore } from "@/lib/store/Explorerstore";
+
 function FileExplore({ roomId }) {
   const exRef = useRef<PanelImperativeHandle>(null);
-  const { isCollapse } = useLayout();
+  const { panels } = useLayout();
   const [doc, setDoc] = useState(null);
   const [selected, setSelected] = useState(null);
-  const { loadFolder } = useExplorerstore();
 
   const [creating, setCreating] = useState({
     parentId: null,
@@ -26,13 +27,15 @@ function FileExplore({ roomId }) {
 
   const [error, setError] = useState("");
 
-  const [isPending, startTransition] = useTransition();
+  const [Loading, startTransition] = useTransition();
+
+  const { loadFolder } = useExplorerstore();
 
   useEffect(() => {
-    getProjectDoc();
+    getFolder();
   }, []);
 
-  async function getProjectDoc() {
+  async function getFolder() {
     startTransition(async () => {
       try {
         const res = await fetch(`/api/playground/${roomId}/directory`, {
@@ -70,7 +73,9 @@ function FileExplore({ roomId }) {
   };
 
   const handleRefresh = debounce(() => {
-    loadFolder(roomId, selected || doc?.rootDir?._id, true);
+    startTransition(() => {
+      loadFolder(roomId, selected || doc?.rootDir?._id, true);
+    });
   }, 500);
 
   if (error) {
@@ -84,7 +89,7 @@ function FileExplore({ roomId }) {
       panelRef={exRef}
       collapsible
       collapsedSize={0}
-      defaultSize={isCollapse.explorer ? 20 : 0}
+      defaultSize={panels.explorer ? 20 : 0}
     >
       <Suspense fallback={<FileExploreSkeleton />}>
         <div className="flex flex-col h-full border-r border-[#2d2d30] bg-[#1e1e1e] text-gray-300">
@@ -98,7 +103,7 @@ function FileExplore({ roomId }) {
           {/* Empty State */}
           {!doc?.rootDir && <NoFolder />}
 
-          {isPending ? (
+          {Loading ? (
             <div className="flex justify-center py-3">
               <Spinner className="size-5" />
             </div>
@@ -111,7 +116,7 @@ function FileExplore({ roomId }) {
                 setCreating={setCreating}
                 selected={selected}
                 setSelected={setSelected}
-                refresh={getProjectDoc}
+                Loading={Loading}
               />
             )
           )}

@@ -32,6 +32,7 @@ function FolderItem({
   setCreating,
   setSelected,
   selected,
+
   depth = 0,
 }: Folderprop) {
   const [inputValue, setInputValue] = useState("");
@@ -169,7 +170,6 @@ function FolderItem({
           />
 
           <Folder className="w-4 h-4 text-yellow-400" />
-
           {renamingId === item._id ? (
             <input
               autoFocus

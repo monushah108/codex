@@ -58,7 +58,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   return (
     <LayoutContext.Provider
       value={{
-        isCollapse: panels,
+        panels,
         toggle,
         open,
         close,

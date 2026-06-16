@@ -15,7 +15,7 @@ type Message = {
 };
 
 export default function Chat() {
-  const { isCollapse } = useLayout();
+  const { panels } = useLayout();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -90,7 +90,7 @@ export default function Chat() {
 
   return (
     <ResizablePanel
-      defaultSize={isCollapse.chat ? 35 : 0}
+      defaultSize={panels.chat ? 35 : 0}
       className="border-l border-[#2d2d30] "
     >
       <div className="flex h-full min-h-0 flex-col bg-[#1e1e1e]">
