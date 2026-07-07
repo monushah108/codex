@@ -198,10 +198,10 @@ export function SignupForm({
                 <FieldDescription className="text-center mt-2">
                   Already have an account?{" "}
                   <Link
-                    href="/auth/signin"
+                    href="/auth/login"
                     className="underline underline-offset-4"
                   >
-                    Sign in
+                    logIn
                   </Link>
                 </FieldDescription>
               </Field>
