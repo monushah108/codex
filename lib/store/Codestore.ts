@@ -18,6 +18,7 @@ type Output = {
 
 type CodeState = {
   content: string;
+  savedContent: string;
   loaded?: boolean;
   loading?: boolean;
   saving?: boolean;
@@ -141,9 +142,10 @@ export const useCodestore = create<Store>((set, get) => {
     updateContent: (fileId, content) => {
       updateCode(fileId, {
         content,
+        savedContent: "",
       });
 
-      // get().setFileEdited(fileId, true);
+      get().setFileEdited(fileId, true);
     },
 
     // LOAD FILE
@@ -169,7 +171,7 @@ export const useCodestore = create<Store>((set, get) => {
 
         updateCode(fileId, {
           content: data?.content || "",
-
+          savedContent: data?.content || "",
           loaded: true,
 
           loading: false,
@@ -213,6 +215,7 @@ export const useCodestore = create<Store>((set, get) => {
 
         updateCode(fileId, {
           content,
+          savedContent: content,
           saving: false,
         });
       } catch (err) {

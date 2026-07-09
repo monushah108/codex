@@ -3,12 +3,7 @@ import { GitBranch, CheckCircle, Users, Sparkles } from "lucide-react";
 import Profile from "./ui/profile";
 import { useLayout } from "@/context/layout-context";
 
-interface StatusBarProps {
-  currentUsers: number;
-  maxUsers: number;
-}
-
-function StatusBar({ currentUsers, maxUsers }: StatusBarProps) {
+function StatusBar() {
   const { toggle } = useLayout();
 
   return (
@@ -33,9 +28,6 @@ function StatusBar({ currentUsers, maxUsers }: StatusBarProps) {
         <div className="flex items-center gap-2 cursor-pointer">
           <Sparkles className="size-3" onClick={() => toggle("chat")} />
           <Users className="size-3" />
-          <span>
-            {currentUsers}/{maxUsers}
-          </span>
         </div>
       </div>
     </div>

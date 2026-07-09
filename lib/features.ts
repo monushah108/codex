@@ -16,7 +16,7 @@ export const getOutputColor = (type: string) => {
 };
 
 export const getRandomImg = async () => {
-  const res = await fetch("https://api.jikan.moe/v4/random/characters");
+  const res = await fetch("https://c.tenor.com/SH_u4G_adZYAAAAd/tenor.gif");
   const data = await res.json();
   return data.data.images.jpg.image_url;
 };

@@ -9,7 +9,7 @@ import { useLayout } from "@/context/layout-context";
 const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const openFiles = useCodestore((s) => s.openFiles);
-  const activeFileId = useCodestore((s) => s.activeFileId);
+  const activeFileId = useCodestore((s) => s.activeFileId || "");
   const closeFile = useCodestore((s) => s.closeFile);
   const openFile = useCodestore((s) => s.openFile);
   const setEdited = useCodestore((s) => s.setFileEdited);

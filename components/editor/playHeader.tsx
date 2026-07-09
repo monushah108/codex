@@ -3,9 +3,15 @@ import { Binary, PanelBottomOpen, PanelLeftOpen } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { useLayout } from "@/context/layout-context";
+import { socket } from "@/lib/socket";
+import { useEffect } from "react";
 
-export default function PlayHeader() {
+export default function PlayHeader({ roomId }: { roomId: string }) {
   const { toggle } = useLayout();
+
+  useEffect(() => {
+    socket.emit("yjs:join", { roomId });
+  }, [roomId]);
 
   return (
     <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3 shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4">

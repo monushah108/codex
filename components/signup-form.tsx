@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { getRandomImg } from "@/lib/features";
 
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
@@ -54,7 +53,6 @@ export function SignupForm({
         confirmPassword: formData.get("confirm-password"),
       };
 
-      const randomImg = await getRandomImg();
       const { success, data, error } = signUpSchema.safeParse(newUser);
       console.log(data, error, newUser);
 
@@ -67,7 +65,7 @@ export function SignupForm({
       await authClient.signUp.email(
         {
           ...data,
-          image: randomImg,
+          image: "https://c.tenor.com/SH_u4G_adZYAAAAd/tenor.gif",
           callbackURL: "/playground",
         },
         {

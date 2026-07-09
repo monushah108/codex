@@ -14,7 +14,11 @@ import { useLayout } from "@/context/layout-context";
 const Terminal = lazy(() => import("./Terminal"));
 const MonacoEditor = lazy(() => import("./MonacoEditor"));
 
-const CodeWindow = React.memo(function CodeWindow({ roomId }) {
+const CodeWindow = React.memo(function CodeWindow({
+  roomId,
+}: {
+  roomId: string;
+}) {
   const { panels } = useLayout();
 
   return (
