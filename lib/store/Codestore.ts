@@ -5,6 +5,7 @@ type FileItem = {
   _id: string;
   name: string;
   isEdited?: boolean;
+  isDeleted?: boolean;
 };
 
 type Output = {
@@ -426,3 +427,5 @@ export const useCodestore = create<Store>((set, get) => {
     },
   };
 });
+
+/* TODO: Implement real time file deletion functionality and real time file saved functionality when one user saves a file than others files will be updated in real time */

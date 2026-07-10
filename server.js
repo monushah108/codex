@@ -36,21 +36,6 @@ app.prepare().then(() => {
     // ======================
     // JOIN
     // ======================
-    // socket.on("yjs:join", ({ roomId, fileId }) => {
-    //   const roomKey = `${roomId}:${fileId}`;
-
-    //   socket.join(roomKey);
-
-    //   const ydoc = getDoc(roomId, fileId);
-
-    //   const state = Y.encodeStateAsUpdate(ydoc);
-
-    //   socket.emit("yjs:sync", {
-    //     update: Array.from(state),
-    //   });
-
-    //   console.log("Joined:", roomKey);
-    // });
 
     let currentRoom = null;
 
@@ -105,10 +90,10 @@ app.prepare().then(() => {
     // UPDATE FILE
     // =========================
 
-    socket.on("file:update", ({ roomId, fileId, update }) => {
-      socket.to(roomId).emit("file:update", {
-        update,
+    socket.on("file:saved", ({ roomId, fileId, content }) => {
+      socket.to(`${roomId}:${fileId}`).emit("file:saved", {
         fileId,
+        content,
       });
     });
 
@@ -131,3 +116,5 @@ app.prepare().then(() => {
     console.log("Server running on http://localhost:3000");
   });
 });
+
+/* TODO: Implement real time file deletion functionality and real time file saved functionality when one user saves a file than others files will be updated in real time */
