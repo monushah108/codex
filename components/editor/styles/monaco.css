@@ -1,0 +1,35 @@
+.yRemoteSelection {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.yRemoteSelectionHead {
+  position: absolute !important;
+  width: 3px !important;
+  background: #3b82f6 !important;
+  height: 100% !important;
+  z-index: 1000 !important;
+}
+
+.yRemoteSelectionHead::after {
+  content: attr(data-name);
+}
+.cursor-name {
+  position: absolute;
+
+  top: -24px;
+  left: -2px;
+
+  background: #3b82f6;
+
+  color: white;
+
+  padding: 2px 6px;
+
+  border-radius: 4px;
+
+  font-size: 11px;
+
+  white-space: nowrap;
+
+  pointer-events: none;
+}

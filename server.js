@@ -1,18 +1,25 @@
 import { createServer } from "node:http";
-
 import next from "next";
-
 import { Server } from "socket.io";
-
 import * as Y from "yjs";
 
 const dev = process.env.NODE_ENV !== "production";
 
 const app = next({ dev });
-
 const handler = app.getRequestHandler();
 
-const rooms = new Map();
+// Store one Y.Doc per file
+const docs = new Map();
+
+function getDoc(roomId, fileId) {
+  const key = `${roomId}:${fileId}`;
+
+  if (!docs.has(key)) {
+    docs.set(key, new Y.Doc());
+  }
+
+  return docs.get(key);
+}
 
 app.prepare().then(() => {
   const httpServer = createServer(handler);
@@ -24,38 +31,38 @@ app.prepare().then(() => {
   });
 
   io.on("connection", (socket) => {
+    console.log("Client Connected:", socket.id);
+
     // ======================
     // JOIN
     // ======================
+    socket.on("yjs:join", ({ roomId, fileId }) => {
+      const roomKey = `${roomId}:${fileId}`;
 
-    socket.on("yjs:join", ({ roomId }) => {
-      socket.join(roomId);
-      // console.log("join room");
-      if (!rooms.has(roomId)) {
-        rooms.set(roomId, new Y.Doc());
-      }
+      socket.join(roomKey);
 
-      const ydoc = rooms.get(roomId);
+      const ydoc = getDoc(roomId, fileId);
 
       const state = Y.encodeStateAsUpdate(ydoc);
 
       socket.emit("yjs:sync", {
         update: Array.from(state),
       });
+
+      console.log("Joined:", roomKey);
     });
 
     // ======================
-    // DOC UPDATE
+    // DOCUMENT UPDATE
     // ======================
+    socket.on("yjs:update", ({ roomId, fileId, update }) => {
+      const roomKey = `${roomId}:${fileId}`;
 
-    socket.on("yjs:update", ({ roomId, update }) => {
-      const ydoc = rooms.get(roomId);
-      // console.log("update yjs");
-      if (!ydoc) return;
+      const ydoc = getDoc(roomId, fileId);
 
       Y.applyUpdate(ydoc, new Uint8Array(update));
 
-      socket.to(roomId).emit("yjs:update", {
+      socket.to(roomKey).emit("yjs:update", {
         update,
       });
     });
@@ -63,16 +70,20 @@ app.prepare().then(() => {
     // ======================
     // AWARENESS
     // ======================
+    socket.on("yjs:awareness", ({ roomId, fileId, update }) => {
+      const roomKey = `${roomId}:${fileId}`;
 
-    socket.on("yjs:awareness", ({ roomId, update }) => {
-      // console.log("awareness yjs");
-      socket.to(roomId).emit("yjs:awareness", {
+      socket.to(roomKey).emit("yjs:awareness", {
         update,
       });
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected:", socket.id);
     });
   });
 
   httpServer.listen(3000, () => {
-    console.log("server running");
+    console.log("Server running on http://localhost:3000");
   });
 });

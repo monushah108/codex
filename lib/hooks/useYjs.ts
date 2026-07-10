@@ -9,8 +9,8 @@ import {
 } from "y-protocols/awareness";
 
 import { socket } from "@/lib/socket";
-import { getAwareness } from "../awareness";
-import { getYDoc, getYText } from "../yjs";
+import { destroyAwareness, getAwareness } from "../awareness";
+import { destroyYDoc, getYDoc, getYText } from "../yjs";
 import { useCodestore } from "../store/Codestore";
 
 export function useYjs(roomId: string, fileId: string) {
@@ -18,12 +18,19 @@ export function useYjs(roomId: string, fileId: string) {
   const ydoc = useMemo(() => getYDoc(roomId, fileId), [roomId, fileId]);
 
   const yText = useMemo(() => getYText(roomId, fileId), [roomId, fileId]);
-  const store = useCodestore.getState();
-
   const awareness = useMemo(
     () => getAwareness(roomId, fileId),
     [roomId, fileId],
   );
+
+  const colors = [
+    "#ef4444",
+    "#3b82f6",
+    "#22c55e",
+    "#eab308",
+    "#a855f7",
+    "#ec4899",
+  ];
 
   useEffect(() => {
     if (!roomId) return;
@@ -32,6 +39,11 @@ export function useYjs(roomId: string, fileId: string) {
     // Join room
     // -------------------------
     socket.emit("yjs:join", { roomId, fileId });
+
+    awareness.setLocalStateField("user", {
+      name: "Monu", // Replace with logged-in user's name
+      color: colors[Math.floor(Math.random() * colors.length)],
+    });
 
     // -------------------------
     // Initial Sync
@@ -47,7 +59,7 @@ export function useYjs(roomId: string, fileId: string) {
     // Receive remote updates
     // -------------------------
     const handleRemoteUpdate = ({ update }: { update: number[] }) => {
-      Y.applyUpdate(ydoc, new Uint8Array(update));
+      Y.applyUpdate(ydoc, new Uint8Array(update), "remote");
       console.log("Received remote update for file:", fileId);
     };
 
@@ -56,8 +68,11 @@ export function useYjs(roomId: string, fileId: string) {
     // -------------------------
     // Send local updates
     // -------------------------
-    const handleLocalUpdate = (update: Uint8Array) => {
+    const handleLocalUpdate = (update: Uint8Array, origin: unknown) => {
       console.log("Sending local update for file:", fileId);
+      if (origin === "remote") return;
+
+      const store = useCodestore.getState();
 
       const current = yText.toString();
       const saved = store.code[fileId]?.savedContent ?? "";
@@ -110,6 +125,7 @@ export function useYjs(roomId: string, fileId: string) {
     awareness.on("update", awarenessHandler);
 
     return () => {
+      awareness.setLocalState(null);
       socket.off("yjs:sync", handleSync);
       socket.off("yjs:update", handleRemoteUpdate);
       socket.off("yjs:awareness", handleAwareness);
@@ -117,8 +133,8 @@ export function useYjs(roomId: string, fileId: string) {
       ydoc.off("update", handleLocalUpdate);
       awareness.off("update", awarenessHandler);
 
-      awareness.destroy();
-      ydoc.destroy();
+      destroyAwareness(roomId, fileId);
+      destroyYDoc(roomId, fileId);
     };
   }, [roomId, fileId, ydoc, awareness]);
 

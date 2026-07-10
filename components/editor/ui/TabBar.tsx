@@ -7,7 +7,7 @@ import SaveFile from "../Module/saveFile";
 import { useLayout } from "@/context/layout-context";
 
 const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
-  const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const openFiles = useCodestore((s) => s.openFiles);
   const activeFileId = useCodestore((s) => s.activeFileId || "");
   const closeFile = useCodestore((s) => s.closeFile);

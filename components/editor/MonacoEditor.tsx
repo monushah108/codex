@@ -7,13 +7,14 @@ import { Code2 } from "lucide-react";
 
 import TabBar from "./ui/TabBar";
 
+import "./styles/monaco.css";
+
 import { getType } from "@/lib/features";
 import { useCodestore } from "@/lib/store/Codestore";
 import { useYjs } from "@/lib/hooks/useYjs";
 
 function MonacoEditor({ roomId }: { roomId: string }) {
   const { activeFileId, openFiles, saveFileContent } = useCodestore();
-
   const activeFile = useMemo(
     () => openFiles.find((file) => file._id === activeFileId),
     [openFiles, activeFileId],
@@ -36,6 +37,40 @@ function MonacoEditor({ roomId }: { roomId: string }) {
     );
   }
 
+  const updateCursorLabels = () => {
+    const myId = awareness.clientID;
+
+    for (const [clientId, state] of awareness.getStates()) {
+      const cursor = document.querySelector(
+        `.yRemoteSelectionHead-${clientId}`,
+      ) as HTMLElement | null;
+
+      if (!cursor) continue;
+
+      // Hide my own collaborative cursor
+      if (clientId === myId) {
+        cursor.style.display = "none";
+
+        cursor.querySelector(".cursor-name")?.remove();
+
+        continue;
+      }
+
+      // Show remote users' cursors
+      cursor.style.display = "";
+
+      // Remove previous label
+      cursor.querySelector(".cursor-name")?.remove();
+
+      // Add new label
+      const label = document.createElement("div");
+      label.className = "cursor-name";
+      label.textContent = state.user?.name ?? "Anonymous";
+
+      cursor.appendChild(label);
+    }
+  };
+
   const handleMount: OnMount = async (editor, monaco) => {
     const model = editor.getModel();
 
@@ -45,16 +80,13 @@ function MonacoEditor({ roomId }: { roomId: string }) {
 
     new MonacoBinding(yText, model, new Set([editor]), awareness);
 
-    // const disposable = editor.onDidChangeModelContent((e) => {
-    //   if (e.isFlush) return;
+    awareness.on("change", () => {
+      requestAnimationFrame(updateCursorLabels);
+    });
 
-    //   setFileEdited(activeFileId, true);
-    // });
-
-    // editor.onDidDispose(() => {
-    //   disposable.dispose();
-    //   binding.destroy();
-    // });
+    editor.onDidChangeModelContent(() => {
+      requestAnimationFrame(updateCursorLabels);
+    });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async () => {
       await saveFileContent(roomId, activeFileId, yText.toString());
@@ -72,6 +104,8 @@ function MonacoEditor({ roomId }: { roomId: string }) {
         defaultLanguage={getType(activeFile?.name ?? "")?.language}
         onMount={handleMount}
         options={{
+          cursorBlinking: "smooth",
+          cursorStyle: "line",
           fontSize: 14,
           fontFamily: "Fira Code, monospace",
           automaticLayout: true,

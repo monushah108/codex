@@ -4,7 +4,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FilePlus, FolderPlus, MoreHorizontal, Repeat2 } from "lucide-react";
+import {
+  Download,
+  FilePlus,
+  FolderPlus,
+  MoreHorizontal,
+  Repeat2,
+  Trash,
+} from "lucide-react";
 
 export function FileHeader({
   handleCreateFile,
@@ -54,7 +61,10 @@ export function FileHeader({
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-[#2a2d2e] border-[#2a2d2e] ">
                 <DropdownMenuItem className=" text-center text-gray-400">
-                  delete project
+                  <Trash /> delete
+                </DropdownMenuItem>
+                <DropdownMenuItem className=" text-center text-gray-400">
+                  <Download /> download
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
