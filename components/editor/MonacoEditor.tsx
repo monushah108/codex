@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useRef } from "react";
 import { Editor, OnMount } from "@monaco-editor/react";
 
 import { Code2 } from "lucide-react";
@@ -36,6 +36,7 @@ function MonacoEditor({ roomId }: { roomId: string }) {
       </div>
     );
   }
+  /* TODO: handleMount inside handleMount, but never removing that listener. After opening and closing many files, those listeners will accumulate. I can show you a production-grade version of MonacoEditor that fixes that, removes the remaining memory leaks, and simplifies the */
 
   const updateCursorLabels = () => {
     const myId = awareness.clientID;
@@ -58,7 +59,7 @@ function MonacoEditor({ roomId }: { roomId: string }) {
 
       // Show remote users' cursors
       cursor.style.display = "";
-
+      cursor.style.backgroundColor = state.user?.color ?? "#3b82f6";
       // Remove previous label
       cursor.querySelector(".cursor-name")?.remove();
 
@@ -66,6 +67,7 @@ function MonacoEditor({ roomId }: { roomId: string }) {
       const label = document.createElement("div");
       label.className = "cursor-name";
       label.textContent = state.user?.name ?? "Anonymous";
+      label.style.backgroundColor = state.user?.color ?? "#3b82f6";
 
       cursor.appendChild(label);
     }
@@ -79,6 +81,12 @@ function MonacoEditor({ roomId }: { roomId: string }) {
     const { MonacoBinding } = await import("y-monaco");
 
     new MonacoBinding(yText, model, new Set([editor]), awareness);
+
+    // 👇 Add this here
+    // editor.onDidDispose(() => {
+    //   console.log("Destroying binding");
+    //   binding.destroy();
+    // });
 
     awareness.on("change", () => {
       requestAnimationFrame(updateCursorLabels);

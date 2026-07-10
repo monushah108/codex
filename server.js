@@ -36,17 +36,40 @@ app.prepare().then(() => {
     // ======================
     // JOIN
     // ======================
+    // socket.on("yjs:join", ({ roomId, fileId }) => {
+    //   const roomKey = `${roomId}:${fileId}`;
+
+    //   socket.join(roomKey);
+
+    //   const ydoc = getDoc(roomId, fileId);
+
+    //   const state = Y.encodeStateAsUpdate(ydoc);
+
+    //   socket.emit("yjs:sync", {
+    //     update: Array.from(state),
+    //   });
+
+    //   console.log("Joined:", roomKey);
+    // });
+
+    let currentRoom = null;
+
     socket.on("yjs:join", ({ roomId, fileId }) => {
       const roomKey = `${roomId}:${fileId}`;
 
+      // Leave previous file
+      if (currentRoom && currentRoom !== roomKey) {
+        socket.leave(currentRoom);
+        console.log("Left:", currentRoom);
+      }
+
       socket.join(roomKey);
+      currentRoom = roomKey;
 
       const ydoc = getDoc(roomId, fileId);
 
-      const state = Y.encodeStateAsUpdate(ydoc);
-
       socket.emit("yjs:sync", {
-        update: Array.from(state),
+        update: Array.from(Y.encodeStateAsUpdate(ydoc)),
       });
 
       console.log("Joined:", roomKey);
@@ -75,6 +98,27 @@ app.prepare().then(() => {
 
       socket.to(roomKey).emit("yjs:awareness", {
         update,
+      });
+    });
+
+    // =========================
+    // UPDATE FILE
+    // =========================
+
+    socket.on("file:update", ({ roomId, fileId, update }) => {
+      socket.to(roomId).emit("file:update", {
+        update,
+        fileId,
+      });
+    });
+
+    // =========================
+    // DELETE FILE
+    // =========================
+
+    socket.on("file:delete", ({ roomId, fileId }) => {
+      socket.to(roomId).emit("file:delete", {
+        fileId,
       });
     });
 

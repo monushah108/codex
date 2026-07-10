@@ -192,6 +192,15 @@ export const useCodestore = create<Store>((set, get) => {
         content,
       });
 
+      const IsSaved = get().code[fileId]?.savedContent == content;
+
+      if (IsSaved) {
+        updateCode(fileId, {
+          saving: false,
+        });
+        return;
+      }
+
       try {
         const res = await fetch(`/api/playground/${roomId}/files`, {
           method: "PUT",
@@ -226,6 +235,8 @@ export const useCodestore = create<Store>((set, get) => {
         });
       }
     },
+
+    // RUN CODE
     runCode: async (fileId) => {
       const code = get().code[fileId]?.content;
 
@@ -331,7 +342,10 @@ export const useCodestore = create<Store>((set, get) => {
         });
       }
     },
+
     clearOutputs: () => set({ outputs: [] }),
+
+    // RUN COMMAND
     runCommand: async (command, fileId) => {
       switch (command.trim().toLowerCase()) {
         case "clear":
