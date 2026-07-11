@@ -23,6 +23,8 @@ export function useYjs(roomId: string, fileId: string) {
     [roomId, fileId],
   );
 
+  const user = useCodestore((state) => state.user);
+
   const colors = [
     "#ef4444",
     "#3b82f6",
@@ -33,7 +35,7 @@ export function useYjs(roomId: string, fileId: string) {
   ];
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !user) return;
 
     // -------------------------
     // Join room
@@ -41,7 +43,8 @@ export function useYjs(roomId: string, fileId: string) {
     socket.emit("yjs:join", { roomId, fileId });
 
     awareness.setLocalStateField("user", {
-      name: "Monu", // Replace with logged-in user's name
+      name: user?.name || "Anonymous",
+      image: user?.image || null,
       color: colors[Math.floor(Math.random() * colors.length)],
     });
 
@@ -50,7 +53,6 @@ export function useYjs(roomId: string, fileId: string) {
     // -------------------------
     const handleSync = ({ update }: { update: number[] }) => {
       Y.applyUpdate(ydoc, new Uint8Array(update));
-      console.log("Initial sync for file:", fileId);
     };
 
     socket.on("yjs:sync", handleSync);
@@ -60,7 +62,6 @@ export function useYjs(roomId: string, fileId: string) {
     // -------------------------
     const handleRemoteUpdate = ({ update }: { update: number[] }) => {
       Y.applyUpdate(ydoc, new Uint8Array(update), "remote");
-      console.log("Received remote update for file:", fileId);
     };
 
     socket.on("yjs:update", handleRemoteUpdate);
@@ -69,7 +70,6 @@ export function useYjs(roomId: string, fileId: string) {
     // Send local updates
     // -------------------------
     const handleLocalUpdate = (update: Uint8Array, origin: unknown) => {
-      console.log("Sending local update for file:", fileId);
       if (origin === "remote") return;
 
       const store = useCodestore.getState();
@@ -92,7 +92,6 @@ export function useYjs(roomId: string, fileId: string) {
     // Receive awareness
     // -------------------------
     const handleAwareness = ({ update }: { update: number[] }) => {
-      console.log("Received awareness update for file:", fileId);
       applyAwarenessUpdate(awareness, new Uint8Array(update), "remote");
     };
 
@@ -114,7 +113,6 @@ export function useYjs(roomId: string, fileId: string) {
 
       const update = encodeAwarenessUpdate(awareness, changed);
 
-      console.log("Sending awareness update for file:", fileId);
       socket.emit("yjs:awareness", {
         roomId,
         fileId,

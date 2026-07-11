@@ -1,11 +1,17 @@
 import { create } from "zustand";
 import { getType } from "../features";
+import { authClient } from "../auth-client";
 
 type FileItem = {
   _id: string;
   name: string;
   isEdited?: boolean;
   isDeleted?: boolean;
+};
+type User = typeof authClient.$Infer.Session.user;
+type AuthStore = {
+  user: User | null;
+  setUser: (user: User | null) => void;
 };
 
 type Output = {
@@ -34,6 +40,9 @@ type Store = {
   activeFileId: string | null;
 
   outputs: Output[];
+
+  user: User | null;
+  setUser: (user: User | null) => void;
 
   openFile: (file: FileItem, roomId: string) => Promise<void>;
 
@@ -82,6 +91,10 @@ export const useCodestore = create<Store>((set, get) => {
     activeFileId: null,
 
     outputs: [],
+    user: {},
+
+    // set User
+    setUser: (user) => set({ user }),
 
     // OPEN FILE
     openFile: async (file, roomId) => {

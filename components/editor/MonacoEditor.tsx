@@ -66,8 +66,23 @@ function MonacoEditor({ roomId }: { roomId: string }) {
       // Add new label
       const label = document.createElement("div");
       label.className = "cursor-name";
-      label.textContent = state.user?.name ?? "Anonymous";
-      label.style.backgroundColor = state.user?.color ?? "#3b82f6";
+      label.innerHTML = `
+<div class="cursor-badge">
+    <img
+        class="cursor-avatar"
+        src="${state.user?.image ?? ""}"
+        alt=""
+    />
+
+    <span class="cursor-text">
+        ${state.user?.name ?? "Anonymous"}
+    </span>
+
+    <div class="cursor-arrow"></div>
+</div>
+`;
+      const badge = label.querySelector(".cursor-badge") as HTMLElement;
+      badge.style.backgroundColor = state.user?.color ?? "#3b82f6";
 
       cursor.appendChild(label);
     }
