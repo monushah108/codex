@@ -33,12 +33,16 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
             <Button
               key={file._id}
               variant="none"
-              className={`border-t-4  rounded-xs group ${isActive ? "bg-blue-700/20 border-blue-600" : "border-blue-600/60 bg-blue-600/10 hover:bg-[#3a3a3d]"} t`}
+              className={`border-t-4  rounded-xs group ${file.isDeleted && "bg-muted"} ${isActive ? "bg-blue-700/20 border-blue-600" : "border-blue-600/60 bg-blue-600/10 hover:bg-[#3a3a3d]"} t`}
               onClick={() => {
                 openFile(file, roomId);
               }}
             >
-              {file.name}
+              <span
+                className={`truncate max-w-xs ${file.isDeleted && "line-through text-muted-foreground"}`}
+              >
+                {file.name}
+              </span>
 
               {file.isEdited ? (
                 <SaveFile

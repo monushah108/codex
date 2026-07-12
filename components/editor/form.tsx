@@ -21,8 +21,10 @@ import { CircleAlert } from "lucide-react";
 export default function Form() {
   const [name, setRoomName] = useState("codex");
   const [roomType, setRoomType] = useState<"public" | "private">("public");
-  const [password, setPassword] = useState("12345678");
-  const [duration, setDuration] = useState(false);
+  // const [password, setPassword] = useState("12345678");
+  const [duration, setDuration] = useState<"no-expiration" | "expiration">(
+    "no-expiration",
+  );
 
   const [errors, setErrors] = useState<
     Partial<
@@ -46,7 +48,7 @@ export default function Form() {
       const newRoom = {
         name,
         type: roomType,
-        password: roomType === "private" ? password : undefined,
+        // password: roomType === "private" ? password : undefined,
         duration,
       };
 
@@ -54,10 +56,12 @@ export default function Form() {
       console.log(success, data, error, newRoom);
       if (!success) {
         const formatted = error.flatten().fieldErrors;
+        console.log(formatted);
         setErrors(formatted);
-
         return;
       }
+
+      console.log(errors);
 
       try {
         const response = await fetch("/api/playground", {
@@ -151,7 +155,7 @@ export default function Form() {
         </Field>
 
         {/* Password */}
-        {roomType === "private" && (
+        {/* {roomType === "private" && (
           <Field>
             <FieldLabel>Access Password</FieldLabel>
 
@@ -170,7 +174,7 @@ export default function Form() {
               </FieldError>
             )}
           </Field>
-        )}
+        )}  */}
 
         {/* Duration */}
         <Field>
@@ -178,25 +182,27 @@ export default function Form() {
 
           <RadioGroup
             value={duration}
-            onValueChange={setDuration}
+            onValueChange={(value) =>
+              setDuration(value as "no-expiration" | "expiration")
+            }
             className="flex gap-6"
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem
                 className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
-                value="true"
-                id="true"
+                value="no-expiration"
+                id="no-expiration"
               />
-              <FieldLabel htmlFor="true">No Expiration</FieldLabel>
+              <FieldLabel htmlFor="no-expiration">No Expiration</FieldLabel>
             </div>
 
             <div className="flex items-center space-x-2">
               <RadioGroupItem
                 className="text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white"
-                value="false"
-                id="false"
+                value="expiration"
+                id="expiration"
               />
-              <FieldLabel htmlFor="false">Expires in 7 Days</FieldLabel>
+              <FieldLabel htmlFor="expiration">Expires in 7 Days</FieldLabel>
             </div>
           </RadioGroup>
         </Field>

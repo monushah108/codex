@@ -1,5 +1,5 @@
 import { model, models, Schema } from "mongoose";
-import bcrypt from "bcrypt";
+// import bcrypt from "bcrypt";
 
 const roomSchema = new Schema(
   {
@@ -8,7 +8,7 @@ const roomSchema = new Schema(
       required: true,
       trim: true,
       minlength: 3,
-      maxlength: 8,
+      maxlength: 15,
     },
 
     type: {
@@ -17,28 +17,28 @@ const roomSchema = new Schema(
       required: true,
     },
 
-    password: {
-      type: String,
+    // password: {
+    //   type: String,
 
-      required: function () {
-        return this.type === "private";
-      },
+    //   required: function () {
+    //     return this.type === "private";
+    //   },
 
-      minlength: 6,
+    //   minlength: 6,
 
-      validate: {
-        validator: function (value: string) {
-          // PUBLIC ROOM CANNOT HAVE PASSWORD
-          if (this.type === "public") {
-            return !value;
-          }
+    //   validate: {
+    //     validator: function (value: string) {
+    //       // PUBLIC ROOM CANNOT HAVE PASSWORD
+    //       if (this.type === "public") {
+    //         return !value;
+    //       }
 
-          return true;
-        },
+    //       return true;
+    //     },
 
-        message: "Public rooms cannot contain password",
-      },
-    },
+    //     message: "Public rooms cannot contain password",
+    //   },
+    // },
 
     adminId: {
       type: Schema.Types.ObjectId,
@@ -57,8 +57,9 @@ const roomSchema = new Schema(
     //
 
     duration: {
-      type: Boolean,
-      default: false,
+      type: String,
+      enum: ["no-expiration", "expiration"],
+      default: "no-expiration",
     },
 
     expiresAt: {
@@ -66,7 +67,7 @@ const roomSchema = new Schema(
 
       default: function () {
         // EXPIRE AFTER 7 DAYS
-        if (!this.duration) {
+        if (this.duration === "expiration") {
           return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         }
 
@@ -107,7 +108,7 @@ roomSchema.index(
     expireAfterSeconds: 0,
 
     partialFilterExpression: {
-      duration: false,
+      duration: "expiration",
     },
   },
 );
@@ -116,21 +117,21 @@ roomSchema.index(
 // HASH PASSWORD
 //
 
-roomSchema.pre("save", async function () {
-  if (!this.isModified("password") || !this.password) {
-    return;
-  }
+// roomSchema.pre("save", async function () {
+//   if (!this.isModified("password") || !this.password) {
+//     return;
+//   }
 
-  this.password = await bcrypt.hash(this.password, 12);
-});
+//   this.password = await bcrypt.hash(this.password, 12);
+// });
 
 //
 // PASSWORD COMPARE
 //
 
-roomSchema.methods.comparePassword = async function (enteredPassword: string) {
-  return bcrypt.compare(enteredPassword, this.password);
-};
+// roomSchema.methods.comparePassword = async function (enteredPassword: string) {
+//   return bcrypt.compare(enteredPassword, this.password);
+// };
 
 //
 // VALIDATE USER LIMIT

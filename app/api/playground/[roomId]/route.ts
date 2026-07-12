@@ -48,11 +48,7 @@ export async function GET(
       );
     }
 
-    if (
-      !room.isPermanent &&
-      room.expiresAt &&
-      new Date(room.expiresAt) < new Date()
-    ) {
+    if (room.expiresAt && new Date(room.expiresAt) < new Date()) {
       return Response.json(
         {
           error: "Room expired",

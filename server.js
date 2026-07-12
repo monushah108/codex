@@ -87,10 +87,19 @@ app.prepare().then(() => {
     });
 
     // =========================
+    // ACTIVIIES
+    // =========================
+
+    // socket.on("activity" , ({roomId , fileId ,type , msg}) => {
+    //     socket.to()
+    // })
+
+    // =========================
     // UPDATE FILE
     // =========================
 
     socket.on("file:saved", ({ roomId, fileId, content }) => {
+      console.log("file saved", fileId);
       socket.to(`${roomId}:${fileId}`).emit("file:saved", {
         fileId,
         content,
@@ -101,9 +110,11 @@ app.prepare().then(() => {
     // DELETE FILE
     // =========================
 
-    socket.on("file:delete", ({ roomId, fileId }) => {
+    socket.on("file:delete", ({ roomId, fileId, type }) => {
+      console.log("file delete ", fileId);
       socket.to(roomId).emit("file:delete", {
         fileId,
+        type,
       });
     });
 

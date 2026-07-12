@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/collapsible";
 
 import { Spinner } from "@/components/ui/spinner";
-import { ChevronRight, FileIcon, Folder } from "lucide-react";
+import { AlertCircle, ChevronRight, FileIcon, Folder } from "lucide-react";
 import { useState, memo } from "react";
 
 import { useExplorerstore } from "@/lib/store/Explorerstore";
@@ -13,7 +13,10 @@ import ExplorerMenu from "../Module/ExplorerMenu";
 import { useCodestore } from "@/lib/store/Codestore";
 
 type Folderprop = {
-  item: any;
+  item: {
+    _id: string;
+    name: string;
+  };
   roomId: string;
   creating: { parentId: string | null; type: "file" | "folder" | null };
   setCreating: (value: {
@@ -49,6 +52,8 @@ function FolderItem({
   const deleteFile = useExplorerstore((s) => s.deleteFile);
   const deleteFolder = useExplorerstore((s) => s.deleteFolder);
   const openFile = useCodestore((s) => s.openFile);
+  const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<"file" | "folder" | null>(null);
 
   const folders = cache?.folders || [];
   const files = cache?.files || [];
@@ -58,89 +63,98 @@ function FolderItem({
 
   const isSelected = selected === item._id;
 
+  /* ---------------- VALIDATE NAMES ----------------- */
+
+  const validateName = ({
+    value,
+    type,
+    currentId,
+  }: {
+    value: string;
+    type: "file" | "folder";
+    currentId?: string;
+  }) => {
+    const name = value.trim().toLowerCase();
+
+    const fileExists = files.some(
+      (file) =>
+        file._id !== currentId && file.name.trim().toLowerCase() === name,
+    );
+
+    const folderExists = folders.some(
+      (folder) =>
+        folder._id !== currentId && folder.name.trim().toLowerCase() === name,
+    );
+
+    if (type === "file" && fileExists) {
+      setError("File already exists");
+      setErrorType("file");
+      return false;
+    }
+
+    if (type === "folder" && folderExists) {
+      setError("Folder already exists");
+      setErrorType("folder");
+      return false;
+    }
+
+    setError(null);
+    setErrorType(null);
+
+    return true;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+
+    validateName({
+      value,
+      type: creating.type!,
+    });
+  };
+
   /* ---------------- CREATE ---------------- */
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!inputValue.trim()) return;
 
-    const endpoint =
-      creating.type === "file"
-        ? `/api/playground/${roomId}/files`
-        : `/api/playground/${roomId}/directory`;
+    if (error) return;
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: inputValue,
-        parentId: item._id,
-      }),
-    });
-
-    const newItem = await res.json();
-
-    if (creating.type === "file") addFile(item._id, newItem);
-    else addFolder(item._id, newItem);
+    if (creating.type === "file") addFile(roomId, item._id, inputValue);
+    else addFolder(roomId, item._id, inputValue);
 
     setInputValue("");
     setCreating({ parentId: null, type: null });
   };
 
   /* ---------------- RENAME ---------------- */
-
+  const clearError = () => {
+    setError(null);
+    setErrorType(null);
+  };
   const handleRename = (id: string, name: string) => {
+    clearError();
     setRenamingId(id);
     setRenameValue(name);
   };
 
   const submitRename = async (type: "file" | "folder"): Promise<void> => {
     if (!renameValue.trim()) return;
+    if (error) return;
 
-    const endpoint =
-      type === "file"
-        ? `/api/playground/${roomId}/files`
-        : `/api/playground/${roomId}/directory`;
-
-    await fetch(endpoint, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: renamingId,
-        name: renameValue,
-      }),
-    });
-
-    if (type === "file") renameFile(item._id, renamingId, renameValue);
-    if (type === "folder") renameFolder(item._id, renamingId, renameValue);
+    if (type === "file") renameFile(roomId, item._id, renamingId, renameValue);
+    if (type === "folder")
+      renameFolder(roomId, item._id, renamingId, renameValue);
 
     setRenamingId(null);
   };
 
   /* ---------------- DELETE ---------------- */
 
-  const handleDelete = async (
-    id: string,
-    type: "file" | "folder",
-  ): Promise<void> => {
-    const endpoint =
-      type === "file"
-        ? `/api/playground/${roomId}/files`
-        : `/api/playground/${roomId}/directory`;
-
-    await fetch(endpoint, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id }),
-    });
-
-    if (type === "file") deleteFile(item._id, id);
-    if (type === "folder") deleteFolder(item._id, id);
+  const handleDelete = (id: string, type: "file" | "folder") => {
+    if (type === "file") deleteFile(roomId, item._id, id);
+    if (type === "folder") deleteFolder(roomId, item._id, id);
   };
 
   return (
@@ -171,18 +185,39 @@ function FolderItem({
 
           <Folder className="w-4 h-4 text-yellow-400" />
           {renamingId === item._id ? (
-            <input
-              autoFocus
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onFocus={(e) => e.target.select()}
-              onBlur={() => setRenamingId(null)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") submitRename("folder");
-                if (e.key === "Escape") setRenamingId(null);
-              }}
-              className="bg-transparent border border-sky-500 px-1 text-sm outline-none"
-            />
+            <div className="flex flex-col gap-1">
+              <input
+                autoFocus
+                value={renameValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setRenameValue(value);
+                  validateName({
+                    value,
+                    type: "folder",
+                    currentId: item._id,
+                  });
+                }}
+                onFocus={(e) => e.target.select()}
+                onBlur={() => {
+                  clearError();
+                  setRenamingId(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitRename("folder");
+                  if (e.key === "Escape") {
+                    clearError();
+                    setRenamingId(null);
+                  }
+                }}
+                className="bg-transparent border border-sky-500 px-1 text-sm outline-none"
+              />
+              {error && errorType === "folder" && renamingId == item._id && (
+                <span className="text-destructive text-xs flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {error}
+                </span>
+              )}
+            </div>
           ) : (
             item.name
           )}
@@ -226,18 +261,37 @@ function FolderItem({
                 <FileIcon className="w-4 h-4 text-gray-400" />
 
                 {renamingId === file._id ? (
-                  <input
-                    autoFocus
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onFocus={(e) => e.target.select()}
-                    onBlur={() => setRenamingId(null)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") submitRename("file");
-                      if (e.key === "Escape") setRenamingId(null);
-                    }}
-                    className="bg-transparent  border border-sky-500 px-1 text-sm outline-none"
-                  />
+                  <div className="flex flex-col gap-1">
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        setRenameValue(value);
+
+                        validateName({
+                          value,
+                          type: "file",
+                          currentId: file._id,
+                        });
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      onBlur={() => setRenamingId(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") submitRename("file");
+                        if (e.key === "Escape") setRenamingId(null);
+                      }}
+                      className="bg-transparent  border border-sky-500 px-1 text-sm outline-none"
+                    />
+                    {error &&
+                      errorType === "file" &&
+                      renamingId == file._id && (
+                        <span className="text-destructive text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> {error}
+                        </span>
+                      )}
+                  </div>
                 ) : (
                   file.name
                 )}
@@ -271,7 +325,7 @@ function FolderItem({
             <input
               autoFocus
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={handleChange}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmit();
 
@@ -279,9 +333,17 @@ function FolderItem({
                   setCreating({ parentId: null, type: null });
                 }
               }}
-              onBlur={() => setCreating({ parentId: null, type: null })}
+              onBlur={() => {
+                clearError();
+                setCreating({ parentId: null, type: null });
+              }}
               className="bg-transparent border border-[#3a3d3e] px-1 text-sm outline-none"
             />
+            {error && (
+              <div className="text-destructive text-xs ml-2 flex items-center ">
+                <AlertCircle className="w-3 h-3" /> {error}
+              </div>
+            )}
           </div>
         )}
       </CollapsibleContent>

@@ -51,6 +51,7 @@ export async function POST(request: NextRequest, { params }) {
     return Response.json(file, { status: 201 });
   } catch (err) {
     console.error(err);
+
     return Response.json({ error: "file creation failed" }, { status: 500 });
   }
 }
@@ -90,11 +91,12 @@ export async function PATCH(request: NextRequest) {
     if (!success) {
       return Response.json({ error: "rate limit exceeded" }, { status: 429 });
     }
-    const file = await File.findByIdAndUpdate(id, { name });
+    const file = await File.findByIdAndUpdate(id, { name }, { new: true });
 
     return Response.json(file);
   } catch (err) {
     console.error(err);
+
     return Response.json({ error: "rename failed" }, { status: 500 });
   }
 }

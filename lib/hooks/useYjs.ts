@@ -12,6 +12,7 @@ import { socket } from "@/lib/socket";
 import { destroyAwareness, getAwareness } from "../awareness";
 import { destroyYDoc, getYDoc, getYText } from "../yjs";
 import { useCodestore } from "../store/Codestore";
+import { useExplorerstore } from "../store/Explorerstore";
 
 export function useYjs(roomId: string, fileId: string) {
   // Create only once
@@ -65,6 +66,76 @@ export function useYjs(roomId: string, fileId: string) {
     };
 
     socket.on("yjs:update", handleRemoteUpdate);
+
+    // -------------------------
+    // DELETE
+    // -------------------------
+
+    const handleDelete = ({
+      fileId,
+      type,
+    }: {
+      fileId: string;
+      type: string;
+    }) => {
+      const explorer = useExplorerstore.getState();
+      const isDeleted = useCodestore.getState().code[fileId]?.isDeleted;
+      if (isDeleted) return;
+      useExplorerstore.setState((state) => ({
+        cache: {
+          ...state.cache,
+          [fileId]: {
+            ...state.cache[fileId],
+            files: state.cache[fileId].files.map((file) =>
+              file._id === fileId ? { ...file, isDeleted: true } : file,
+            ),
+          },
+        },
+      }));
+      useCodestore.getState().closeFile(fileId);
+
+      if (type === "file") {
+        explorer.deleteFile(roomId, fileId);
+      } else if (type === "folder") {
+        explorer.deleteFolder(roomId, fileId);
+      }
+    };
+
+    socket.on("file:delete", handleDelete);
+
+    // -------------------------
+    // Send local updates
+    // -------------------------
+    const handleFileSaved = ({
+      fileId,
+      content,
+    }: {
+      fileId: string;
+      content: string;
+    }) => {
+      const store = useCodestore.getState();
+
+      store.setFileEdited(fileId, false);
+
+      const current = store.code[fileId];
+
+      if (!current) return;
+
+      // Mark THIS version as saved
+      useCodestore.setState((state) => ({
+        code: {
+          ...state.code,
+          [fileId]: {
+            ...state.code[fileId],
+            content,
+            savedContent: content,
+            saving: false,
+          },
+        },
+      }));
+    };
+
+    socket.on("file:saved", handleFileSaved);
 
     // -------------------------
     // Send local updates
@@ -127,6 +198,8 @@ export function useYjs(roomId: string, fileId: string) {
       socket.off("yjs:sync", handleSync);
       socket.off("yjs:update", handleRemoteUpdate);
       socket.off("yjs:awareness", handleAwareness);
+      socket.off("file:delete", handleDelete);
+      socket.off("file:saved", handleFileSaved);
 
       ydoc.off("update", handleLocalUpdate);
       awareness.off("update", awarenessHandler);

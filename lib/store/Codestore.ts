@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { getType } from "../features";
 import { authClient } from "../auth-client";
+import { socket } from "../socket";
 
 type FileItem = {
   _id: string;
@@ -9,10 +10,6 @@ type FileItem = {
   isDeleted?: boolean;
 };
 type User = typeof authClient.$Infer.Session.user;
-type AuthStore = {
-  user: User | null;
-  setUser: (user: User | null) => void;
-};
 
 type Output = {
   id: string;
@@ -31,6 +28,7 @@ type CodeState = {
   saving?: boolean;
   generating?: boolean;
   running?: boolean;
+  isDeleted?: boolean;
 };
 type Store = {
   code: Record<string, CodeState>;
@@ -207,6 +205,11 @@ export const useCodestore = create<Store>((set, get) => {
       });
 
       const IsSaved = get().code[fileId]?.savedContent == content;
+      const file = get().code[fileId];
+
+      if (file?.isDeleted) {
+        return;
+      }
 
       if (IsSaved) {
         updateCode(fileId, {
@@ -235,6 +238,12 @@ export const useCodestore = create<Store>((set, get) => {
         }
 
         get().setFileEdited(fileId, false);
+
+        socket.emit("file:saved", {
+          roomId,
+          fileId,
+          content,
+        });
 
         updateCode(fileId, {
           content,

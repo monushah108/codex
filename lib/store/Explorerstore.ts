@@ -5,11 +5,13 @@ type FileItem = {
   _id: string;
   name: string;
   isEdited?: boolean;
+  isDeleted?: boolean;
 };
 
 type FolderItem = {
   _id: string;
   name: string;
+  isDeleted?: boolean;
 };
 
 type FolderChildren = {
@@ -30,14 +32,24 @@ type ExplorerStore = {
   ) => Promise<void>;
   setSelectedFile: (parentId: string, fileId: string) => void;
 
-  addFile: (parentId: string, file: FileItem) => void;
-  addFolder: (parentId: string, folder: FolderItem) => void;
+  addFile: (roomId: string, parentId: string, name: string) => void;
+  addFolder: (roomId: string, parentId: string, name: string) => void;
 
-  renameFile: (parentId: string, fileId: string, newName: string) => void;
-  renameFolder: (parentId: string, folderId: string, newName: string) => void;
+  renameFile: (
+    roomId: string,
+    parentId: string,
+    fileId: string,
+    newName: string,
+  ) => void;
+  renameFolder: (
+    roomId: string,
+    parentId: string,
+    folderId: string,
+    newName: string,
+  ) => void;
 
-  deleteFile: (parentId: string, fileId: string) => void;
-  deleteFolder: (parentId: string, folderId: string) => void;
+  deleteFile: (roomId: string, parentId: string, fileId: string) => void;
+  deleteFolder: (roomId: string, parentId: string, folderId: string) => void;
 };
 
 export const useExplorerstore = create<ExplorerStore>((set, get) => ({
@@ -108,7 +120,22 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
 
   /* ---------------- ADD ---------------- */
 
-  addFile: (parentId, file) =>
+  addFile: async (roomId, parentId, name) => {
+    const endpoint = `/api/playground/${roomId}/files`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        parentId,
+      }),
+    });
+
+    const file = await res.json();
+
     set((state) => ({
       cache: {
         ...state.cache,
@@ -117,10 +144,24 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
           files: [...(state.cache[parentId]?.files || []), file],
         },
       },
-    })),
+    }));
+  },
 
-  addFolder: (parentId, folder) => {
-    console.log(get().cache[parentId]);
+  addFolder: async (roomId, parentId, name) => {
+    const endpoint = `/api/playground/${roomId}/directory`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        parentId,
+      }),
+    });
+
+    const folder = await res.json();
     set((state) => ({
       cache: {
         ...state.cache,
@@ -133,7 +174,19 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   },
   /* ---------------- RENAME ---------------- */
 
-  renameFile: (parentId, fileId, newName) =>
+  renameFile: async (roomId, parentId, fileId, newName) => {
+    const endpoint = `/api/playground/${roomId}/files`;
+
+    await fetch(endpoint, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: fileId,
+        name: newName,
+      }),
+    });
     set((state) => {
       const codestore = useCodestore.getState();
 
@@ -156,25 +209,52 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
           },
         },
       };
-    }),
+    });
+  },
 
-  renameFolder: (parentId, folderId, newName) =>
-    set((state) => ({
-      cache: {
-        ...state.cache,
-        [parentId]: {
-          ...state.cache[parentId],
-          folders:
-            state.cache[parentId]?.folders.map((f) =>
-              f._id === folderId ? { ...f, name: newName } : f,
-            ) || [],
-        },
+  renameFolder: async (roomId, parentId, folderId, newName) => {
+    const endpoint = `/api/playground/${roomId}/directory`;
+
+    const res = await fetch(endpoint, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
       },
-    })),
+      body: JSON.stringify({
+        id: folderId,
+        name: newName,
+      }),
+    });
+    const folder = await res.json();
+
+    set((state) => {
+      return {
+        cache: {
+          ...state.cache,
+          [parentId]: {
+            ...state.cache[parentId],
+            folders:
+              state.cache[parentId]?.folders.map((f) =>
+                f._id === folderId ? folder : f,
+              ) || [],
+          },
+        },
+      };
+    });
+  },
 
   /* ---------------- DELETE ---------------- */
 
-  deleteFile: (parentId, fileId) =>
+  deleteFile: async (roomId, parentId, fileId) => {
+    const endpoint = `/api/playground/${roomId}/files`;
+
+    await fetch(endpoint, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: fileId }),
+    });
     set((state) => {
       const codestore = useCodestore.getState();
       codestore.closeFile(fileId);
@@ -190,9 +270,19 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
           },
         },
       };
-    }),
+    });
+  },
 
-  deleteFolder: (parentId, folderId) =>
+  deleteFolder: async (roomId, parentId, folderId) => {
+    const endpoint = `/api/playground/${roomId}/directory`;
+
+    await fetch(endpoint, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: folderId }),
+    });
     set((state) => {
       const newCache = { ...state.cache };
       const codestore = useCodestore.getState();
@@ -230,5 +320,8 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
       return {
         cache: newCache,
       };
-    }),
+    });
+  },
 }));
+
+/* TODO : RENAMING and DELETING folders are not working  */

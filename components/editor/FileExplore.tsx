@@ -14,13 +14,32 @@ import { Spinner } from "../ui/spinner";
 import debounce from "lodash/debounce";
 import { useExplorerstore } from "@/lib/store/Explorerstore";
 
-function FileExplore({ roomId }) {
+type FileItem = {
+  _id: string;
+  name: string;
+  parentDirId: string | null;
+  roomId: string;
+  isEdited?: boolean;
+  isDeleted?: boolean;
+};
+
+interface docProp {
+  rootDir: FileItem | null;
+  _id: string;
+  name: string;
+  isEdited?: boolean;
+}
+
+function FileExplore({ roomId }: { roomId: string }) {
   const exRef = useRef<PanelImperativeHandle>(null);
   const { panels } = useLayout();
-  const [doc, setDoc] = useState(null);
-  const [selected, setSelected] = useState(null);
+  const [doc, setDoc] = useState<docProp | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
-  const [creating, setCreating] = useState({
+  const [creating, setCreating] = useState<{
+    parentId: string | null | undefined;
+    type: "file" | "folder" | null;
+  }>({
     parentId: null,
     type: null,
   });

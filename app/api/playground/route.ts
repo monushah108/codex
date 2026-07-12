@@ -21,13 +21,24 @@ export async function POST(request: NextRequest) {
     return Response.json(z.flattenError(error).fieldErrors, { status: 422 });
   }
 
-  const { name, type, password, duration, expiresAt } = data;
+  const { name, type, duration } = data;
 
   const session = await mongoose.startSession();
 
   session.startTransaction();
 
   try {
+    const isRoomExists = await Room.findOne({
+      $text: { $search: name },
+    }).lean();
+
+    if (isRoomExists) {
+      return Response.json(
+        { error: "A room with this name already exists" },
+        { status: 409 },
+      );
+    }
+
     const rootDirId = new Types.ObjectId();
     const roomId = new Types.ObjectId();
 
@@ -37,10 +48,8 @@ export async function POST(request: NextRequest) {
         adminId: userId,
         name: name,
         type: type,
-        password,
         rootDirId,
-        duration: duration ?? true,
-        expiresAt: duration ? null : expiresAt,
+        duration: duration,
       },
       { session },
     );
@@ -55,7 +64,14 @@ export async function POST(request: NextRequest) {
     );
 
     session.commitTransaction();
-
+    // console.log({
+    //   _id: roomId,
+    //   adminId: userId,
+    //   name: name,
+    //   type: type,
+    //   rootDirId,
+    //   duration: duration,
+    // });
     const formated = {
       roomId: room._id,
       name: room.name,
