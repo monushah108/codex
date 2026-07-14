@@ -1,3 +1,4 @@
+import { FolderResponse } from "../api/explorerApi";
 import { authClient } from "../auth-client";
 type User = typeof authClient.$Infer.Session.user;
 /* ------------- explorer types --------------- */
@@ -36,7 +37,7 @@ export type ExplorerStore = {
     parentId: string,
     data: FolderChildren,
     force?: boolean,
-  ) => Promise<void>;
+  ) => Promise<FolderResponse>;
   setSelectedFile: (parentId: string, fileId: string) => void;
 
   insertFile: (parentId: string, file: FileItem) => void;

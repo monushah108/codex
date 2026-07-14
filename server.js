@@ -30,6 +30,8 @@ app.prepare().then(() => {
     },
   });
 
+  const users = new Map();
+
   io.on("connection", (socket) => {
     console.log("Client Connected:", socket.id);
 
@@ -89,7 +91,6 @@ app.prepare().then(() => {
     // =========================
     // JOIN EXPLORER
     // =========================
-    const users = new Map();
     socket.on("explorer:join", ({ roomId, user }) => {
       users.set(socket.id, user);
       socket.join(roomId);
@@ -122,18 +123,14 @@ app.prepare().then(() => {
     // EXPLORER OPERATIONS
     // =========================
 
-    socket.on(
-      "explorer:operation",
-      ({ roomId, operation, target, payload, parentId, id }) => {
-        socket.to(roomId).emit("explorer:operation", {
-          operation,
-          target,
-          payload,
-          parentId,
-          id,
-        });
-      },
-    );
+    socket.on("explorer:operation", ({ roomId, type, target, payload }) => {
+      console.log("explorer operation", payload);
+      socket.to(roomId).emit("explorer:operation", {
+        type,
+        target,
+        payload,
+      });
+    });
 
     socket.on("disconnect", () => {
       if (users.has(socket.id)) {

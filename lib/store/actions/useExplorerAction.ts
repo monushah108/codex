@@ -7,6 +7,7 @@ export const useExplorerActions: ExplorerActions = {
   loadFolder: async (roomId, parentId, force) => {
     const data = await ExplorerApi.loadFolder(roomId, parentId);
     useExplorerstore.getState().loadFolder(roomId, parentId, data, force);
+    return data;
   },
   addFolder: async (roomId, parentId, name) => {
     const folder = await ExplorerApi.createFolder(roomId, parentId, name);

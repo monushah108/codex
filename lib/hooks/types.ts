@@ -2,29 +2,86 @@ import { FileItem, FolderItem } from "../store/types";
 
 export type ExplorerOperation =
   | {
-      operation: "create";
-      target: "file" | "folder";
-      payload: FileItem | FolderItem;
-      parentId: string;
+      type: "add";
+      target: "file";
+      payload: {
+        parentId: string;
+        file: FileItem;
+      };
     }
   | {
-      operation: "rename";
-      target: "file" | "folder";
-      id: string;
-      name: string;
+      type: "add";
+      target: "folder";
+      payload: {
+        parentId: string;
+        folder: FolderItem;
+      };
     }
   | {
-      operation: "delete";
-      target: "file" | "folder";
-      id: string;
+      type: "update";
+      target: "file";
+      payload: {
+        parentId: string;
+        id: string;
+        newName: string;
+      };
     }
   | {
-      operation: "move";
-      target: "file" | "folder";
-      id: string;
-      from: string;
-      to: string;
+      type: "update";
+      target: "folder";
+      payload: {
+        parentId: string;
+        id: string;
+        newName: string;
+      };
+    }
+  | {
+      type: "remove";
+      target: "file";
+      payload: {
+        parentId: string;
+        id: string;
+      };
+    }
+  | {
+      type: "remove";
+      target: "folder";
+      payload: {
+        parentId: string;
+        id: string;
+      };
     };
+
+export type UseExplorerSocket = {
+  applyCreate(
+    roomId: string,
+    parentId: string,
+    item: FileItem,
+    target: "file",
+  ): void;
+
+  applyCreate(
+    roomId: string,
+    parentId: string,
+    item: FolderItem,
+    target: "folder",
+  ): void;
+
+  applyUpdate(
+    roomId: string,
+    parentId: string,
+    id: string,
+    newName: string,
+    target: "file" | "folder",
+  ): void;
+
+  applyRemove(
+    roomId: string,
+    parentId: string,
+    id: string,
+    target: "file" | "folder",
+  ): void;
+};
 
 export type Activity = {
   id: string;

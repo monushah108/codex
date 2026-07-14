@@ -37,7 +37,7 @@ function FolderItem({
   setCreating,
   setSelected,
   selected,
-
+  explorerSync,
   depth = 0,
 }: Folderprop) {
   const [inputValue, setInputValue] = useState("");
@@ -46,13 +46,6 @@ function FolderItem({
   const [isOpen, setIsOpen] = useState(false);
 
   const cache = useExplorerstore((s) => s.cache[item._id]);
-  // const loadFolder = useExplorerstore((s) => s.loadFolder);
-  // const addFile = useExplorerstore((s) => s.addFile);
-  // const addFolder = useExplorerstore((s) => s.addFolder);
-  // const renameFile = useExplorerstore((s) => s.renameFile);
-  // const renameFolder = useExplorerstore((s) => s.renameFolder);
-  // const deleteFile = useExplorerstore((s) => s.deleteFile);
-  // const deleteFolder = useExplorerstore((s) => s.deleteFolder);
   const openFile = useCodestore((s) => s.openFile);
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<"file" | "folder" | null>(null);
@@ -118,16 +111,26 @@ function FolderItem({
 
   /* ---------------- CREATE ---------------- */
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!inputValue.trim()) return;
 
     if (error) return;
 
-    // if (creating.type === "file") addFile(roomId, item._id, inputValue);
-    // else addFolder(roomId, item._id, inputValue);j
-    if (creating.type === "file")
-      useExplorerActions.addFile(roomId, item._id, inputValue);
-    else useExplorerActions.addFolder(roomId, item._id, inputValue);
+    if (creating.type === "file") {
+      const file = await useExplorerActions.addFile(
+        roomId,
+        item._id,
+        inputValue,
+      );
+      explorerSync.applyCreate(roomId, item._id, file, "file");
+    } else {
+      const folder = await useExplorerActions.addFolder(
+        roomId,
+        item._id,
+        inputValue,
+      );
+      explorerSync.applyCreate(roomId, item._id, folder, "folder");
+    }
 
     setInputValue("");
     setCreating({ parentId: null, type: null });
@@ -148,26 +151,50 @@ function FolderItem({
     if (!renameValue.trim()) return;
     if (error) return;
 
-    if (type === "file")
-      useExplorerActions.renameFile(roomId, item._id, renamingId, renameValue);
-    if (type === "folder")
-      useExplorerActions.renameFolder(
+    if (type === "file") {
+      await useExplorerActions.renameFile(
+        roomId,
+        item._id,
+        renamingId,
+        renameValue,
+      );
+      explorerSync.applyUpdate(
+        roomId,
+        item._id,
+        renamingId,
+        renameValue,
+        "file",
+      );
+    }
+    if (type === "folder") {
+      await useExplorerActions.renameFolder(
         roomId,
         item.parentDirId,
         renamingId,
         renameValue,
       );
+      explorerSync.applyUpdate(
+        roomId,
+        item.parentDirId,
+        renamingId,
+        renameValue,
+        "folder",
+      );
+    }
 
     setRenamingId(null);
   };
 
   /* ---------------- DELETE ---------------- */
 
-  const handleDelete = (id: string, type: "file" | "folder") => {
-    if (type === "file") useExplorerActions.deleteFile(roomId, item._id, id);
+  const handleDelete = async (id: string, type: "file" | "folder") => {
+    if (type === "file") {
+      await useExplorerActions.deleteFile(roomId, item._id, id);
+      explorerSync.applyRemove(roomId, item._id, id, "file");
+    }
     if (type === "folder") {
-      useExplorerActions.deleteFolder(roomId, item.parentDirId, id);
-      console.log("handle delete", item.parentDirId, id);
+      await useExplorerActions.deleteFolder(roomId, item.parentDirId, id);
+      explorerSync.applyRemove(roomId, item.parentDirId, id, "folder");
     }
   };
 
@@ -326,6 +353,7 @@ function FolderItem({
             setSelected={setSelected}
             selected={selected}
             depth={depth + 1}
+            explorerSync={explorerSync}
           />
         ))}
 
