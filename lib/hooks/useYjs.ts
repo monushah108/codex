@@ -12,7 +12,6 @@ import { socket } from "@/lib/socket";
 import { destroyAwareness, getAwareness } from "../awareness";
 import { destroyYDoc, getYDoc, getYText } from "../yjs";
 import { useCodestore } from "../store/Codestore";
-import { useExplorerstore } from "../store/Explorerstore";
 
 export function useYjs(roomId: string, fileId: string) {
   // Create only once
@@ -50,60 +49,6 @@ export function useYjs(roomId: string, fileId: string) {
     });
 
     // -------------------------
-    // Initial Sync
-    // -------------------------
-    const handleSync = ({ update }: { update: number[] }) => {
-      Y.applyUpdate(ydoc, new Uint8Array(update));
-    };
-
-    socket.on("yjs:sync", handleSync);
-
-    // -------------------------
-    // Receive remote updates
-    // -------------------------
-    const handleRemoteUpdate = ({ update }: { update: number[] }) => {
-      Y.applyUpdate(ydoc, new Uint8Array(update), "remote");
-    };
-
-    socket.on("yjs:update", handleRemoteUpdate);
-
-    // -------------------------
-    // DELETE
-    // -------------------------
-
-    const handleDelete = ({
-      fileId,
-      type,
-    }: {
-      fileId: string;
-      type: string;
-    }) => {
-      const explorer = useExplorerstore.getState();
-      const isDeleted = useCodestore.getState().code[fileId]?.isDeleted;
-      if (isDeleted) return;
-      useExplorerstore.setState((state) => ({
-        cache: {
-          ...state.cache,
-          [fileId]: {
-            ...state.cache[fileId],
-            files: state.cache[fileId].files.map((file) =>
-              file._id === fileId ? { ...file, isDeleted: true } : file,
-            ),
-          },
-        },
-      }));
-      useCodestore.getState().closeFile(fileId);
-
-      if (type === "file") {
-        explorer.deleteFile(roomId, fileId);
-      } else if (type === "folder") {
-        explorer.deleteFolder(roomId, fileId);
-      }
-    };
-
-    socket.on("file:delete", handleDelete);
-
-    // -------------------------
     // Send local updates
     // -------------------------
     const handleFileSaved = ({
@@ -136,6 +81,24 @@ export function useYjs(roomId: string, fileId: string) {
     };
 
     socket.on("file:saved", handleFileSaved);
+
+    // -------------------------
+    // Initial Sync
+    // -------------------------
+    const handleSync = ({ update }: { update: number[] }) => {
+      Y.applyUpdate(ydoc, new Uint8Array(update));
+    };
+
+    socket.on("yjs:sync", handleSync);
+
+    // -------------------------
+    // Receive remote updates
+    // -------------------------
+    const handleRemoteUpdate = ({ update }: { update: number[] }) => {
+      Y.applyUpdate(ydoc, new Uint8Array(update), "remote");
+    };
+
+    socket.on("yjs:update", handleRemoteUpdate);
 
     // -------------------------
     // Send local updates
@@ -198,7 +161,6 @@ export function useYjs(roomId: string, fileId: string) {
       socket.off("yjs:sync", handleSync);
       socket.off("yjs:update", handleRemoteUpdate);
       socket.off("yjs:awareness", handleAwareness);
-      socket.off("file:delete", handleDelete);
       socket.off("file:saved", handleFileSaved);
 
       ydoc.off("update", handleLocalUpdate);

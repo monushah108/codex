@@ -87,38 +87,59 @@ app.prepare().then(() => {
     });
 
     // =========================
+    // JOIN EXPLORER
+    // =========================
+    const users = new Map();
+    socket.on("explorer:join", ({ roomId, user }) => {
+      users.set(socket.id, user);
+      socket.join(roomId);
+    });
+
+    // =========================
     // ACTIVIIES
     // =========================
 
-    // socket.on("activity" , ({roomId , fileId ,type , msg}) => {
-    //     socket.to()
-    // })
-
-    // =========================
-    // UPDATE FILE
-    // =========================
-
-    socket.on("file:saved", ({ roomId, fileId, content }) => {
-      console.log("file saved", fileId);
-      socket.to(`${roomId}:${fileId}`).emit("file:saved", {
-        fileId,
-        content,
-      });
-    });
-
-    // =========================
-    // DELETE FILE
-    // =========================
-
-    socket.on("file:delete", ({ roomId, fileId, type }) => {
-      console.log("file delete ", fileId);
-      socket.to(roomId).emit("file:delete", {
-        fileId,
+    socket.on("activity", ({ roomId, type, msg }) => {
+      socket.to(roomId).emit("activity", {
         type,
+        msg,
       });
     });
+
+    // =========================
+    // MEMBERS
+    // =========================
+
+    socket.on("members", ({ roomId }) => {
+      socket.to(roomId).emit("members", {
+        users,
+        roomId,
+        socketId: socket.id,
+      });
+    });
+
+    // =========================
+    // EXPLORER OPERATIONS
+    // =========================
+
+    socket.on(
+      "explorer:operation",
+      ({ roomId, operation, target, payload, parentId, id }) => {
+        socket.to(roomId).emit("explorer:operation", {
+          operation,
+          target,
+          payload,
+          parentId,
+          id,
+        });
+      },
+    );
 
     socket.on("disconnect", () => {
+      if (users.has(socket.id)) {
+        users.clear(socket.id);
+      }
+
       console.log("Disconnected:", socket.id);
     });
   });

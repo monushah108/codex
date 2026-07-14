@@ -11,11 +11,13 @@ import { useState, memo } from "react";
 import { useExplorerstore } from "@/lib/store/Explorerstore";
 import ExplorerMenu from "../Module/ExplorerMenu";
 import { useCodestore } from "@/lib/store/Codestore";
+import { useExplorerActions } from "@/lib/store/actions/useExplorerAction";
 
 type Folderprop = {
   item: {
     _id: string;
     name: string;
+    parentDirId: string;
   };
   roomId: string;
   creating: { parentId: string | null; type: "file" | "folder" | null };
@@ -44,13 +46,13 @@ function FolderItem({
   const [isOpen, setIsOpen] = useState(false);
 
   const cache = useExplorerstore((s) => s.cache[item._id]);
-  const loadFolder = useExplorerstore((s) => s.loadFolder);
-  const addFile = useExplorerstore((s) => s.addFile);
-  const addFolder = useExplorerstore((s) => s.addFolder);
-  const renameFile = useExplorerstore((s) => s.renameFile);
-  const renameFolder = useExplorerstore((s) => s.renameFolder);
-  const deleteFile = useExplorerstore((s) => s.deleteFile);
-  const deleteFolder = useExplorerstore((s) => s.deleteFolder);
+  // const loadFolder = useExplorerstore((s) => s.loadFolder);
+  // const addFile = useExplorerstore((s) => s.addFile);
+  // const addFolder = useExplorerstore((s) => s.addFolder);
+  // const renameFile = useExplorerstore((s) => s.renameFile);
+  // const renameFolder = useExplorerstore((s) => s.renameFolder);
+  // const deleteFile = useExplorerstore((s) => s.deleteFile);
+  // const deleteFolder = useExplorerstore((s) => s.deleteFolder);
   const openFile = useCodestore((s) => s.openFile);
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<"file" | "folder" | null>(null);
@@ -121,8 +123,11 @@ function FolderItem({
 
     if (error) return;
 
-    if (creating.type === "file") addFile(roomId, item._id, inputValue);
-    else addFolder(roomId, item._id, inputValue);
+    // if (creating.type === "file") addFile(roomId, item._id, inputValue);
+    // else addFolder(roomId, item._id, inputValue);j
+    if (creating.type === "file")
+      useExplorerActions.addFile(roomId, item._id, inputValue);
+    else useExplorerActions.addFolder(roomId, item._id, inputValue);
 
     setInputValue("");
     setCreating({ parentId: null, type: null });
@@ -143,9 +148,15 @@ function FolderItem({
     if (!renameValue.trim()) return;
     if (error) return;
 
-    if (type === "file") renameFile(roomId, item._id, renamingId, renameValue);
+    if (type === "file")
+      useExplorerActions.renameFile(roomId, item._id, renamingId, renameValue);
     if (type === "folder")
-      renameFolder(roomId, item._id, renamingId, renameValue);
+      useExplorerActions.renameFolder(
+        roomId,
+        item.parentDirId,
+        renamingId,
+        renameValue,
+      );
 
     setRenamingId(null);
   };
@@ -153,14 +164,17 @@ function FolderItem({
   /* ---------------- DELETE ---------------- */
 
   const handleDelete = (id: string, type: "file" | "folder") => {
-    if (type === "file") deleteFile(roomId, item._id, id);
-    if (type === "folder") deleteFolder(roomId, item._id, id);
+    if (type === "file") useExplorerActions.deleteFile(roomId, item._id, id);
+    if (type === "folder") {
+      useExplorerActions.deleteFolder(roomId, item.parentDirId, id);
+      console.log("handle delete", item.parentDirId, id);
+    }
   };
 
   return (
     <Collapsible
       onOpenChange={(open) => {
-        if (open) loadFolder(roomId, item._id);
+        if (open) useExplorerActions.loadFolder(roomId, item._id);
         setIsOpen(open);
       }}
     >

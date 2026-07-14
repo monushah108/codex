@@ -1,69 +1,9 @@
 import { create } from "zustand";
 import { getType } from "../features";
-import { authClient } from "../auth-client";
 import { socket } from "../socket";
+import { CodeState, Store } from "./types";
 
-type FileItem = {
-  _id: string;
-  name: string;
-  isEdited?: boolean;
-  isDeleted?: boolean;
-};
-type User = typeof authClient.$Infer.Session.user;
-
-type Output = {
-  id: string;
-  stdout?: string;
-  stderr?: string;
-  compile_output?: string;
-  message?: string;
-  error?: string;
-};
-
-type CodeState = {
-  content: string;
-  savedContent: string;
-  loaded?: boolean;
-  loading?: boolean;
-  saving?: boolean;
-  generating?: boolean;
-  running?: boolean;
-  isDeleted?: boolean;
-};
-type Store = {
-  code: Record<string, CodeState>;
-
-  openFiles: FileItem[];
-
-  activeFileId: string | null;
-
-  outputs: Output[];
-
-  user: User | null;
-  setUser: (user: User | null) => void;
-
-  openFile: (file: FileItem, roomId: string) => Promise<void>;
-
-  closeFile: (fileId: string) => void;
-
-  setActiveFile: (fileId: string) => void;
-
-  setFileEdited: (fileId: string, edited: boolean) => void;
-
-  updateContent: (fileId: string, content: string) => void;
-
-  loadFileContent: (roomId: string, fileId: string) => Promise<void>;
-  runCode: (fileId: string, content?: string) => Promise<void>;
-  runCommand: (command: string, fileId: string) => Promise<void>;
-  clearOutputs: () => void;
-  saveFileContent: (
-    roomId: string,
-    fileId: string,
-    content: string,
-  ) => Promise<void>;
-
-  generateCode: (fileId: string, prompt: string) => Promise<void>;
-};
+import * as codeApi from "@/lib/api/codeApi";
 
 export const useCodestore = create<Store>((set, get) => {
   const updateCode = (fileId: string, data: Partial<CodeState>) =>
@@ -171,15 +111,7 @@ export const useCodestore = create<Store>((set, get) => {
       });
 
       try {
-        const res = await fetch(
-          `/api/playground/${roomId}/files?fileId=${fileId}`,
-        );
-
-        if (!res.ok) {
-          throw new Error("Failed to load file");
-        }
-
-        const data = await res.json();
+        const data = await codeApi.loadFile(roomId, fileId);
 
         updateCode(fileId, {
           content: data?.content || "",
@@ -219,23 +151,7 @@ export const useCodestore = create<Store>((set, get) => {
       }
 
       try {
-        const res = await fetch(`/api/playground/${roomId}/files`, {
-          method: "PUT",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            id: fileId,
-
-            content,
-          }),
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to save file");
-        }
+        await codeApi.saveFile(roomId, fileId, content);
 
         get().setFileEdited(fileId, false);
 
@@ -278,7 +194,7 @@ export const useCodestore = create<Store>((set, get) => {
 
       const activeFile = get().openFiles.find((f) => f._id === fileId);
 
-      const langId = getType(activeFile?.name)?.id;
+      const langId = getType(activeFile?.name as string)?.id;
 
       if (!langId) {
         set((state) => ({
@@ -313,21 +229,7 @@ export const useCodestore = create<Store>((set, get) => {
       }));
 
       try {
-        const res = await fetch(
-          "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              source_code: code,
-              language_id: langId,
-            }),
-          },
-        );
-
-        const data = await res.json();
+        const data = await codeApi.runCode(activeFile?.name as string, code);
 
         set((state) => ({
           outputs: [
@@ -405,40 +307,20 @@ export const useCodestore = create<Store>((set, get) => {
     },
 
     generateCode: async (fileId, prompt) => {
-      const existingContent = get().code[fileId]?.content || "";
+      const content = get().code[fileId]?.content || "";
 
       updateCode(fileId, {
         generating: true,
       });
 
       try {
-        const res = await fetch("/api/ai", {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            prompt,
-
-            content: existingContent,
-          }),
-        });
-
-        if (!res.ok) {
-          throw new Error("Generation failed");
-        }
-
-        const data = await res.json();
+        const data = await codeApi.generateCode(prompt, content);
 
         updateCode(fileId, {
           content: data.code,
 
           generating: false,
         });
-
-        // get().setFileEdited(fileId, true);
       } catch (err) {
         console.error(err);
 

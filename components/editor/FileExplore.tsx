@@ -12,16 +12,10 @@ import NoFolder from "./ui/noFolder";
 import { Spinner } from "../ui/spinner";
 
 import debounce from "lodash/debounce";
-import { useExplorerstore } from "@/lib/store/Explorerstore";
-
-type FileItem = {
-  _id: string;
-  name: string;
-  parentDirId: string | null;
-  roomId: string;
-  isEdited?: boolean;
-  isDeleted?: boolean;
-};
+// import { useExplorerstore } from "@/lib/store/Explorerstore";
+// import useExplorerSocket from "@/lib/hooks/useExplorerSocket";
+import { FileItem } from "@/lib/store/types";
+import { useExplorerActions } from "@/lib/store/actions/useExplorerAction";
 
 interface docProp {
   rootDir: FileItem | null;
@@ -44,11 +38,13 @@ function FileExplore({ roomId }: { roomId: string }) {
     type: null,
   });
 
+  // useExplorerSocket({ roomId });
+
   const [error, setError] = useState("");
 
   const [Loading, startTransition] = useTransition();
 
-  const { loadFolder } = useExplorerstore();
+  // const { loadFolder } = useExplorerstore();
 
   useEffect(() => {
     getFolder();
@@ -93,7 +89,11 @@ function FileExplore({ roomId }: { roomId: string }) {
 
   const handleRefresh = debounce(() => {
     startTransition(() => {
-      loadFolder(roomId, selected || doc?.rootDir?._id, true);
+      useExplorerActions.loadFolder(
+        roomId,
+        selected || doc?.rootDir?._id,
+        true,
+      );
     });
   }, 500);
 
