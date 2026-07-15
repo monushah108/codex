@@ -1,6 +1,6 @@
 import { FolderResponse } from "../api/explorerApi";
 import { authClient } from "../auth-client";
-type User = typeof authClient.$Infer.Session.user;
+export type User = typeof authClient.$Infer.Session.user;
 /* ------------- explorer types --------------- */
 
 export type FileItem = {
@@ -26,11 +26,26 @@ export type FolderChildren = {
   loading: boolean;
 };
 
+export type Activity = {
+  id: string;
+  userId: string;
+  userName: string;
+  type: "add" | "update" | "remove";
+  target: "file" | "folder";
+  fileName: string;
+  time: string;
+  message: string;
+};
 export type ExplorerStore = {
   cache: Record<string, FolderChildren>;
   members: User[];
+  activity: Activity[];
 
-  setMembers: (user: User) => void;
+  setMembers: (members: User[]) => void;
+
+  setActivity: (activity: Activity) => void;
+
+  removeActivity: (id: string) => void;
 
   loadFolder: (
     roomId: string,

@@ -12,6 +12,7 @@ import { useExplorerstore } from "@/lib/store/Explorerstore";
 import ExplorerMenu from "../Module/ExplorerMenu";
 import { useCodestore } from "@/lib/store/Codestore";
 import { useExplorerActions } from "@/lib/store/actions/useExplorerAction";
+import { UseExplorerSocket } from "@/lib/hooks/types";
 
 type Folderprop = {
   item: {
@@ -27,6 +28,7 @@ type Folderprop = {
   }) => void;
   setSelected: (id: string) => void;
   selected: string | null;
+  explorerSync: UseExplorerSocket;
   depth?: number;
 };
 
@@ -38,6 +40,7 @@ function FolderItem({
   setSelected,
   selected,
   explorerSync,
+  user,
   depth = 0,
 }: Folderprop) {
   const [inputValue, setInputValue] = useState("");
@@ -122,14 +125,14 @@ function FolderItem({
         item._id,
         inputValue,
       );
-      explorerSync.applyCreate(roomId, item._id, file, "file");
+      explorerSync.applyCreate(roomId, user, item._id, file, "file");
     } else {
       const folder = await useExplorerActions.addFolder(
         roomId,
         item._id,
         inputValue,
       );
-      explorerSync.applyCreate(roomId, item._id, folder, "folder");
+      explorerSync.applyCreate(roomId, user, item._id, folder, "folder");
     }
 
     setInputValue("");
@@ -154,12 +157,14 @@ function FolderItem({
     if (type === "file") {
       await useExplorerActions.renameFile(
         roomId,
+        user,
         item._id,
         renamingId,
         renameValue,
       );
       explorerSync.applyUpdate(
         roomId,
+        user,
         item._id,
         renamingId,
         renameValue,
@@ -190,11 +195,11 @@ function FolderItem({
   const handleDelete = async (id: string, type: "file" | "folder") => {
     if (type === "file") {
       await useExplorerActions.deleteFile(roomId, item._id, id);
-      explorerSync.applyRemove(roomId, item._id, id, "file");
+      explorerSync.applyRemove(roomId, user, item._id, id, "file");
     }
     if (type === "folder") {
       await useExplorerActions.deleteFolder(roomId, item.parentDirId, id);
-      explorerSync.applyRemove(roomId, item.parentDirId, id, "folder");
+      explorerSync.applyRemove(roomId, user, item.parentDirId, id, "folder");
     }
   };
 
@@ -354,6 +359,7 @@ function FolderItem({
             selected={selected}
             depth={depth + 1}
             explorerSync={explorerSync}
+            user={user}
           />
         ))}
 

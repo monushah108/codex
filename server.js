@@ -92,8 +92,42 @@ app.prepare().then(() => {
     // JOIN EXPLORER
     // =========================
     socket.on("explorer:join", ({ roomId, user }) => {
-      users.set(socket.id, user);
+      users.set(socket.id, {
+        roomId,
+        user,
+      });
+
       socket.join(roomId);
+      const members = [...users.values()]
+        .filter((m) => m.roomId === roomId)
+        .map((m) => m.user);
+      io.to(roomId).emit("members", members);
+      socket.to(roomId).emit("activity", {
+        id: crypto.randomUUID(),
+        userId: user.id,
+        userName: user.name,
+        type: "join",
+        time: new Date().toLocaleTimeString(),
+      });
+    });
+
+    socket.on("explorer:leave", ({ roomId, user }) => {
+      socket.leave(roomId);
+      users.delete(socket.id);
+
+      const members = [...users.values()]
+        .filter((m) => m.roomId === roomId)
+        .map((m) => m.user);
+
+      io.to(roomId).emit("members", members);
+
+      socket.to(roomId).emit("activity", {
+        id: crypto.randomUUID(),
+        userId: user.id,
+        userName: user.name,
+        type: "leave",
+        time: new Date().toLocaleTimeString(),
+      });
     });
 
     // =========================
@@ -111,33 +145,58 @@ app.prepare().then(() => {
     // MEMBERS
     // =========================
 
-    socket.on("members", ({ roomId }) => {
-      socket.to(roomId).emit("members", {
-        users,
-        roomId,
-        socketId: socket.id,
-      });
-    });
-
     // =========================
     // EXPLORER OPERATIONS
     // =========================
 
-    socket.on("explorer:operation", ({ roomId, type, target, payload }) => {
-      console.log("explorer operation", payload);
-      socket.to(roomId).emit("explorer:operation", {
-        type,
-        target,
-        payload,
-      });
-    });
+    socket.on(
+      "explorer:operation",
+      ({ roomId, user, type, target, payload }) => {
+        socket.to(roomId).emit("explorer:operation", {
+          user,
+          type,
+          target,
+          payload,
+        });
+
+        const fileName =
+          payload.file?.name ?? payload.folder?.name ?? payload.newName ?? "";
+
+        const activity = {
+          id: crypto.randomUUID(),
+          userId: user.id,
+          userName: user.name,
+          type,
+          target,
+          fileName,
+          time: new Date().toLocaleTimeString(),
+          message: `${user.name} has ${type}  ${target} "${payload.file?.name}"`,
+        };
+
+        socket.to(roomId).emit("activity", activity);
+      },
+    );
 
     socket.on("disconnect", () => {
-      if (users.has(socket.id)) {
-        users.clear(socket.id);
-      }
+      const member = users.get(socket.id);
 
-      console.log("Disconnected:", socket.id);
+      if (!member) return;
+
+      users.delete(socket.id);
+
+      const members = [...users.values()]
+        .filter((m) => m.roomId === member.roomId)
+        .map((m) => m.user);
+
+      io.to(member.roomId).emit("members", members);
+
+      io.to(member.roomId).emit("activity", {
+        id: crypto.randomUUID(),
+        userId: member.user.id,
+        userName: member.user.name,
+        type: "leave",
+        time: new Date().toLocaleTimeString(),
+      });
     });
   });
 
@@ -145,5 +204,3 @@ app.prepare().then(() => {
     console.log("Server running on http://localhost:3000");
   });
 });
-
-/* TODO: Implement real time file deletion functionality and real time file saved functionality when one user saves a file than others files will be updated in real time */

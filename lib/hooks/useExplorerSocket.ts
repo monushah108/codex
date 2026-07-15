@@ -7,6 +7,7 @@ import { useCodestore } from "../store/Codestore";
 import { useExplorerstore } from "../store/Explorerstore";
 
 import { ExplorerOperation, UseExplorerSocket } from "./types";
+import { Activity } from "../store/types";
 
 export default function useExplorerSocket({
   roomId,
@@ -24,22 +25,22 @@ export default function useExplorerSocket({
 
     /* ---------------- MEMBERS ---------------- */
 
-    socket.emit("members", { roomId });
-
-    const handleMembers = ({ users }: { users: (typeof user)[] }) => {
-      useExplorerstore.setState({
-        members: users,
-      });
+    const handleMembers = (members: (typeof user)[]) => {
+      useExplorerstore.getState().setMembers(members);
     };
-
     socket.on("members", handleMembers);
 
     /* ---------------- ACTIVITY ---------------- */
+    const handleActivity = (activity: Activity) => {
+      const store = useExplorerstore.getState();
 
-    const handleActivity = () => {};
+      store.setActivity(activity);
 
+      setTimeout(() => {
+        useExplorerstore.getState().removeActivity(activity.id);
+      }, 5000); // remove after 5 seconds
+    };
     socket.on("activity", handleActivity);
-
     /* ---------------- OPERATIONS ---------------- */
 
     const applyOperation = (operation: ExplorerOperation) => {
@@ -98,6 +99,10 @@ export default function useExplorerSocket({
     socket.on("explorer:operation", applyOperation);
 
     return () => {
+      socket.emit("explorer:leave", {
+        roomId,
+        user,
+      });
       socket.off("members", handleMembers);
       socket.off("activity", handleActivity);
       socket.off("explorer:operation", applyOperation);
@@ -109,10 +114,11 @@ export default function useExplorerSocket({
   /* -------------------------------------------------------------------------- */
 
   const applyCreate: UseExplorerSocket["applyCreate"] = useCallback(
-    (roomId, parentId, item, target) => {
+    (roomId, user, parentId, item, target) => {
       console.log("add file ", item);
       socket.emit("explorer:operation", {
         roomId,
+        user,
         type: "add",
         target,
         payload: {
@@ -125,10 +131,11 @@ export default function useExplorerSocket({
   );
 
   const applyUpdate: UseExplorerSocket["applyUpdate"] = useCallback(
-    (roomId, parentId, id, newName, target) => {
+    (roomId, user, parentId, id, newName, target) => {
       console.log("update file ", id);
       socket.emit("explorer:operation", {
         roomId,
+        user,
         type: "update",
         target,
         payload: {
@@ -142,10 +149,11 @@ export default function useExplorerSocket({
   );
 
   const applyRemove: UseExplorerSocket["applyRemove"] = useCallback(
-    (roomId, parentId, id, target) => {
+    (roomId, user, parentId, id, target) => {
       console.log("remoe file ", id);
       socket.emit("explorer:operation", {
         roomId,
+        user,
         type: "remove",
         target,
         payload: {

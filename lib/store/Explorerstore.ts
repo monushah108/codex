@@ -8,11 +8,25 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
 
   members: [],
 
+  activity: [],
+
+  /* --------------- ACTIVITY ------------------- */
+
+  setActivity: (activity) =>
+    set((state) => ({
+      activity: [activity, ...state.activity].slice(0, 20),
+    })),
+
+  removeActivity: (id) =>
+    set((state) => ({
+      activity: state.activity.filter((a) => a.id !== id),
+    })),
+
   /* --------------- MEMBER --------------------- */
 
-  setMembers: (user) =>
-    set((state) => ({
-      members: [...state.members, user],
+  setMembers: (members) =>
+    set(() => ({
+      members,
     })),
 
   /* ---------------- LOAD FOLDER ---------------- */
@@ -205,3 +219,6 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
     });
   },
 }));
+
+/* TODO : implement a instant file deletion system so it does not open while deleting file and folders it suppose not to be visible to user while deleting . deletion will continue in background
+ */

@@ -1,4 +1,4 @@
-import { FileItem, FolderItem } from "../store/types";
+import { FileItem, FolderItem, User } from "../store/types";
 
 export type ExplorerOperation =
   | {
@@ -55,6 +55,7 @@ export type ExplorerOperation =
 export type UseExplorerSocket = {
   applyCreate(
     roomId: string,
+    user: User,
     parentId: string,
     item: FileItem,
     target: "file",
@@ -62,6 +63,7 @@ export type UseExplorerSocket = {
 
   applyCreate(
     roomId: string,
+    user: User,
     parentId: string,
     item: FolderItem,
     target: "folder",
@@ -69,6 +71,7 @@ export type UseExplorerSocket = {
 
   applyUpdate(
     roomId: string,
+    user: User,
     parentId: string,
     id: string,
     newName: string,
@@ -77,6 +80,7 @@ export type UseExplorerSocket = {
 
   applyRemove(
     roomId: string,
+    user: User,
     parentId: string,
     id: string,
     target: "file" | "folder",

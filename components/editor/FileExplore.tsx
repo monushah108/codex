@@ -16,6 +16,7 @@ import debounce from "lodash/debounce";
 import useExplorerSocket from "@/lib/hooks/useExplorerSocket";
 import { FileItem } from "@/lib/store/types";
 import { useExplorerActions } from "@/lib/store/actions/useExplorerAction";
+import { useCodestore } from "@/lib/store/Codestore";
 
 interface docProp {
   rootDir: FileItem | null;
@@ -39,6 +40,7 @@ function FileExplore({ roomId }: { roomId: string }) {
   });
 
   const explorerSync = useExplorerSocket({ roomId });
+  const user = useCodestore((s) => s.user);
 
   const [error, setError] = useState("");
 
@@ -135,6 +137,7 @@ function FileExplore({ roomId }: { roomId: string }) {
                 setSelected={setSelected}
                 Loading={Loading}
                 explorerSync={explorerSync}
+                user={user}
               />
             )
           )}
