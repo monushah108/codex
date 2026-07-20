@@ -33,9 +33,9 @@ export const useCodeActions: CodeActions = {
 
     const file = store.code[fileId];
 
-    if (!file || file.isDeleted) return;
+    // if (!file || file.isDeleted) return;
 
-    if (file.savedContent === content.content) return;
+    // if (file.savedContent === content.content) return;
 
     store.setSaving(fileId, true);
 

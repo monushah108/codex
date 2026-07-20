@@ -12,7 +12,7 @@ export default function PlayHeader({ roomId }: { roomId: string }) {
   useEffect(() => {
     socket.emit("yjs:join", { roomId });
   }, [roomId]);
-
+  /* TODO: is this working  */
   return (
     <div className="h-10 text-[#d4d4d4] col-start-1 col-end-3 shrink-0 bg-[#323233] border-b border-[#2d2d30] flex items-center justify-between px-3 py-4">
       <div className="flex items-center gap-3">

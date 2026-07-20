@@ -106,29 +106,19 @@ export const useCodestore = create<Store>((set, get) => {
       const cache = get().code[fileId];
 
       if (cache?.loading || cache?.loaded) return;
-
+      console.log("loadfile", cache);
       updateCode(fileId, {
-        loading: true,
+        content: data?.content || "",
+        savedContent: data?.content || "",
+        loaded: true,
+
+        loading: false,
       });
-
-      try {
-        updateCode(fileId, {
-          content: data?.content || "",
-          savedContent: data?.content || "",
-          loaded: true,
-
-          loading: false,
-        });
-      } catch (err) {
-        console.error(err);
-
-        updateCode(fileId, {
-          loading: false,
-        });
-      }
     },
 
-    setLoading: (fileId, loading) =>
+    setLoading: (fileId, loading) => {
+      console.log("loading", get().code[fileId]);
+
       set((state) => ({
         code: {
           ...state.code,
@@ -137,7 +127,8 @@ export const useCodestore = create<Store>((set, get) => {
             loading,
           },
         },
-      })),
+      }));
+    },
 
     setLoadFileError: (fileId, err) => {
       set((state) => ({
@@ -160,35 +151,35 @@ export const useCodestore = create<Store>((set, get) => {
         content,
       });
 
-      const IsSaved = get().code[fileId]?.savedContent == content;
-      const file = get().code[fileId];
+      // const IsSaved = get().code[fileId]?.savedContent == content;
+      // const file = get().code[fileId];
 
-      if (file?.isDeleted) {
-        return;
-      }
+      // if (file?.isDeleted) {
+      //   return;
+      // }
 
-      if (IsSaved) {
-        updateCode(fileId, {
-          saving: false,
-        });
-        return;
-      }
+      // if (IsSaved) {
+      //   updateCode(fileId, {
+      //     saving: false,
+      //   });
+      //   return;
+      // }
 
-      try {
-        get().setFileEdited(fileId, false);
+      // try {
+      get().setFileEdited(fileId, false);
 
-        updateCode(fileId, {
-          content,
-          savedContent: content,
-          saving: false,
-        });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        updateCode(fileId, {
-          saving: false,
-        });
-      }
+      updateCode(fileId, {
+        content,
+        savedContent: content,
+        saving: false,
+      });
+      // } catch (err) {
+      //   console.error(err);
+      // } finally {
+      //   updateCode(fileId, {
+      //     saving: false,
+      //   });
+      // }
     },
 
     setSaving: (fileId, saving) => {

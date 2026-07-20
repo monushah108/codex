@@ -89,17 +89,6 @@ app.prepare().then(() => {
     });
 
     // =========================
-    // TERMINAL
-    // =========================
-
-    socket.on("terminal", ({ roomId, fileId, data }) => {
-      const roomKey = `${roomId}:${fileId}`;
-      socket.to(roomKey).emit("terminal", {
-        data,
-      });
-    });
-
-    // =========================
     // JOIN EXPLORER
     // =========================
     socket.on("explorer:join", ({ roomId, user }) => {
@@ -149,6 +138,33 @@ app.prepare().then(() => {
       socket.to(roomId).emit("activity", {
         type,
         msg,
+      });
+    });
+
+    // =========================
+    // AI CHAT MESSAGES
+    // =========================
+
+    socket.on("messages", ({ roomId, user, data }) => {
+      socket.to(roomId).emit("messages", {
+        data,
+      });
+      socket.to(roomId).emit("activity", {
+        id: crypto.randomUUID(),
+        userId: user.id,
+        userName: user.name,
+        type: `${user.name} generating some response from codex-ai`,
+        time: new Date().toLocaleTimeString(),
+      });
+    });
+
+    // =========================
+    // TERMINAL
+    // =========================
+
+    socket.on("terminal", ({ roomId, data }) => {
+      socket.to(roomId).emit("terminal", {
+        data,
       });
     });
 
