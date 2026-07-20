@@ -114,8 +114,8 @@ export default function useExplorerSocket({
   /* -------------------------------------------------------------------------- */
 
   const applyCreate: UseExplorerSocket["applyCreate"] = useCallback(
-    (roomId, user, parentId, item, target) => {
-      console.log("add file ", item);
+    (parentId, item, target) => {
+      if (!roomId || !user) return;
       socket.emit("explorer:operation", {
         roomId,
         user,
@@ -127,12 +127,12 @@ export default function useExplorerSocket({
         },
       });
     },
-    [],
+    [roomId, user],
   );
 
   const applyUpdate: UseExplorerSocket["applyUpdate"] = useCallback(
-    (roomId, user, parentId, id, newName, target) => {
-      console.log("update file ", id);
+    (parentId, id, newName, target) => {
+      if (!roomId || !user) return;
       socket.emit("explorer:operation", {
         roomId,
         user,
@@ -145,12 +145,12 @@ export default function useExplorerSocket({
         },
       });
     },
-    [],
+    [roomId, user],
   );
 
   const applyRemove: UseExplorerSocket["applyRemove"] = useCallback(
-    (roomId, user, parentId, id, target) => {
-      console.log("remoe file ", id);
+    (parentId, id, target) => {
+      if (!roomId || !user) return;
       socket.emit("explorer:operation", {
         roomId,
         user,
@@ -162,7 +162,7 @@ export default function useExplorerSocket({
         },
       });
     },
-    [],
+    [roomId, user],
   );
 
   return {

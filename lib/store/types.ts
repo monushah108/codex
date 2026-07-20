@@ -3,6 +3,10 @@ import { authClient } from "../auth-client";
 export type User = typeof authClient.$Infer.Session.user;
 /* ------------- explorer types --------------- */
 
+export type RootDirectory = {
+  _id: string;
+  name: string;
+};
 export type FileItem = {
   _id: string;
   name: string;
@@ -67,11 +71,7 @@ export type ExplorerStore = {
 
 // Actions types
 export type ExplorerActions = {
-  loadFolder: (
-    roomId: string,
-    parentId: string,
-    force?: boolean,
-  ) => Promise<void>;
+  loadFolder: (roomId: string, parentId?: string) => Promise<FolderResponse>;
 
   addFile: (
     roomId: string,
@@ -113,14 +113,28 @@ export type ExplorerActions = {
 };
 
 /* ------------- codes types --------------- */
-
-type Output = {
+export type Output = {
   id: string;
   stdout?: string;
   stderr?: string;
   compile_output?: string;
   message?: string;
   error?: string;
+  loading?: boolean;
+  loaded?: boolean;
+};
+
+export type Message = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type AIChat = {
+  data: Message[];
+  loading: boolean;
+  loaded: boolean;
+  error: string | null;
 };
 
 export type CodeState = {
@@ -131,9 +145,13 @@ export type CodeState = {
   saving?: boolean;
   generating?: boolean;
   running?: boolean;
+  error?: string;
   isDeleted?: boolean;
 };
-export type Store = {
+
+export interface Store {
+  /* ---------- State ---------- */
+
   code: Record<string, CodeState>;
 
   openFiles: FileItem[];
@@ -142,28 +160,94 @@ export type Store = {
 
   outputs: Output[];
 
+  response: Message[];
+
   user: User | null;
-  setUser: (user: User | null) => void;
+  setError(fileId: string, error?: string): void;
+  /* ---------- User ---------- */
 
-  openFile: (file: FileItem, roomId: string) => Promise<void>;
+  setUser(user: User | null): void;
 
-  closeFile: (fileId: string) => void;
+  /* ---------- File ---------- */
 
-  setActiveFile: (fileId: string) => void;
+  openFile(file: FileItem, roomId: string): Promise<void>;
 
-  setFileEdited: (fileId: string, edited: boolean) => void;
+  closeFile(fileId: string): void;
 
-  updateContent: (fileId: string, content: string) => void;
+  setActiveFile(fileId: string): void;
 
-  loadFileContent: (roomId: string, fileId: string) => Promise<void>;
-  runCode: (fileId: string, content?: string) => Promise<void>;
-  runCommand: (command: string, fileId: string) => Promise<void>;
-  clearOutputs: () => void;
-  saveFileContent: (
-    roomId: string,
+  setFileEdited(fileId: string, edited: boolean): void;
+
+  updateContent(fileId: string, content: string): void;
+
+  setSavedFileError(fileId: string, err: any): void;
+
+  /* ---------- Cache ---------- */
+
+  setLoadedFile(
     fileId: string,
-    content: string,
-  ) => Promise<void>;
+    data: {
+      content: string;
+    },
+  ): void;
 
-  generateCode: (fileId: string, prompt: string) => Promise<void>;
+  setSavedFile(fileId: string, content: string): void;
+
+  setLoadFileError(fileId: string, err: any): void;
+
+  setGeneratedContent(
+    responseId: string,
+    prompt: any,
+    data: GenerateCodeResponse,
+  ): void;
+  setGeneratedError(err: string): void;
+
+  setClearResponse(): void;
+  /* ---------- Status ---------- */
+
+  setLoading(fileId: string, loading: boolean): void;
+
+  setSaving(fileId: string, saving: boolean): void;
+
+  setRunning(fileId: string, running: boolean): void;
+
+  setGenerating(fileId: string, generating: boolean): void;
+
+  setClearResponse(): void;
+
+  /* ---------- Output ---------- */
+
+  addOutput(output: Output): void;
+
+  removeOutput(id: string): void;
+
+  clearOutputs(): void;
+
+  setExecutionResult(fileId: string, result: RunCodeResponse): void;
+
+  /* ---------- Terminal ---------- */
+
+  runCommand(command: string, fileId: string): Promise<void>;
+}
+
+export type GenerateCodeResponse = {
+  code: string;
 };
+
+export type RunCodeResponse = Output;
+
+export interface CodeActions {
+  loadFile(roomId: string, fileId: string): Promise<void>;
+
+  saveFile(roomId: string, fileId: string, content: CodeState): Promise<void>;
+
+  runCode(fileId: string, fileName: string): Promise<void>;
+
+  generateCode(responseId: string, prompt: string): Promise<void>;
+
+  formatCode?(fileId: string): Promise<void>;
+
+  downloadFile?(fileId: string): Promise<void>;
+
+  duplicateFile?(roomId: string, fileId: string): Promise<void>;
+}

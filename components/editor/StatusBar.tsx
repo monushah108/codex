@@ -93,7 +93,7 @@ function StatusBar() {
             <button className="rounded hover:bg-white/10 p-1 transition-colors">
               <AvatarGroup>
                 {members.slice(0, 3).map((member) => (
-                  <Avatar key={member.id} className="size-4">
+                  <Avatar key={member.id} className="size-4 ml-1">
                     <AvatarImage src={member.image ?? ""} alt={member.name} />
 
                     <AvatarFallback>

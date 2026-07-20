@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { message } = await req.json();
+    const { prompt } = await req.json();
 
-    if (!message?.trim()) {
+    if (!prompt?.trim()) {
       return NextResponse.json(
         { error: "Message is required" },
         { status: 400 },
@@ -122,7 +122,7 @@ You are a focused technical assistant.
                 },
                 {
                   role: "user",
-                  content: message,
+                  content: prompt,
                 },
               ],
             }),

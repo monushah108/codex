@@ -2,91 +2,43 @@
 
 import { ResizablePanel } from "@/components/ui/resizable";
 import { Send } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Msg from "./ui/msg";
 import { Spinner } from "../ui/spinner";
 import { useLayout } from "@/context/layout-context";
-
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
+import { useCodestore } from "@/lib/store/Codestore";
+import { useCodeActions } from "@/lib/store/actions/useCodeAction";
 
 export default function Chat() {
   const { panels } = useLayout();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Hello! How can I help you today?",
-    },
-  ]);
-
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const response = useCodestore((s) => s.response);
+  console.log(response);
+  const setClearResponse = useCodestore((s) => s.setClearResponse);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages, loading]);
+  }, [response]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-
-    const prompt = input.trim();
-
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: prompt,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-
-    setInput("");
-    textareaRef.current?.style.setProperty("height", "24px");
-
-    setLoading(true);
+  const sendMessage = useCallback(async () => {
+    if (!input.trim()) return;
 
     try {
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: prompt,
-        }),
-      });
+      const prompt = input.trim();
 
-      const data = await res.json();
+      await useCodeActions.generateCode(crypto.randomUUID(), prompt);
 
-      const aiMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: data.response || "No response",
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "Something went wrong.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
+      setInput("");
+      textareaRef.current?.style.setProperty("height", "24px");
+    } catch (err) {
+      console.error(err);
     }
-  };
+  }, [input]);
 
   return (
     <ResizablePanel
@@ -99,7 +51,7 @@ export default function Chat() {
           <h2 className="text-sm font-medium text-zinc-200">Codex AI</h2>
 
           <button
-            onClick={() => setMessages([])}
+            onClick={() => setClearResponse()}
             className="text-xs text-zinc-500 hover:text-zinc-300"
           >
             Clear
@@ -109,8 +61,8 @@ export default function Chat() {
         {/* Messages */}
         <ScrollArea.Root className="flex-1 overflow-hidden max-h-175">
           <ScrollArea.Viewport className="h-full">
-            <div className="mx-auto max-w-4xl space-y-5 p-4">
-              {messages.map((msg) => (
+            {/* <div className="mx-auto max-w-4xl space-y-5 p-4">
+              {response.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex ${
@@ -128,7 +80,6 @@ export default function Chat() {
                   </div>
                 </div>
               ))}
-
               {loading && (
                 <div className="flex justify-start">
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
@@ -137,8 +88,9 @@ export default function Chat() {
                   </div>
                 </div>
               )}
+              {error && <div className="text-red-500 text-sm">{error}</div>}
               <div ref={bottomRef} />
-            </div>
+            </div> */}
           </ScrollArea.Viewport>
           <ScrollArea.Scrollbar orientation="vertical">
             <ScrollArea.Thumb />

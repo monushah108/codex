@@ -7,19 +7,33 @@ export type FolderResponse = {
   files: FileItem[];
 };
 
+export type ApiResponse<T> = {
+  status: number;
+  data?: T;
+  error?: string;
+};
+
 const jsonHeaders = {
   "Content-Type": "application/json",
 };
 
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
+async function request<T>(
+  url: string,
+  options?: RequestInit,
+): Promise<ApiResponse<T>> {
   const res = await fetch(url, options);
 
   if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message || "Request failed");
+    return {
+      status: res.status,
+      error: await res.text(),
+    };
   }
 
-  return res.json();
+  return {
+    status: res.status,
+    data: await res.json(),
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -29,20 +43,25 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 export async function loadFolder(
   roomId: string,
   parentId: string,
-): Promise<FolderResponse> {
-  return request<FolderResponse>(
-    `/api/playground/${roomId}/directory?parentId=${parentId}`,
-  );
+): Promise<ApiResponse<FolderResponse>> {
+  const url = parentId
+    ? `/api/playground/${roomId}/directory?parentId=${parentId}`
+    : `/api/playground/${roomId}/directory`;
+
+  return request<FolderResponse>(url, {
+    credentials: "include",
+  });
 }
 
 export async function createFolder(
   roomId: string,
   parentId: string,
   name: string,
-): Promise<FolderItem> {
+): Promise<ApiResponse<FolderItem>> {
   return request<FolderItem>(`/api/playground/${roomId}/directory`, {
     method: "POST",
     headers: jsonHeaders,
+    credentials: "include",
     body: JSON.stringify({
       parentId,
       name,
@@ -54,10 +73,11 @@ export async function renameFolder(
   roomId: string,
   folderId: string,
   name: string,
-): Promise<FolderItem> {
+): Promise<ApiResponse<FolderItem>> {
   return request<FolderItem>(`/api/playground/${roomId}/directory`, {
     method: "PATCH",
     headers: jsonHeaders,
+    credentials: "include",
     body: JSON.stringify({
       id: folderId,
       name,
@@ -72,6 +92,7 @@ export async function deleteFolder(
   await request(`/api/playground/${roomId}/directory`, {
     method: "DELETE",
     headers: jsonHeaders,
+    credentials: "include",
     body: JSON.stringify({
       id: folderId,
     }),
@@ -86,10 +107,11 @@ export async function createFile(
   roomId: string,
   parentId: string,
   name: string,
-): Promise<FileItem> {
+): Promise<ApiResponse<FileItem>> {
   return request<FileItem>(`/api/playground/${roomId}/files`, {
     method: "POST",
     headers: jsonHeaders,
+    credentials: "include",
     body: JSON.stringify({
       parentId,
       name,
@@ -101,10 +123,11 @@ export async function renameFile(
   roomId: string,
   fileId: string,
   name: string,
-): Promise<FileItem> {
+): Promise<ApiResponse<FileItem>> {
   return request<FileItem>(`/api/playground/${roomId}/files`, {
     method: "PATCH",
     headers: jsonHeaders,
+    credentials: "include",
     body: JSON.stringify({
       id: fileId,
       name,
@@ -119,6 +142,7 @@ export async function deleteFile(
   await request(`/api/playground/${roomId}/files`, {
     method: "DELETE",
     headers: jsonHeaders,
+    credentials: "include",
     body: JSON.stringify({
       id: fileId,
     }),

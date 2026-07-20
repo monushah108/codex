@@ -5,7 +5,13 @@ import {
 } from "@/components/ui/collapsible";
 
 import { Spinner } from "@/components/ui/spinner";
-import { AlertCircle, ChevronRight, FileIcon, Folder } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronRight,
+  File,
+  FileIcon,
+  Folder,
+} from "lucide-react";
 import { useState, memo } from "react";
 
 import { useExplorerstore } from "@/lib/store/Explorerstore";
@@ -60,7 +66,6 @@ function FolderItem({
   const indent = depth * 12;
 
   const isSelected = selected === item._id;
-
   /* ---------------- VALIDATE NAMES ----------------- */
 
   const validateName = ({
@@ -125,14 +130,14 @@ function FolderItem({
         item._id,
         inputValue,
       );
-      explorerSync.applyCreate(roomId, user, item._id, file, "file");
+      explorerSync.applyCreate(item._id, file, "file");
     } else {
       const folder = await useExplorerActions.addFolder(
         roomId,
         item._id,
         inputValue,
       );
-      explorerSync.applyCreate(roomId, user, item._id, folder, "folder");
+      explorerSync.applyCreate(item._id, folder, "folder");
     }
 
     setInputValue("");
@@ -157,19 +162,11 @@ function FolderItem({
     if (type === "file") {
       await useExplorerActions.renameFile(
         roomId,
-        user,
         item._id,
         renamingId,
         renameValue,
       );
-      explorerSync.applyUpdate(
-        roomId,
-        user,
-        item._id,
-        renamingId,
-        renameValue,
-        "file",
-      );
+      explorerSync.applyUpdate(item._id, renamingId, renameValue, "file");
     }
     if (type === "folder") {
       await useExplorerActions.renameFolder(
@@ -179,7 +176,6 @@ function FolderItem({
         renameValue,
       );
       explorerSync.applyUpdate(
-        roomId,
         item.parentDirId,
         renamingId,
         renameValue,
@@ -195,11 +191,11 @@ function FolderItem({
   const handleDelete = async (id: string, type: "file" | "folder") => {
     if (type === "file") {
       await useExplorerActions.deleteFile(roomId, item._id, id);
-      explorerSync.applyRemove(roomId, user, item._id, id, "file");
+      explorerSync.applyRemove(item._id, id, "file");
     }
     if (type === "folder") {
       await useExplorerActions.deleteFolder(roomId, item.parentDirId, id);
-      explorerSync.applyRemove(roomId, user, item.parentDirId, id, "folder");
+      explorerSync.applyRemove(item.parentDirId, id, "folder");
     }
   };
 
@@ -370,6 +366,11 @@ function FolderItem({
             style={{ paddingLeft: indent + 20 }}
             className="flex items-center gap-2 py-1"
           >
+            {creating.type == "file" ? (
+              <File className="w-4 h-4 text-yellow-400" />
+            ) : (
+              <Folder className="w-4 h-4 text-yellow-400" />
+            )}
             <input
               autoFocus
               value={inputValue}

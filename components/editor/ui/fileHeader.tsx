@@ -13,11 +13,7 @@ import {
   Trash,
 } from "lucide-react";
 
-export function FileHeader({
-  handleCreateFile,
-  handleCreateFolder,
-  handleRefresh,
-}) {
+export function FileHeader({ handleCreateFile, handleCreateFolder }) {
   return (
     <div className="flex flex-col  py-1 border-b border-[#2d2d30] text-xs text-gray-400 gap-2">
       <div className="flex items-center justify-between px-2">
@@ -42,16 +38,6 @@ export function FileHeader({
             className="p-1 rounded hover:bg-[#3a3d3e]"
           >
             <FolderPlus className="size-4" />
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRefresh();
-            }}
-            className="p-1 rounded hover:bg-[#3a3d3e]"
-          >
-            <Repeat2 className="size-4" />
           </button>
 
           <button className="p-1 rounded hover:bg-[#2a2d2e]">

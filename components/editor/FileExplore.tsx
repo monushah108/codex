@@ -11,24 +11,15 @@ import FolderItem from "./ui/folderItem";
 import NoFolder from "./ui/noFolder";
 import { Spinner } from "../ui/spinner";
 
-import debounce from "lodash/debounce";
-
 import useExplorerSocket from "@/lib/hooks/useExplorerSocket";
-import { FileItem } from "@/lib/store/types";
+
 import { useExplorerActions } from "@/lib/store/actions/useExplorerAction";
 import { useCodestore } from "@/lib/store/Codestore";
-
-interface docProp {
-  rootDir: FileItem | null;
-  _id: string;
-  name: string;
-  isEdited?: boolean;
-}
 
 function FileExplore({ roomId }: { roomId: string }) {
   const exRef = useRef<PanelImperativeHandle>(null);
   const { panels } = useLayout();
-  const [doc, setDoc] = useState<docProp | null>(null);
+
   const [selected, setSelected] = useState<string | null>(null);
 
   const [creating, setCreating] = useState<{
@@ -40,37 +31,36 @@ function FileExplore({ roomId }: { roomId: string }) {
   });
 
   const explorerSync = useExplorerSocket({ roomId });
+
   const user = useCodestore((s) => s.user);
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [Loading, startTransition] = useTransition();
+  const [root, setRoot] = useState("");
 
   useEffect(() => {
     getFolder();
   }, []);
 
   async function getFolder() {
-    startTransition(async () => {
-      try {
-        const res = await fetch(`/api/playground/${roomId}/directory`, {
-          credentials: "include",
-        });
+    setLoading(true);
+    setError("");
 
-        const data = await res.json();
-
-        if (res.status === 200) {
-          setDoc(data);
-        }
-      } catch (err) {
-        console.log(err);
-        setError("Server failed to fetch explorer");
-      }
-    });
+    try {
+      const { rootFolder } = await useExplorerActions.loadFolder(roomId);
+      setRoot(rootFolder);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Server failed to fetch explorer",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   const handleCreateFile = () => {
-    const parent = selected || doc?.rootDir?._id;
+    const parent = selected || root?._id;
 
     setCreating({
       parentId: parent,
@@ -79,7 +69,7 @@ function FileExplore({ roomId }: { roomId: string }) {
   };
 
   const handleCreateFolder = () => {
-    const parent = selected || doc?.rootDir?._id;
+    const parent = selected || root?._id;
 
     setCreating({
       parentId: parent,
@@ -87,20 +77,14 @@ function FileExplore({ roomId }: { roomId: string }) {
     });
   };
 
-  const handleRefresh = debounce(() => {
-    startTransition(() => {
-      useExplorerActions.loadFolder(
-        roomId,
-        selected || doc?.rootDir?._id,
-        true,
-      );
-    });
-  }, 500);
-
   if (error) {
     return (
       <div className="p-2 text-red-400 text-sm">Explorer Error: {error}</div>
     );
+  }
+
+  if (!root) {
+    return <NoFolder />;
   }
 
   return (
@@ -114,28 +98,24 @@ function FileExplore({ roomId }: { roomId: string }) {
         <div className="flex flex-col h-full border-r border-[#2d2d30] bg-[#1e1e1e] text-gray-300">
           {/* Explorer Header */}
           <FileHeader
-            handleRefresh={handleRefresh}
             handleCreateFile={handleCreateFile}
             handleCreateFolder={handleCreateFolder}
           />
 
-          {/* Empty State */}
-          {!doc?.rootDir && <NoFolder />}
-
-          {Loading ? (
+          {loading ? (
             <div className="flex justify-center py-3">
               <Spinner className="size-5" />
             </div>
           ) : (
-            doc?.rootDir && (
+            root && (
               <FolderItem
-                item={doc.rootDir}
+                item={root}
                 roomId={roomId}
                 creating={creating}
                 setCreating={setCreating}
                 selected={selected}
                 setSelected={setSelected}
-                Loading={Loading}
+                Loading={loading}
                 explorerSync={explorerSync}
                 user={user}
               />

@@ -31,46 +31,18 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
 
   /* ---------------- LOAD FOLDER ---------------- */
 
-  loadFolder: async (roomId, parentId, data, force = false) => {
-    const cache = get().cache[parentId];
-    console.log(get().cache[parentId]?.folders);
-    if (!force && cache?.loaded) return;
-
+  loadFolder: (data) => {
     set((state) => ({
       cache: {
         ...state.cache,
-        [parentId]: {
-          ...(state.cache[parentId] || {}),
-          loading: true,
+        [data.parentId]: {
+          rootFolder: data.rootFolder,
+          folders: data.folders || [],
+          files: data.files || [],
+          loaded: true,
         },
       },
     }));
-
-    try {
-      set((state) => ({
-        cache: {
-          ...state.cache,
-          [parentId]: {
-            folders: data.folders || [],
-            files: data.files || [],
-            loaded: true,
-            loading: false,
-          },
-        },
-      }));
-    } catch (err) {
-      console.error(err);
-
-      set((state) => ({
-        cache: {
-          ...state.cache,
-          [parentId]: {
-            ...state.cache[parentId],
-            loading: false,
-          },
-        },
-      }));
-    }
   },
 
   /* ---------------- SELECT FILE ---------------- */
@@ -88,29 +60,31 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
 
   /* ---------------- ADD ---------------- */
 
-  insertFile: async (parentId, file) => {
+  insertFile: (parentId, file) =>
     set((state) => ({
       cache: {
         ...state.cache,
-        [parentId]: {
-          ...state.cache[parentId],
-          files: [...(state.cache[parentId]?.files || []), file],
-        },
-      },
-    }));
-  },
 
-  insertFolder: async (parentId, folder) => {
+        [parentId]: {
+          ...state.cache[parentId],
+
+          files: [...(state.cache[parentId]?.files ?? []), file],
+        },
+      },
+    })),
+
+  insertFolder: (parentId, folder) =>
     set((state) => ({
       cache: {
         ...state.cache,
+
         [parentId]: {
           ...state.cache[parentId],
-          folders: [...(state.cache[parentId]?.folders || []), folder],
+
+          folders: [...(state.cache[parentId]?.folders ?? []), folder],
         },
       },
-    }));
-  },
+    })),
   /* ---------------- RENAME ---------------- */
 
   updateFile: async (parentId, fileId, newName) => {
@@ -139,22 +113,39 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
     });
   },
 
-  updateFolder: async (parentId, folderId, newName) => {
-    set((state) => {
-      return {
-        cache: {
-          ...state.cache,
-          [parentId]: {
-            ...state.cache[parentId],
-            folders:
-              state.cache[parentId]?.folders.map((f) =>
-                f._id === folderId ? { ...f, name: newName, renamed: true } : f,
-              ) || [],
-          },
+  updateFolder: (parentId, folderId, newName) =>
+    set((state) => ({
+      cache: {
+        ...state.cache,
+
+        // Update parent's folder list
+        [parentId]: {
+          ...state.cache[parentId],
+          folders:
+            state.cache[parentId]?.folders.map((folder) =>
+              folder._id === folderId
+                ? {
+                    ...folder,
+                    name: newName,
+                    renamed: true,
+                  }
+                : folder,
+            ) ?? [],
         },
-      };
-    });
-  },
+
+        // Update folder metadata
+        [folderId]: {
+          ...state.cache[folderId],
+          rootFolder: state.cache[folderId]?.rootFolder
+            ? {
+                ...state.cache[folderId].rootFolder,
+                name: newName,
+                renamed: true,
+              }
+            : undefined,
+        },
+      },
+    })),
 
   /* ---------------- DELETE ---------------- */
 

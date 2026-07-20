@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import { consumeToken } from "@/lib/rateLimiter";
 import Directory from "@/model/directory";
 import File from "@/model/file";
+import Room from "@/model/room";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
@@ -14,46 +15,36 @@ export async function GET(request: NextRequest, { params }) {
   const { roomId } = await params;
   const parentId = request.nextUrl.searchParams.get("parentId");
 
-  let parentObjectId = null;
-  let rootDir = null;
-
-  if (!parentId || parentId === "null") {
-    rootDir = await Directory.findOne({
-      roomId,
-      parentDirId: null,
-    }).lean();
-
-    if (!rootDir) {
-      return Response.json(
-        { error: "root directory not found" },
-        { status: 404 },
-      );
-    }
-
-    parentObjectId = rootDir._id;
-  } else {
-    parentObjectId = new mongoose.Types.ObjectId(parentId);
-  }
   const { success } = consumeToken(request);
 
   if (!success) {
     return Response.json({ error: "rate limit exceeded" }, { status: 429 });
   }
-  try {
-    const folders = await Directory.find({
-      roomId,
-      parentDirId: parentObjectId,
-      _id: { $ne: rootDir?._id },
-    }).lean();
 
-    const files = await File.find({
-      roomId,
-      parentDirId: parentId || null,
-    }).lean();
+  try {
+    const room = await Room.findById(roomId).select("rootDirId").lean();
+
+    if (!room) {
+      return Response.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    const folderId = parentId ?? room.rootDirId;
+
+    const rootFolder = await Directory.findById(folderId).lean();
+
+    if (!rootFolder) {
+      return Response.json({ error: "Folder not found" }, { status: 404 });
+    }
+
+    const [folders, files] = await Promise.all([
+      Directory.find({ parentDirId: folderId }).sort({ createdAt: 1 }).lean(),
+      File.find({ parentDirId: folderId }).sort({ createdAt: 1 }).lean(),
+    ]);
 
     return Response.json(
       {
-        rootDir,
+        parentId: folderId,
+        rootFolder,
         folders,
         files,
       },

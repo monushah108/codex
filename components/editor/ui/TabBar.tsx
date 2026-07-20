@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCodestore } from "@/lib/store/Codestore";
 import SaveFile from "../Module/saveFile";
 import { useLayout } from "@/context/layout-context";
+import { useCodeActions } from "@/lib/store/actions/useCodeAction";
 
 const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
   const [openDialog, setOpenDialog] = useState(false);
@@ -14,7 +15,7 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
   const openFile = useCodestore((s) => s.openFile);
   const setEdited = useCodestore((s) => s.setFileEdited);
   const setActiveFile = useCodestore((s) => s.setActiveFile);
-  const runCode = useCodestore((s) => s.runCode);
+
   const nextFile = openFiles.find((f) => f._id !== activeFileId);
   const running = useCodestore((s) => s.code[activeFileId]?.running);
   const { open } = useLayout();
@@ -76,7 +77,7 @@ const TabBar = memo(function TabBar({ roomId }: { roomId: string }) {
           disabled={running}
           variant="none"
           onClick={() => {
-            runCode(activeFileId);
+            useCodeActions.runCode(activeFileId);
 
             open("terminal");
           }}

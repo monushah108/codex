@@ -53,38 +53,18 @@ export type ExplorerOperation =
     };
 
 export type UseExplorerSocket = {
-  applyCreate(
-    roomId: string,
-    user: User,
-    parentId: string,
-    item: FileItem,
-    target: "file",
-  ): void;
+  applyCreate(parentId: string, item: FileItem, target: "file"): void;
 
-  applyCreate(
-    roomId: string,
-    user: User,
-    parentId: string,
-    item: FolderItem,
-    target: "folder",
-  ): void;
+  applyCreate(parentId: string, item: FolderItem, target: "folder"): void;
 
   applyUpdate(
-    roomId: string,
-    user: User,
     parentId: string,
     id: string,
     newName: string,
     target: "file" | "folder",
   ): void;
 
-  applyRemove(
-    roomId: string,
-    user: User,
-    parentId: string,
-    id: string,
-    target: "file" | "folder",
-  ): void;
+  applyRemove(parentId: string, id: string, target: "file" | "folder"): void;
 };
 
 export type Activity = {

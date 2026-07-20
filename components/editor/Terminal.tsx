@@ -8,7 +8,7 @@ import { ArrowBigRight, TerminalIcon, Trash } from "lucide-react";
 
 import { useCodestore } from "@/lib/store/Codestore";
 
-const Terminal = memo(function Terminal({ roomId }) {
+const Terminal = memo(function Terminal({ roomId }: { roomId: string }) {
   const [userInput, setUserInput] = useState("");
 
   const terminalRef = useRef<HTMLDivElement>(null);

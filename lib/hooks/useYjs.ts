@@ -52,9 +52,11 @@ export function useYjs(roomId: string, fileId: string) {
     // Send local updates
     // -------------------------
     const handleFileSaved = ({
+      roomId,
       fileId,
       content,
     }: {
+      roomId: string;
       fileId: string;
       content: string;
     }) => {

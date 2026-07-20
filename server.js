@@ -89,6 +89,17 @@ app.prepare().then(() => {
     });
 
     // =========================
+    // TERMINAL
+    // =========================
+
+    socket.on("terminal", ({ roomId, fileId, data }) => {
+      const roomKey = `${roomId}:${fileId}`;
+      socket.to(roomKey).emit("terminal", {
+        data,
+      });
+    });
+
+    // =========================
     // JOIN EXPLORER
     // =========================
     socket.on("explorer:join", ({ roomId, user }) => {
@@ -142,10 +153,6 @@ app.prepare().then(() => {
     });
 
     // =========================
-    // MEMBERS
-    // =========================
-
-    // =========================
     // EXPLORER OPERATIONS
     // =========================
 
@@ -161,7 +168,6 @@ app.prepare().then(() => {
 
         const fileName =
           payload.file?.name ?? payload.folder?.name ?? payload.newName ?? "";
-
         const activity = {
           id: crypto.randomUUID(),
           userId: user.id,
@@ -170,7 +176,7 @@ app.prepare().then(() => {
           target,
           fileName,
           time: new Date().toLocaleTimeString(),
-          message: `${user.name} has ${type}  ${target} "${payload.file?.name}"`,
+          message: `${user.name} has ${type}  ${target}  "${fileName}"`,
         };
 
         socket.to(roomId).emit("activity", activity);

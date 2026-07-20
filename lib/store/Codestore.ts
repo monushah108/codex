@@ -1,9 +1,6 @@
 import { create } from "zustand";
-import { getType } from "../features";
-import { socket } from "../socket";
 import { CodeState, Store } from "./types";
-
-import * as codeApi from "@/lib/api/codeApi";
+import { useCodeActions } from "./actions/useCodeAction";
 
 export const useCodestore = create<Store>((set, get) => {
   const updateCode = (fileId: string, data: Partial<CodeState>) =>
@@ -31,8 +28,12 @@ export const useCodestore = create<Store>((set, get) => {
     outputs: [],
     user: {},
 
+    response: {},
+
     // set User
     setUser: (user) => set({ user }),
+
+    /* ---------------- LOAD FILE CONTENT ---------------- */
 
     // OPEN FILE
     openFile: async (file, roomId) => {
@@ -52,7 +53,7 @@ export const useCodestore = create<Store>((set, get) => {
             ],
       }));
 
-      await get().loadFileContent(roomId, file._id);
+      await useCodeActions.loadFile(roomId, file._id);
     },
 
     // CLOSE FILE
@@ -101,7 +102,7 @@ export const useCodestore = create<Store>((set, get) => {
     },
 
     // LOAD FILE
-    loadFileContent: async (roomId, fileId) => {
+    setLoadedFile: (fileId, data) => {
       const cache = get().code[fileId];
 
       if (cache?.loading || cache?.loaded) return;
@@ -111,8 +112,6 @@ export const useCodestore = create<Store>((set, get) => {
       });
 
       try {
-        const data = await codeApi.loadFile(roomId, fileId);
-
         updateCode(fileId, {
           content: data?.content || "",
           savedContent: data?.content || "",
@@ -129,8 +128,33 @@ export const useCodestore = create<Store>((set, get) => {
       }
     },
 
+    setLoading: (fileId, loading) =>
+      set((state) => ({
+        code: {
+          ...state.code,
+          [fileId]: {
+            ...state.code[fileId],
+            loading,
+          },
+        },
+      })),
+
+    setLoadFileError: (fileId, err) => {
+      set((state) => ({
+        code: {
+          ...state.code,
+          [fileId]: {
+            ...state.code[fileId],
+            error: err,
+          },
+        },
+      }));
+    },
+
+    /*----------------- SAVE FILE CONTENT ------------------- */
+
     // SAVE FILE
-    saveFileContent: async (roomId, fileId, content) => {
+    setSavedFile: (fileId, content) => {
       updateCode(fileId, {
         saving: true,
         content,
@@ -151,15 +175,7 @@ export const useCodestore = create<Store>((set, get) => {
       }
 
       try {
-        await codeApi.saveFile(roomId, fileId, content);
-
         get().setFileEdited(fileId, false);
-
-        socket.emit("file:saved", {
-          roomId,
-          fileId,
-          content,
-        });
 
         updateCode(fileId, {
           content,
@@ -175,161 +191,151 @@ export const useCodestore = create<Store>((set, get) => {
       }
     },
 
-    // RUN CODE
-    runCode: async (fileId) => {
-      const code = get().code[fileId]?.content;
+    setSaving: (fileId, saving) => {
+      set((state) => ({
+        code: {
+          ...state.code,
+          [fileId]: {
+            ...state.code[fileId],
+            loading: saving,
+          },
+        },
+      }));
+    },
 
-      if (!code?.trim()) {
-        set((state) => ({
-          outputs: [
-            ...state.outputs,
-            {
-              id: crypto.randomUUID(),
-              error: "No code to execute",
-            },
-          ],
-        }));
-        return;
-      }
+    setSavedFileError: (fileId, err) => {
+      set((state) => ({
+        code: {
+          ...state.code,
+          [fileId]: {
+            ...state.code[fileId],
+            error: err,
+          },
+        },
+      }));
+    },
 
-      const activeFile = get().openFiles.find((f) => f._id === fileId);
-
-      const langId = getType(activeFile?.name as string)?.id;
-
-      if (!langId) {
-        set((state) => ({
-          outputs: [
-            ...state.outputs,
-            {
-              id: crypto.randomUUID(),
-              error: "Unsupported file type",
-              loading: false,
-            },
-          ],
-        }));
-        return;
-      }
-
+    /*------------- CODE EXECUTION --------------- */
+    setExecutionResult: (fileId, result) => {
       updateCode(fileId, {
-        running: true,
+        running: false,
       });
-
-      const loadingId = crypto.randomUUID();
 
       set((state) => ({
         outputs: [
           ...state.outputs,
           {
-            id: loadingId,
-            stdout: "⏳ Running code...",
-            loading: true,
-            loaded: false,
+            id: crypto.randomUUID(),
+            stdout: result.stdout,
+            stderr: result.stderr,
+            compile_output: result.compile_output,
+            message: result.message,
+            error: result.error,
+            loaded: true,
           },
         ],
       }));
-
-      try {
-        const data = await codeApi.runCode(activeFile?.name as string, code);
-
-        set((state) => ({
-          outputs: [
-            ...state.outputs.filter((o) => o.id !== loadingId),
-            {
-              id: crypto.randomUUID(),
-              stdout: data.stdout,
-              stderr: data.stderr,
-              compile_output: data.compile_output,
-              message: data.message,
-              loading: false,
-              loaded: true,
-            },
-          ],
-        }));
-
-        updateCode(fileId, {
-          running: false,
-        });
-      } catch (err) {
-        console.error(err);
-
-        set((state) => ({
-          outputs: [
-            ...state.outputs.filter((o) => o.id !== loadingId),
-            {
-              id: crypto.randomUUID(),
-              error: "Failed to execute code",
-            },
-          ],
-        }));
-      } finally {
-        updateCode(fileId, {
-          running: false,
-        });
-      }
     },
+
+    addOutput: (output) =>
+      set((state) => ({
+        outputs: [
+          ...state.outputs,
+          {
+            id: output.id ?? crypto.randomUUID(),
+            ...output,
+          },
+        ],
+      })),
+
+    removeOutput: (id) =>
+      set((state) => ({
+        outputs: state.outputs.filter((o) => o.id !== id),
+      })),
 
     clearOutputs: () => set({ outputs: [] }),
 
-    // RUN COMMAND
     runCommand: async (command, fileId) => {
-      switch (command.trim().toLowerCase()) {
-        case "clear":
-          set({ outputs: [] });
-          break;
+      const cmd = command.trim().toLowerCase();
 
-        case "help":
-          set((state) => ({
-            outputs: [
-              ...state.outputs,
-              {
-                id: crypto.randomUUID(),
-                stdout: "Available commands: help, clear, run code",
-              },
-            ],
-          }));
-          break;
+      const commands: Record<string, () => Promise<void> | void> = {
+        clear: () => get().clearOutputs(),
 
-        case "run code":
-          await get().runCode(fileId);
-          break;
+        help: () =>
+          get().addOutput({
+            id: crypto.randomUUID(),
+            stdout: [
+              "Available commands:",
+              "• help",
+              "• clear",
+              "• run code",
+            ].join("\n"),
+          }),
 
-        default:
-          set((state) => ({
-            outputs: [
-              ...state.outputs,
-              {
-                id: crypto.randomUUID(),
-                stderr: `Command not found: ${command}`,
-              },
-            ],
-          }));
-      }
-    },
+        "run code": () => useCodeActions.runCode(fileId),
+      };
 
-    generateCode: async (fileId, prompt) => {
-      const content = get().code[fileId]?.content || "";
+      const action = commands[cmd];
 
-      updateCode(fileId, {
-        generating: true,
-      });
-
-      try {
-        const data = await codeApi.generateCode(prompt, content);
-
-        updateCode(fileId, {
-          content: data.code,
-
-          generating: false,
+      if (!action) {
+        get().addOutput({
+          id: crypto.randomUUID(),
+          stderr: `Command not found: ${command}`,
         });
-      } catch (err) {
-        console.error(err);
-
-        updateCode(fileId, {
-          generating: false,
-        });
+        return;
       }
+
+      await action();
     },
+    /*------------- AI CODE GENERATING --------------- */
+    setClearResponse: () =>
+      set({
+        response: {
+          data: [],
+          loading: false,
+          loaded: false,
+          error: null,
+        },
+      }),
+    setGeneratedContent: (prompt, data) =>
+      set((state) => ({
+        response: {
+          ...state.response,
+          data: [
+            ...state.response.data,
+            {
+              id: crypto.randomUUID(),
+              role: "user",
+              content: prompt,
+            },
+            {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: data.code,
+            },
+          ],
+          loading: false,
+          loaded: true,
+          error: null,
+        },
+      })),
+
+    setGenerating: (generating) =>
+      set((state) => ({
+        response: {
+          ...state.response,
+          loading: generating,
+          loaded: !generating,
+        },
+      })),
+    setGeneratedError: (err) =>
+      set((state) => ({
+        response: {
+          ...state.response,
+          loading: false,
+          loaded: true,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })),
   };
 });
-
-/* TODO: Implement real time file deletion functionality and real time file saved functionality when one user saves a file than others files will be updated in real time */

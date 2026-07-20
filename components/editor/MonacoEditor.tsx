@@ -12,9 +12,10 @@ import "./styles/monaco.css";
 import { getType } from "@/lib/features";
 import { useCodestore } from "@/lib/store/Codestore";
 import { useYjs } from "@/lib/hooks/useYjs";
+import { useCodeActions } from "@/lib/store/actions/useCodeAction";
 
 function MonacoEditor({ roomId }: { roomId: string }) {
-  const { activeFileId, openFiles, saveFileContent } = useCodestore();
+  const { activeFileId, openFiles } = useCodestore();
   const activeFile = useMemo(
     () => openFiles.find((file) => file._id === activeFileId),
     [openFiles, activeFileId],
@@ -112,7 +113,8 @@ function MonacoEditor({ roomId }: { roomId: string }) {
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async () => {
-      await saveFileContent(roomId, activeFileId, yText.toString());
+      // await saveFileContent(roomId, activeFileId, yText.toString());
+      await useCodeActions.saveFile(roomId, activeFileId, yText.toString());
     });
   };
 
