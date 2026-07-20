@@ -145,9 +145,9 @@ app.prepare().then(() => {
     // AI CHAT MESSAGES
     // =========================
 
-    socket.on("messages", ({ roomId, user, data }) => {
+    socket.on("messages", ({ roomId, user, payload }) => {
       socket.to(roomId).emit("messages", {
-        data,
+        payload,
       });
       socket.to(roomId).emit("activity", {
         id: crypto.randomUUID(),

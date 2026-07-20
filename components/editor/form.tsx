@@ -17,6 +17,7 @@ import { Spinner } from "../ui/spinner";
 import { useRouter } from "next/navigation";
 import { playSchema } from "@/lib/schema/playground";
 import { CircleAlert } from "lucide-react";
+import { createRoom } from "@/lib/api/playground";
 
 export default function Form() {
   const [name, setRoomName] = useState("codex");
@@ -61,19 +62,17 @@ export default function Form() {
         return;
       }
 
-      console.log(errors);
-
       try {
-        const response = await fetch("/api/playground", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(data),
-        });
-
-        const result = await response.json();
+        // const response = await fetch("/api/playground", {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //   },
+        //   credentials: "include",
+        //   body: JSON.stringify(data),
+        // });
+        const response = await createRoom(data);
+        const result = response.data;
 
         console.log(result);
 
