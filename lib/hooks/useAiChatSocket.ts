@@ -30,7 +30,7 @@ export default function useAiChatSocket({ roomId }: { roomId: string | null }) {
 
   useEffect(() => {
     if (!roomId || !user) return;
-
+    console.log("socket room:", roomId, user);
     socket.emit("explorer:join", { roomId, user });
 
     const handleAiMessages = ({ payload }: MessagesEvent) => {
@@ -42,7 +42,8 @@ export default function useAiChatSocket({ roomId }: { roomId: string | null }) {
       }));
     };
 
-    const handleTerminal = ({ data }: TerminalEvent) => {
+    const handleTerminal = ({ roomId, data }: TerminalEvent) => {
+      console.log("socket ", data);
       useCodestore.getState().addOutput(data);
     };
 
@@ -53,7 +54,7 @@ export default function useAiChatSocket({ roomId }: { roomId: string | null }) {
       socket.off("messages", handleAiMessages);
       socket.off("terminal", handleTerminal);
     };
-  }, [roomId, user]);
+  }, [roomId]);
 
   const applyResponse = useCallback(
     (payload: AiMessage) => {
@@ -85,3 +86,5 @@ export default function useAiChatSocket({ roomId }: { roomId: string | null }) {
     applyOutput,
   };
 }
+
+/* TODO: not working */

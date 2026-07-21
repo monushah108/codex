@@ -7,8 +7,6 @@ import { NextRequest } from "next/server";
 ========================= */
 
 export async function GET(request: NextRequest, { params }) {
-  const { roomId } = await params;
-
   const fileId = request.nextUrl.searchParams.get("fileId");
 
   try {

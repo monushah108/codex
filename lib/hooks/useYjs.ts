@@ -69,17 +69,19 @@ export function useYjs(roomId: string, fileId: string) {
       if (!current) return;
 
       // Mark THIS version as saved
-      useCodestore.setState((state) => ({
-        code: {
-          ...state.code,
-          [fileId]: {
-            ...state.code[fileId],
-            content,
-            savedContent: content,
-            saving: false,
-          },
-        },
-      }));
+      // useCodestore.setState((state) => ({
+      //   code: {
+      //     ...state.code,
+      //     [fileId]: {
+      //       ...state.code[fileId],
+      //       content,
+      //       savedContent: content,
+      //       saving: false,
+      //     },
+      //   },
+      // }));
+
+      useCodestore.getState().setSavedFile(fileId, content);
     };
 
     socket.on("file:saved", handleFileSaved);
@@ -111,10 +113,10 @@ export function useYjs(roomId: string, fileId: string) {
       const store = useCodestore.getState();
 
       const current = yText.toString();
+      store.updateContent(fileId, current);
       const saved = store.code[fileId]?.savedContent ?? "";
 
       store.setFileEdited(fileId, current !== saved);
-
       socket.emit("yjs:update", {
         roomId,
         fileId,

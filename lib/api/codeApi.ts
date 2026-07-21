@@ -1,87 +1,79 @@
-// lib/api/code.ts
+// lib/api/codeApi.ts
+
+import { AxiosError } from "axios";
 
 import { getType } from "../features";
+import { api } from "./client";
 
-const jsonHeaders = {
-  "Content-Type": "application/json",
+export type ApiError = {
+  status: number;
+  message: string;
+  data?: unknown;
 };
-
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, options);
-
-  if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message || "Request failed");
-  }
-
-  return res.json();
-}
 
 /* -------------------------------------------------------------------------- */
 /*                                    File                                    */
 /* -------------------------------------------------------------------------- */
 
-export async function fetchFile<T = unknown>(
-  roomId: string,
-  fileId: string,
-): Promise<T> {
-  return request<T>(`/api/playground/${roomId}/files?fileId=${fileId}`);
+export async function fetchFile<T>(roomId: string, fileId: string): Promise<T> {
+  const { data } = await api.get<T>(`/api/playground/${roomId}/files`, {
+    params: {
+      fileId,
+    },
+  });
+
+  return data;
 }
 
-export async function persistFile<T = unknown>(
+export async function persistFile<T>(
   roomId: string,
   fileId: string,
   content: string,
 ): Promise<T> {
-  return request<T>(`/api/playground/${roomId}/files`, {
-    method: "PUT",
-    headers: jsonHeaders,
-    body: JSON.stringify({
-      id: fileId,
-      content,
-    }),
+  const { data } = await api.put<T>(`/api/playground/${roomId}/files`, {
+    id: fileId,
+    content,
   });
+
+  return data;
 }
 
 /* -------------------------------------------------------------------------- */
 /*                                     AI                                     */
 /* -------------------------------------------------------------------------- */
 
-export async function requestGeneration<T = unknown>(
-  prompt: string,
-): Promise<T> {
-  return request<T>("/api/ai", {
-    method: "POST",
-    headers: jsonHeaders,
-    body: JSON.stringify({
-      prompt,
-    }),
+export async function requestGeneration<T>(prompt: string): Promise<T> {
+  const { data } = await api.post<T>("/api/ai", {
+    prompt,
   });
+
+  return data;
 }
 
 /* -------------------------------------------------------------------------- */
 /*                                 Code Runner                                */
 /* -------------------------------------------------------------------------- */
 
-export async function executeCode<T = unknown>(
+export async function executeCode<T>(
   filename: string,
   source: string,
 ): Promise<T> {
   const langId = getType(filename)?.id;
 
   if (!langId) {
-    throw new Error("Unsupported language");
+    throw {
+      status: 400,
+      message: "Unsupported language",
+    };
   }
 
-  return request<T>(
+  const { data } = await api.post<T>(
     "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
     {
-      method: "POST",
-      headers: jsonHeaders,
-      body: JSON.stringify({
-        source_code: source,
-        language_id: langId,
-      }),
+      source_code: source,
+      language_id: langId,
     },
   );
+
+  return data;
 }

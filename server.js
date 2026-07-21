@@ -146,7 +146,7 @@ app.prepare().then(() => {
     // =========================
 
     socket.on("messages", ({ roomId, user, payload }) => {
-      socket.to(roomId).emit("messages", {
+      io.to(roomId).emit("messages", {
         payload,
       });
       socket.to(roomId).emit("activity", {
@@ -163,7 +163,9 @@ app.prepare().then(() => {
     // =========================
 
     socket.on("terminal", ({ roomId, data }) => {
-      socket.to(roomId).emit("terminal", {
+      console.log("terminal received:", roomId, data);
+
+      io.to(roomId).emit("terminal", {
         data,
       });
     });

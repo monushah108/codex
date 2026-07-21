@@ -32,6 +32,7 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   /* ---------------- LOAD FOLDER ---------------- */
 
   loadFolder: (data) => {
+    console.log(data);
     set((state) => ({
       cache: {
         ...state.cache,

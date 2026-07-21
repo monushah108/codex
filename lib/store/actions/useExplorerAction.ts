@@ -4,70 +4,75 @@ import { ExplorerActions } from "../types";
 
 export const useExplorerActions: ExplorerActions = {
   async loadFolder(roomId, parentId = "") {
-    const res = await ExplorerApi.loadFolder(roomId, parentId);
-
-    if (res.error) {
-      throw new Error(res.error);
+    try {
+      const data = await ExplorerApi.loadFolder(roomId, parentId);
+      console.log(data);
+      useExplorerstore.getState().loadFolder(data!);
+      return data!;
+    } catch (err) {
+      console.log(err);
     }
-
-    useExplorerstore.getState().loadFolder(res.data!);
-
-    return res.data!;
   },
 
   async addFolder(roomId, parentId, name) {
-    const res = await ExplorerApi.createFolder(roomId, parentId, name);
+    try {
+      const data = await ExplorerApi.createFolder(roomId, parentId, name);
 
-    if (res.error) {
-      throw new Error(res.error);
+      useExplorerstore.getState().insertFolder(parentId, data!);
+
+      return data!;
+    } catch (err) {
+      console.log(err);
     }
-
-    useExplorerstore.getState().insertFolder(parentId, res.data!);
-
-    return res.data!;
   },
 
   async addFile(roomId, parentId, name) {
-    const res = await ExplorerApi.createFile(roomId, parentId, name);
+    try {
+      const data = await ExplorerApi.createFile(roomId, parentId, name);
 
-    if (res.error) {
-      throw new Error(res.error);
+      useExplorerstore.getState().insertFile(parentId, data!);
+
+      return data!;
+    } catch (err) {
+      console.log(err);
     }
-
-    useExplorerstore.getState().insertFile(parentId, res.data!);
-
-    return res.data!;
   },
 
   async renameFolder(roomId, parentId, folderId, newName) {
-    const res = await ExplorerApi.renameFolder(roomId, folderId, newName);
-
-    if (res.error) {
-      throw new Error(res.error);
+    try {
+      await ExplorerApi.renameFolder(roomId, folderId, newName);
+      useExplorerstore.getState().updateFolder(parentId, folderId, newName);
+    } catch (err) {
+      console.log(err);
     }
-
-    useExplorerstore.getState().updateFolder(parentId, folderId, newName);
   },
 
   async renameFile(roomId, parentId, fileId, newName) {
-    const res = await ExplorerApi.renameFile(roomId, fileId, newName);
-
-    if (res.error) {
-      throw new Error(res.error);
+    try {
+      await ExplorerApi.renameFile(roomId, fileId, newName);
+      useExplorerstore.getState().updateFile(parentId, fileId, newName);
+    } catch (err) {
+      console.log(err);
     }
-
-    useExplorerstore.getState().updateFile(parentId, fileId, newName);
   },
 
   async deleteFolder(roomId, parentId, folderId) {
-    await ExplorerApi.deleteFolder(roomId, folderId);
+    try {
+      await ExplorerApi.deleteFolder(roomId, folderId);
 
-    useExplorerstore.getState().removeFolder(parentId, folderId);
+      useExplorerstore.getState().removeFolder(parentId, folderId);
+    } catch (err) {
+      console.log(err);
+    }
   },
 
   async deleteFile(roomId, parentId, fileId) {
-    await ExplorerApi.deleteFile(roomId, fileId);
+    try {
+      await ExplorerApi.deleteFile(roomId, fileId);
 
-    useExplorerstore.getState().removeFile(parentId, fileId);
+      useExplorerstore.getState().removeFile(parentId, fileId);
+    } catch (err) {
+      console.log(err);
+    }
   },
 };

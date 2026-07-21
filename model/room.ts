@@ -140,3 +140,5 @@ roomSchema.index(
 const Room = models.Room || model("Room", roomSchema);
 
 export default Room;
+
+// TODO: ttl index is not working and room with direcotry and file must get deleted too

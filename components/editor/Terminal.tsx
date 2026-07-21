@@ -7,13 +7,17 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { ArrowBigRight, TerminalIcon, Trash } from "lucide-react";
 
 import { useCodestore } from "@/lib/store/Codestore";
+import useAiChatSocket from "@/lib/hooks/useAiChatSocket";
+import { useCodeActions } from "@/lib/store/actions/useCodeAction";
 
 const Terminal = memo(function Terminal({ roomId }: { roomId: string }) {
   const [userInput, setUserInput] = useState("");
 
   const terminalRef = useRef<HTMLDivElement>(null);
 
-  const { outputs, activeFileId, runCommand, clearOutputs } = useCodestore();
+  const { applyOutput } = useAiChatSocket({ roomId });
+
+  const { outputs, activeFileId, clearOutputs } = useCodestore();
   const code = useCodestore((s) => s.code);
 
   const running = activeFileId ? code[activeFileId]?.running : false;
@@ -30,10 +34,15 @@ const Terminal = memo(function Terminal({ roomId }: { roomId: string }) {
 
     if (!userInput.trim() || !activeFileId) return;
 
-    await runCommand(userInput.trim(), activeFileId);
-
+    const output = await useCodeActions.runCode(activeFileId);
+    console.log(Object.values(output).length > 0);
+    if (Object.values(output).length > 0) {
+      applyOutput(output);
+    }
     setUserInput("");
   };
+
+  console.log(outputs);
 
   const prompt = () => <ArrowBigRight className="w-3 h-3" />;
 

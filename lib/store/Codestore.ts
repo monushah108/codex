@@ -106,40 +106,36 @@ export const useCodestore = create<Store>((set, get) => {
       const cache = get().code[fileId];
 
       if (cache?.loading || cache?.loaded) return;
-      console.log("loadfile", cache);
+
       updateCode(fileId, {
         content: data?.content || "",
         savedContent: data?.content || "",
         loaded: true,
-
         loading: false,
       });
     },
 
     setLoading: (fileId, loading) => {
-      console.log("loading", get().code[fileId]);
-
-      set((state) => ({
-        code: {
-          ...state.code,
-          [fileId]: {
-            ...state.code[fileId],
-            loading,
-          },
-        },
-      }));
+      updateCode(fileId, {
+        ...get().code[fileId],
+        loading,
+      });
+      // set((state) => ({
+      //   code: {
+      //     ...state.code,
+      //     [fileId]: {
+      //       ...state.code[fileId],
+      //       loading,
+      //     },
+      //   },
+      // }));
     },
 
     setLoadFileError: (fileId, err) => {
-      set((state) => ({
-        code: {
-          ...state.code,
-          [fileId]: {
-            ...state.code[fileId],
-            error: err,
-          },
-        },
-      }));
+      updateCode(fileId, {
+        ...get().code[fileId],
+        error: err,
+      });
     },
 
     /*----------------- SAVE FILE CONTENT ------------------- */
@@ -151,21 +147,15 @@ export const useCodestore = create<Store>((set, get) => {
         content,
       });
 
-      // const IsSaved = get().code[fileId]?.savedContent == content;
-      // const file = get().code[fileId];
+      const IsSaved = get().code[fileId]?.savedContent == content;
 
-      // if (file?.isDeleted) {
-      //   return;
-      // }
+      if (IsSaved) {
+        updateCode(fileId, {
+          saving: false,
+        });
+        return;
+      }
 
-      // if (IsSaved) {
-      //   updateCode(fileId, {
-      //     saving: false,
-      //   });
-      //   return;
-      // }
-
-      // try {
       get().setFileEdited(fileId, false);
 
       updateCode(fileId, {
@@ -173,13 +163,6 @@ export const useCodestore = create<Store>((set, get) => {
         savedContent: content,
         saving: false,
       });
-      // } catch (err) {
-      //   console.error(err);
-      // } finally {
-      //   updateCode(fileId, {
-      //     saving: false,
-      //   });
-      // }
     },
 
     setSaving: (fileId, saving) => {
@@ -195,15 +178,20 @@ export const useCodestore = create<Store>((set, get) => {
     },
 
     setSavedFileError: (fileId, err) => {
-      set((state) => ({
-        code: {
-          ...state.code,
-          [fileId]: {
-            ...state.code[fileId],
-            error: err,
-          },
-        },
-      }));
+      updateCode(fileId, {
+        ...get().code[fileId],
+        error: err,
+      });
+
+      // set((state) => ({
+      //   code: {
+      //     ...state.code,
+      //     [fileId]: {
+      //       ...state.code[fileId],
+      //       error: err,
+      //     },
+      //   },
+      // }));
     },
 
     /*------------- CODE EXECUTION --------------- */
@@ -278,6 +266,7 @@ export const useCodestore = create<Store>((set, get) => {
 
       await action();
     },
+
     /*------------- AI CODE GENERATING --------------- */
     setClearResponse: () =>
       set({

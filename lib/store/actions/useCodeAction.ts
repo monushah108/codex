@@ -21,8 +21,7 @@ export const useCodeActions: CodeActions = {
 
       store.setLoadedFile(fileId, data);
     } catch (err) {
-      console.error(err);
-      store.setLoadFileError(fileId, err);
+      store.setLoadFileError(fileId, err.message);
     } finally {
       store.setLoading(fileId, false);
     }
@@ -33,19 +32,17 @@ export const useCodeActions: CodeActions = {
 
     const file = store.code[fileId];
 
-    // if (!file || file.isDeleted) return;
+    if (!file || file.isDeleted) return;
 
-    // if (file.savedContent === content.content) return;
+    if (file.savedContent === file.content) return;
 
     store.setSaving(fileId, true);
 
     try {
-      await codeApi.persistFile(roomId, fileId, content.content);
-
-      store.setSavedFile(fileId, content.content);
+      await codeApi.persistFile(roomId, fileId, content);
+      store.setSavedFile(fileId, content);
     } catch (err) {
-      console.error(err);
-      store.setSavedFileError(fileId, err);
+      store.setSavedFileError(fileId, err.message);
     } finally {
       store.setSaving(fileId, false);
     }
@@ -55,6 +52,7 @@ export const useCodeActions: CodeActions = {
     const store = useCodestore.getState();
 
     const file = store.openFiles.find((f) => f._id === fileId);
+
     if (!file) return;
 
     const source = store.code[fileId]?.content;
@@ -65,8 +63,6 @@ export const useCodeActions: CodeActions = {
       });
       return;
     }
-
-    store.setRunning(fileId, true);
 
     const loadingId = crypto.randomUUID();
 
@@ -80,16 +76,19 @@ export const useCodeActions: CodeActions = {
       const result = await codeApi.executeCode(file.name, source);
 
       store.removeOutput(loadingId);
-
+      console.log("execution result:", result);
       store.setExecutionResult(fileId, result);
+      return result;
     } catch {
       store.removeOutput(loadingId);
 
-      store.addOutput({
+      const error = {
         error: "Failed to execute code",
-      });
+      };
 
-      store.setRunning(fileId, false);
+      store.addOutput(error);
+
+      return error;
     }
   },
 
@@ -106,7 +105,7 @@ export const useCodeActions: CodeActions = {
       }
     } catch (err) {
       console.error(err);
-      store.setGeneratedError(responseId, err);
+      store.setGeneratedError(responseId, err.message);
     } finally {
       if (store.activeFileId) {
         store.setGenerating(responseId, false);
