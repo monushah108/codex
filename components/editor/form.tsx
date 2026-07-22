@@ -71,9 +71,7 @@ export default function Form() {
           body: JSON.stringify(data),
         });
 
-        const result = response.json();
-
-        console.log(result);
+        const result = await response.json();
 
         if (response.status === 201) {
           toast.success("Room created successfully!");

@@ -46,7 +46,6 @@ function FolderItem({
   setSelected,
   selected,
   explorerSync,
-  user,
   depth = 0,
 }: Folderprop) {
   const [inputValue, setInputValue] = useState("");
@@ -62,7 +61,6 @@ function FolderItem({
   const folders = cache?.folders || [];
   const files = cache?.files || [];
   const loading = cache?.loading;
-
   const indent = depth * 12;
 
   const isSelected = selected === item._id;
@@ -201,6 +199,7 @@ function FolderItem({
 
   return (
     <Collapsible
+      open={isOpen}
       onOpenChange={(open) => {
         if (open) useExplorerActions.loadFolder(roomId, item._id);
         setIsOpen(open);
@@ -355,7 +354,6 @@ function FolderItem({
             selected={selected}
             depth={depth + 1}
             explorerSync={explorerSync}
-            user={user}
           />
         ))}
 
@@ -364,32 +362,35 @@ function FolderItem({
         {creating?.parentId === item._id && (
           <div
             style={{ paddingLeft: indent + 20 }}
-            className="flex items-center gap-2 py-1"
+            className="flex items-center gap-2 py-1 flex-col"
           >
-            {creating.type == "file" ? (
-              <File className="w-4 h-4 text-yellow-400" />
-            ) : (
-              <Folder className="w-4 h-4 text-yellow-400" />
-            )}
-            <input
-              autoFocus
-              value={inputValue}
-              onChange={handleChange}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
+            <div className="flex items-center gap-2">
+              {creating.type == "file" ? (
+                <File className="w-4 h-4 text-yellow-400" />
+              ) : (
+                <Folder className="w-4 h-4 text-yellow-400" />
+              )}
+              <input
+                autoFocus
+                value={inputValue}
+                onChange={handleChange}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSubmit();
 
-                if (e.key === "Escape") {
+                  if (e.key === "Escape") {
+                    setCreating({ parentId: null, type: null });
+                  }
+                }}
+                onBlur={() => {
+                  clearError();
                   setCreating({ parentId: null, type: null });
-                }
-              }}
-              onBlur={() => {
-                clearError();
-                setCreating({ parentId: null, type: null });
-              }}
-              className="bg-transparent border border-[#3a3d3e] px-1 text-sm outline-none"
-            />
+                }}
+                className="bg-transparent border border-[#3a3d3e] px-1 text-sm outline-none"
+              />
+            </div>
+
             {error && (
-              <div className="text-destructive text-xs ml-2 flex items-center ">
+              <div className="text-destructive text-xs  flex items-center ">
                 <AlertCircle className="w-3 h-3" /> {error}
               </div>
             )}

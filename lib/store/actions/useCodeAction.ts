@@ -36,6 +36,12 @@ export const useCodeActions: CodeActions = {
 
     if (file.savedContent === file.content) return;
 
+    store.setFileEdited(fileId, true);
+
+    console.log(
+      useCodestore.getState().openFiles.find((f) => f._id === fileId),
+    );
+
     store.setSaving(fileId, true);
 
     try {

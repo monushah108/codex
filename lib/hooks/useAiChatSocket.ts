@@ -23,6 +23,7 @@ type MessagesEvent = {
 
 type TerminalEvent = {
   data: TerminalOutput;
+  roomId: string;
 };
 
 export default function useAiChatSocket({ roomId }: { roomId: string | null }) {

@@ -251,3 +251,5 @@ export interface CodeActions {
 
   duplicateFile?(roomId: string, fileId: string): Promise<void>;
 }
+
+// TODO: code and file types are wrong

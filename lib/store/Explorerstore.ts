@@ -32,7 +32,6 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
   /* ---------------- LOAD FOLDER ---------------- */
 
   loadFolder: (data) => {
-    console.log(data);
     set((state) => ({
       cache: {
         ...state.cache,
@@ -40,7 +39,35 @@ export const useExplorerstore = create<ExplorerStore>((set, get) => ({
           rootFolder: data.rootFolder,
           folders: data.folders || [],
           files: data.files || [],
+          loading: false,
           loaded: true,
+        },
+      },
+    }));
+  },
+
+  setLoading: (fileId, loading) => {
+    console.log("setLoading", fileId, loading);
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [fileId]: {
+          ...state.cache[fileId],
+          loading,
+        },
+      },
+    }));
+  },
+
+  setError: (fileId, err) => {
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [fileId]: {
+          ...state.cache[fileId],
+          error: err,
+          loaded: false,
+          loading: false,
         },
       },
     }));

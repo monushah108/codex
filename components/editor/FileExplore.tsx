@@ -34,9 +34,6 @@ function FileExplore({ roomId }: { roomId: string }) {
 
   const user = useCodestore((s) => s.user);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
   const [root, setRoot] = useState("");
 
   useEffect(() => {
@@ -44,19 +41,8 @@ function FileExplore({ roomId }: { roomId: string }) {
   }, []);
 
   async function getFolder() {
-    setLoading(true);
-    setError("");
-
-    try {
-      const { rootFolder } = await useExplorerActions.loadFolder(roomId);
-      setRoot(rootFolder);
-    } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Server failed to fetch explorer",
-      );
-    } finally {
-      setLoading(false);
-    }
+    const res = await useExplorerActions.loadFolder(roomId);
+    setRoot(res.rootFolder);
   }
 
   const handleCreateFile = () => {
@@ -77,12 +63,6 @@ function FileExplore({ roomId }: { roomId: string }) {
     });
   };
 
-  if (error) {
-    return (
-      <div className="p-2 text-red-400 text-sm">Explorer Error: {error}</div>
-    );
-  }
-
   if (!root) {
     return <NoFolder />;
   }
@@ -102,24 +82,17 @@ function FileExplore({ roomId }: { roomId: string }) {
             handleCreateFolder={handleCreateFolder}
           />
 
-          {loading ? (
-            <div className="flex justify-center py-3">
-              <Spinner className="size-5" />
-            </div>
-          ) : (
-            root && (
-              <FolderItem
-                item={root}
-                roomId={roomId}
-                creating={creating}
-                setCreating={setCreating}
-                selected={selected}
-                setSelected={setSelected}
-                Loading={loading}
-                explorerSync={explorerSync}
-                user={user}
-              />
-            )
+          {root && (
+            <FolderItem
+              item={root}
+              roomId={roomId}
+              creating={creating}
+              setCreating={setCreating}
+              selected={selected}
+              setSelected={setSelected}
+              explorerSync={explorerSync}
+              user={user}
+            />
           )}
         </div>
       </Suspense>

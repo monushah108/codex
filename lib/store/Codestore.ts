@@ -78,24 +78,57 @@ export const useCodestore = create<Store>((set, get) => {
       }),
 
     // EDIT STATUS
-    setFileEdited: (fileId, edited) =>
-      set((state) => ({
-        openFiles: state.openFiles.map((file) =>
-          file._id === fileId
-            ? {
-                ...file,
+    // setFileEdited: (fileId, edited) =>
+    //   set((state) => {
+    //     console.log("SET FILE EDITED", fileId, edited);
+    //     return {
+    //       openFiles: state.openFiles.map((file) =>
+    //         file._id === fileId
+    //           ? {
+    //               ...file,
 
-                isEdited: edited,
-              }
-            : file,
-        ),
-      })),
+    //               isEdited: edited,
+    //             }
+    //           : file,
+    //       ),
+    //     };
+    //   }),
+
+    setFileEdited: (fileId, edited) =>
+      set((state) => {
+        console.log("editing", fileId);
+        console.log(
+          "after",
+          state.openFiles.find((f) => f._id === fileId),
+        );
+        console.log(
+          state.openFiles.map((f) => ({
+            id: f._id,
+            name: f.name,
+            edited: f.isEdited,
+          })),
+        );
+
+        const exists = state.openFiles.some((f) => f._id === fileId);
+
+        console.log("exists?", exists);
+
+        return {
+          openFiles: state.openFiles.map((file) =>
+            file._id === fileId
+              ? {
+                  ...file,
+                  isEdited: edited,
+                }
+              : file,
+          ),
+        };
+      }),
 
     // UPDATE CONTENT
     updateContent: (fileId, content) => {
       updateCode(fileId, {
         content,
-        savedContent: "",
       });
 
       get().setFileEdited(fileId, true);
@@ -319,3 +352,5 @@ export const useCodestore = create<Store>((set, get) => {
       })),
   };
 });
+
+// TODO : not getting error message in the file
